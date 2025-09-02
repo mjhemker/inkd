@@ -34,7 +34,7 @@ export default function ArtistMap() {
         {...mapViewport}
         onMove={onMove}
         onClick={onMapClick}
-        mapStyle="mapbox://styles/mapbox/dark-v11"
+        mapStyle="mapbox://styles/mapbox/light-v11"
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
         className="w-full h-full"
       >
@@ -54,8 +54,8 @@ export default function ArtistMap() {
               <button
                 className={`relative ${
                   index === selectedArtistIndex
-                    ? 'text-indigo-600 scale-125'
-                    : 'text-gray-600 hover:text-indigo-600'
+                    ? 'text-purple-600 scale-125'
+                    : 'text-purple-500 hover:text-purple-600'
                 } transition-all duration-200`}
               >
                 <MapPinIcon className="h-8 w-8 drop-shadow-md" />
