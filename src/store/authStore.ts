@@ -26,18 +26,24 @@ export const useAuthStore = create<AuthState>()(
       pendingUserData: null,
 
       signIn: async (email: string, password: string, rememberMe: boolean = false) => {
+        console.log('🔄 Starting sign in for:', email)
         set({ loading: true })
         try {
           const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
           })
+          
+          console.log('📋 Sign in response:', { data, error })
+          
           if (error) throw error
           
           // Check if user exists and is confirmed
           if (!data.user) {
             throw new Error('Sign in failed - no user returned')
           }
+          
+          console.log('✅ Sign in successful, user:', data.user.email)
           
           // Store remember me preference
           if (rememberMe) {
@@ -54,7 +60,10 @@ export const useAuthStore = create<AuthState>()(
             needsVerification: false,
             verificationEmail: null 
           })
+          
+          console.log('🎯 Auth state updated with user')
         } catch (error) {
+          console.error('❌ Sign in error:', error)
           set({ loading: false })
           throw error
         }
@@ -124,11 +133,14 @@ export const useAuthStore = create<AuthState>()(
           set({ user: session?.user || null, loading: false })
 
           supabase.auth.onAuthStateChange(async (event, session) => {
+            console.log('🔄 Auth state change:', event, session?.user?.email || 'no user')
+            
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
               const { pendingUserData } = get()
               
               // If user just verified email and we have pending data, create their profile
               if (session?.user && pendingUserData && event === 'SIGNED_IN') {
+                console.log('👤 Creating profile for verified user')
                 try {
                   const { error: profileError } = await supabase
                     .from('users')
@@ -147,6 +159,7 @@ export const useAuthStore = create<AuthState>()(
                 }
               }
               
+              console.log('✅ Setting user in state:', session?.user?.email)
               set({ 
                 user: session?.user || null, 
                 loading: false, 
@@ -154,6 +167,7 @@ export const useAuthStore = create<AuthState>()(
                 pendingUserData: null 
               })
             } else if (event === 'SIGNED_OUT') {
+              console.log('👋 User signed out')
               set({ 
                 user: null, 
                 loading: false, 
@@ -173,7 +187,12 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ user: state.user }),
+      partialize: (state) => ({ 
+        user: state.user,
+        needsVerification: state.needsVerification,
+        verificationEmail: state.verificationEmail,
+        pendingUserData: state.pendingUserData
+      }),
     }
   )
 )

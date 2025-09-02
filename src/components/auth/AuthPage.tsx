@@ -34,21 +34,37 @@ export default function AuthPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
+    console.log('🚀 Form submitted for:', authStep, email)
 
     try {
       if (authStep === 'signup') {
+        console.log('📝 Attempting signup')
         const result = await signUp(email, password, {
           name,
           handle,
           is_artist: accountType === 'artist',
         })
-        // If verification is needed, the AuthPage will show verification message
-        // No need to do anything else here
+        console.log('✅ Signup result:', result)
       } else {
+        console.log('🔑 Attempting sign in')
         await signIn(email, password, rememberMe)
+        console.log('✅ Sign in completed')
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred')
+      console.error('❌ Auth error:', err)
+      let errorMessage = 'An error occurred'
+      
+      if (err.message.includes('Invalid login credentials')) {
+        errorMessage = 'Incorrect email or password'
+      } else if (err.message.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and click the verification link'
+      } else if (err.message.includes('User not found')) {
+        errorMessage = 'No account found with this email'
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+      
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
