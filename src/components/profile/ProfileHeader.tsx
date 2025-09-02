@@ -2,6 +2,7 @@
 
 import { CalendarIcon, ChatBubbleLeftIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
 import { useAuthStore } from '@/store/authStore'
+import { useProfileStore } from '@/store/profileStore'
 
 interface User {
   id: string
@@ -25,6 +26,7 @@ interface ProfileHeaderProps {
 
 export default function ProfileHeader({ profile }: ProfileHeaderProps) {
   const { user } = useAuthStore()
+  const { posts } = useProfileStore()
   const isOwnProfile = user?.id === profile.id
 
   return (
@@ -92,31 +94,79 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
             </div>
           )}
 
+          {/* Stats for own profile */}
+          {isOwnProfile && (
+            <div className="grid grid-cols-3 gap-4 mt-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-gray-900">{posts?.length || 0}</p>
+                <p className="text-sm text-gray-600">Posts</p>
+              </div>
+              {profile.is_artist && (
+                <>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-gray-900">1.2k</p>
+                    <p className="text-sm text-gray-600">Followers</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-gray-900">4.8</p>
+                    <p className="text-sm text-gray-600">Rating</p>
+                  </div>
+                </>
+              )}
+              {!profile.is_artist && (
+                <>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-gray-900">143</p>
+                    <p className="text-sm text-gray-600">Following</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-gray-900">28</p>
+                    <p className="text-sm text-gray-600">Saved</p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
           {/* Action buttons */}
           <div className="flex flex-wrap gap-3 mt-6 justify-center md:justify-start">
             {!isOwnProfile && (
               <>
                 {profile.is_artist && (
-                  <button className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium">
-                    Book
-                  </button>
+                  <>
+                    <button className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors">
+                      Book Appointment
+                    </button>
+                    <button className="flex items-center space-x-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                      <CalendarIcon className="h-4 w-4" />
+                      <span>View Calendar</span>
+                    </button>
+                  </>
                 )}
-                <button className="flex items-center space-x-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">
-                  <CalendarIcon className="h-4 w-4" />
-                  <span>Calendar</span>
-                </button>
-                <button className="flex items-center space-x-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">
+                <button className="flex items-center space-x-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                   <ChatBubbleLeftIcon className="h-4 w-4" />
                   <span>Message</span>
                 </button>
+                {!profile.is_artist && (
+                  <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                    Follow
+                  </button>
+                )}
               </>
             )}
             
             {isOwnProfile && (
-              <button className="flex items-center space-x-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">
-                <Cog6ToothIcon className="h-4 w-4" />
-                <span>Settings</span>
-              </button>
+              <>
+                <button className="flex items-center space-x-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                  <Cog6ToothIcon className="h-4 w-4" />
+                  <span>Edit Profile</span>
+                </button>
+                {profile.is_artist && (
+                  <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    Manage Business
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
