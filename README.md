@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# INKD Web Application
 
-## Getting Started
+A comprehensive web platform for tattoo enthusiasts and artists featuring social feeds, local artist discovery, portfolio management, and AI-powered assistance.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Social Feed**: Browse and share tattoo posts with responsive grid layout
+- **Local Discovery**: Find nearby artists with interactive map and card interface
+- **Artist Profiles**: Comprehensive profiles with Info, Posts, and Portfolio tabs
+- **AI Assistant**: Booking assistance, inquiry triage, and market research
+- **Daily Highlights**: Curated content to drive user engagement
+- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Frontend**: Next.js 15 with TypeScript, Tailwind CSS v4
+- **State Management**: Zustand
+- **Backend**: Supabase (Auth, Database, Storage)
+- **Maps**: Mapbox GL JS / React Map GL
+- **UI Components**: Headless UI, Heroicons
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Setup
 
-## Learn More
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. **Environment Variables:**
+   Create a `.env.local` file with:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=https://rzubqnqqvjkwnavmzcgz.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_access_token
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. **Database Setup:**
+   - Run the SQL in `supabase-schema.sql` in your Supabase SQL editor
+   - This creates all necessary tables, indexes, and RLS policies
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4. **Development:**
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+## Database Schema
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The application uses the following main tables:
+- `users` - User profiles and artist information
+- `posts` - Social feed posts with images and metadata
+- `portfolio` - Artist portfolio items categorized by type
+- `messages` - Direct messaging between users
+- `appointments` - Booking requests and confirmations
+- `daily_highlights` - Curated daily content
+- `assistant_*` - AI assistant events, settings, and reports
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Development
+
+- `npm run dev` - Start development server with Turbopack
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+
+## Deployment
+
+The application is ready for deployment on Vercel, Netlify, or any other Next.js-compatible platform.
+
+### Environment Setup
+Ensure all environment variables are configured in your deployment platform.
+
+### Database Migrations
+Run the SQL schema in your Supabase project before deploying.
