@@ -1,39 +1,30 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
-import AuthModal from './AuthModal'
+import AuthPage from './AuthPage'
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const { user, loading, initialize } = useAuthStore()
-  const [showAuthModal, setShowAuthModal] = useState(false)
 
   useEffect(() => {
     initialize()
   }, [initialize])
 
-  useEffect(() => {
-    if (!loading && !user) {
-      setShowAuthModal(true)
-    } else {
-      setShowAuthModal(false)
-    }
-  }, [loading, user])
-
-  const handleCloseModal = () => {
-    // Only allow closing in development or if user is authenticated
-    if (process.env.NODE_ENV === 'development' || user) {
-      setShowAuthModal(false)
-    }
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    )
   }
 
-  return (
-    <>
-      {children}
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={handleCloseModal}
-      />
-    </>
-  )
+  // Show auth page if not authenticated
+  if (!user) {
+    return <AuthPage />
+  }
+
+  // Show main app if authenticated
+  return <>{children}</>
 }
