@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store/authStore'
 import AuthPage from './AuthPage'
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { user, loading, initialize } = useAuthStore()
+  const { user, loading, needsVerification, initialize } = useAuthStore()
 
   useEffect(() => {
     initialize()
@@ -20,8 +20,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     )
   }
 
-  // Show auth page if not authenticated
-  if (!user) {
+  // Show auth page if not authenticated or needs verification
+  if (!user || needsVerification) {
     return <AuthPage />
   }
 

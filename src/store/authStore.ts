@@ -6,10 +6,14 @@ import type { User } from '@supabase/supabase-js'
 interface AuthState {
   user: User | null
   loading: boolean
+  needsVerification: boolean
+  verificationEmail: string | null
+  pendingUserData: any | null
   signIn: (email: string, password: string, rememberMe?: boolean) => Promise<void>
-  signUp: (email: string, password: string, userData?: any) => Promise<void>
+  signUp: (email: string, password: string, userData?: any) => Promise<{ needsVerification: boolean }>
   signOut: () => Promise<void>
   initialize: () => Promise<void>
+  clearVerification: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -17,6 +21,9 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       user: null,
       loading: true,
+      needsVerification: false,
+      verificationEmail: null,
+      pendingUserData: null,
 
       signIn: async (email: string, password: string, rememberMe: boolean = false) => {
         set({ loading: true })
@@ -27,6 +34,11 @@ export const useAuthStore = create<AuthState>()(
           })
           if (error) throw error
           
+          // Check if user exists and is confirmed
+          if (!data.user) {
+            throw new Error('Sign in failed - no user returned')
+          }
+          
           // Store remember me preference
           if (rememberMe) {
             localStorage.setItem('inkd-remember-me', 'true')
@@ -36,7 +48,12 @@ export const useAuthStore = create<AuthState>()(
             localStorage.removeItem('inkd-user-email')
           }
           
-          set({ user: data.user, loading: false })
+          set({ 
+            user: data.user, 
+            loading: false, 
+            needsVerification: false,
+            verificationEmail: null 
+          })
         } catch (error) {
           set({ loading: false })
           throw error
@@ -52,6 +69,21 @@ export const useAuthStore = create<AuthState>()(
           })
           if (error) throw error
           
+          // Check if user needs email verification
+          const needsVerification = !data.session && data.user && !data.user.email_confirmed_at
+          
+          if (needsVerification) {
+            set({ 
+              loading: false, 
+              needsVerification: true, 
+              verificationEmail: email,
+              pendingUserData: userData,
+              user: null 
+            })
+            return { needsVerification: true }
+          }
+          
+          // If user is confirmed, create profile
           if (data.user && userData) {
             const { error: profileError } = await supabase
               .from('users')
@@ -65,7 +97,8 @@ export const useAuthStore = create<AuthState>()(
             if (profileError) throw profileError
           }
           
-          set({ user: data.user, loading: false })
+          set({ user: data.user, loading: false, needsVerification: false })
+          return { needsVerification: false }
         } catch (error) {
           set({ loading: false })
           throw error
@@ -90,12 +123,52 @@ export const useAuthStore = create<AuthState>()(
           const { data: { session } } = await supabase.auth.getSession()
           set({ user: session?.user || null, loading: false })
 
-          supabase.auth.onAuthStateChange((event, session) => {
-            set({ user: session?.user || null, loading: false })
+          supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+              const { pendingUserData } = get()
+              
+              // If user just verified email and we have pending data, create their profile
+              if (session?.user && pendingUserData && event === 'SIGNED_IN') {
+                try {
+                  const { error: profileError } = await supabase
+                    .from('users')
+                    .insert([
+                      {
+                        id: session.user.id,
+                        email: session.user.email!,
+                        ...pendingUserData,
+                      }
+                    ])
+                  if (profileError) {
+                    console.error('Error creating profile after verification:', profileError)
+                  }
+                } catch (error) {
+                  console.error('Error creating profile:', error)
+                }
+              }
+              
+              set({ 
+                user: session?.user || null, 
+                loading: false, 
+                needsVerification: false,
+                pendingUserData: null 
+              })
+            } else if (event === 'SIGNED_OUT') {
+              set({ 
+                user: null, 
+                loading: false, 
+                needsVerification: false,
+                pendingUserData: null 
+              })
+            }
           })
         } catch (error) {
           set({ loading: false })
         }
+      },
+
+      clearVerification: () => {
+        set({ needsVerification: false, verificationEmail: null, pendingUserData: null })
       },
     }),
     {
