@@ -7,15 +7,6 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  experimental: {
-    turbo: {
-      rules: {
-        "*.tsx": {
-          loaders: ["@babel/preset-typescript"],
-        },
-      },
-    },
-  },
 };
 
 export default nextConfig;
