@@ -34,7 +34,7 @@ export default function ArtistMap() {
         {...mapViewport}
         onMove={onMove}
         onClick={onMapClick}
-        mapStyle="mapbox://styles/mapbox/streets-v12"
+        mapStyle="mapbox://styles/mapbox/dark-v11"
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
         className="w-full h-full"
       >

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Dialog } from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { useAuthStore } from '@/store/authStore'
@@ -17,10 +17,23 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [name, setName] = useState('')
   const [handle, setHandle] = useState('')
   const [isArtist, setIsArtist] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   
   const { signIn, signUp } = useAuthStore()
+
+  // Pre-populate email if "Remember Me" was used
+  useEffect(() => {
+    if (isOpen && !isSignUp) {
+      const rememberedEmail = localStorage.getItem('inkd-user-email')
+      const rememberMeEnabled = localStorage.getItem('inkd-remember-me') === 'true'
+      if (rememberedEmail && rememberMeEnabled) {
+        setEmail(rememberedEmail)
+        setRememberMe(true)
+      }
+    }
+  }, [isOpen, isSignUp])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,7 +48,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           is_artist: isArtist,
         })
       } else {
-        await signIn(email, password)
+        await signIn(email, password, rememberMe)
       }
       onClose()
       resetForm()
@@ -52,6 +65,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setName('')
     setHandle('')
     setIsArtist(false)
+    setRememberMe(false)
     setError('')
     setIsSignUp(false)
   }
@@ -153,13 +167,43 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               </>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
-            </button>
+            {!isSignUp && (
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="rememberMe"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-900">
+                  Remember me
+                </label>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              >
+                {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+              </button>
+              
+              {process.env.NODE_ENV === 'development' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Skip authentication for development
+                    onClose()
+                  }}
+                  className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Skip Login - Dev
+                </button>
+              )}
+            </div>
           </form>
 
           <div className="mt-4 text-center">

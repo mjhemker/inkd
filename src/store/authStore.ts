@@ -6,7 +6,7 @@ import type { User } from '@supabase/supabase-js'
 interface AuthState {
   user: User | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<void>
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<void>
   signUp: (email: string, password: string, userData?: any) => Promise<void>
   signOut: () => Promise<void>
   initialize: () => Promise<void>
@@ -18,7 +18,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       loading: true,
 
-      signIn: async (email: string, password: string) => {
+      signIn: async (email: string, password: string, rememberMe: boolean = false) => {
         set({ loading: true })
         try {
           const { data, error } = await supabase.auth.signInWithPassword({
@@ -26,6 +26,16 @@ export const useAuthStore = create<AuthState>()(
             password,
           })
           if (error) throw error
+          
+          // Store remember me preference
+          if (rememberMe) {
+            localStorage.setItem('inkd-remember-me', 'true')
+            localStorage.setItem('inkd-user-email', email)
+          } else {
+            localStorage.removeItem('inkd-remember-me')
+            localStorage.removeItem('inkd-user-email')
+          }
+          
           set({ user: data.user, loading: false })
         } catch (error) {
           set({ loading: false })
