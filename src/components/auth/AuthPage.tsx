@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { supabase } from '@/lib/supabase'
 import { UserIcon, PaintBrushIcon } from '@heroicons/react/24/outline'
 
 type AuthStep = 'choice' | 'signin' | 'signup'
@@ -19,6 +20,11 @@ export default function AuthPage() {
   
   const { signIn, signUp } = useAuthStore()
 
+  // Debug the current state
+  useEffect(() => {
+    console.log('🔍 AuthPage state:', { authStep, email, error, loading })
+  }, [authStep, email, error, loading])
+
   useEffect(() => {
     if (authStep === 'signin') {
       const rememberedEmail = localStorage.getItem('inkd-user-email')
@@ -33,19 +39,22 @@ export default function AuthPage() {
   // Test Supabase connection on component mount
   useEffect(() => {
     const testConnection = async () => {
+      console.log('🔧 Environment check:', {
+        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅ Set' : '❌ Missing',
+        supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Missing'
+      })
+      
       try {
-        const response = await fetch(process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1/', {
-          headers: {
-            'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-          }
-        })
-        console.log('🔗 Supabase connection test:', { ok: response.ok, status: response.status })
-        if (!response.ok) {
-          setError('Authentication service unavailable. Please try again later.')
+        // Test basic Supabase connection
+        const { data, error } = await supabase.from('users').select('count').limit(1).maybeSingle()
+        console.log('🔗 Supabase connection test:', { error: error?.message || 'none', success: !error })
+        
+        if (error && !error.message.includes('relation') && !error.message.includes('does not exist')) {
+          setError('Authentication service connection failed. Please try again.')
         }
       } catch (error) {
         console.error('❌ Supabase connection failed:', error)
-        setError('Unable to connect to authentication service. Please check your internet connection.')
+        setError('Unable to connect to authentication service.')
       }
     }
     testConnection()
@@ -102,6 +111,7 @@ export default function AuthPage() {
 
   const handleDevSkip = () => {
     if (process.env.NODE_ENV === 'development') {
+      console.log('🚀 Dev skip activated')
       const mockUser = {
         id: 'dev-user-id',
         email: 'dev@inkd.com',
@@ -114,8 +124,35 @@ export default function AuthPage() {
         identities: [],
         factors: []
       }
-      useAuthStore.setState({ user: mockUser as any, loading: false })
+      useAuthStore.setState({ 
+        user: mockUser as any, 
+        loading: false,
+        needsVerification: false,
+        verificationEmail: null,
+        pendingUserData: null
+      })
+      console.log('✅ Dev user set, should navigate to app')
     }
+  }
+
+  // Add a test button for debugging auth issues
+  const handleTestAuth = async () => {
+    console.log('🧪 Testing auth with test credentials')
+    setError('')
+    setLoading(true)
+    
+    try {
+      // Test with a simple email/password
+      await signUp('test@test.com', 'testpass123', {
+        name: 'Test User',
+        handle: 'testuser',
+        is_artist: false,
+      })
+    } catch (err: any) {
+      console.error('❌ Test auth failed:', err)
+      setError('Test auth failed: ' + (err.message || 'Unknown error'))
+    }
+    setLoading(false)
   }
 
   const renderChoiceStep = () => (
@@ -208,12 +245,19 @@ export default function AuthPage() {
         </div>
 
         {process.env.NODE_ENV === 'development' && (
-          <div className="text-center mt-8">
+          <div className="text-center mt-8 space-y-3">
             <button
               onClick={handleDevSkip}
-              className="px-6 py-2 border border-white/30 rounded-lg text-sm font-medium text-indigo-200 bg-white/10 hover:bg-white/20 transition-colors"
+              className="block mx-auto px-6 py-2 border border-white/30 rounded-lg text-sm font-medium text-indigo-200 bg-white/10 hover:bg-white/20 transition-colors"
             >
               Skip Login - Dev
+            </button>
+            <button
+              onClick={handleTestAuth}
+              className="block mx-auto px-6 py-2 border border-green-300/30 rounded-lg text-sm font-medium text-green-200 bg-green-500/10 hover:bg-green-500/20 transition-colors"
+              disabled={loading}
+            >
+              {loading ? 'Testing...' : 'Test Auth - Dev'}
             </button>
           </div>
         )}

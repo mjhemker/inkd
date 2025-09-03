@@ -28,19 +28,29 @@ export const useAuthStore = create<AuthState>()(
       signIn: async (email: string, password: string, rememberMe: boolean = false) => {
         console.log('🔄 Starting sign in for:', email)
         set({ loading: true })
+        
+        // Clear any existing auth state first
+        await supabase.auth.signOut()
+        
         try {
           const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
           })
           
-          console.log('📋 Sign in response:', { data, error })
+          console.log('📋 Sign in response:', { 
+            user: data.user?.email || 'none',
+            session: data.session ? 'exists' : 'none',
+            error: error?.message || 'none' 
+          })
           
-          if (error) throw error
+          if (error) {
+            console.error('🚨 Supabase sign in error:', error)
+            throw error
+          }
           
-          // Check if user exists and is confirmed
-          if (!data.user) {
-            throw new Error('Sign in failed - no user returned')
+          if (!data.user || !data.session) {
+            throw new Error('Sign in failed - invalid response from server')
           }
           
           console.log('✅ Sign in successful, user:', data.user.email)
@@ -54,59 +64,7 @@ export const useAuthStore = create<AuthState>()(
             localStorage.removeItem('inkd-user-email')
           }
           
-          set({ 
-            user: data.user, 
-            loading: false, 
-            needsVerification: false,
-            verificationEmail: null 
-          })
-          
-          console.log('🎯 Auth state updated with user')
-        } catch (error) {
-          console.error('❌ Sign in error:', error)
-          set({ loading: false })
-          throw error
-        }
-      },
-
-      signUp: async (email: string, password: string, userData?: any) => {
-        console.log('📝 Starting signup for:', email)
-        set({ loading: true })
-        try {
-          const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-          })
-          
-          console.log('📋 Signup response:', { data, error })
-          
-          if (error) throw error
-          
-          // Since email confirmation is disabled, user should be immediately signed in
-          if (!data.user) {
-            throw new Error('Signup failed - no user returned')
-          }
-          
-          console.log('👤 Creating user profile')
-          
-          // Create user profile immediately
-          if (userData) {
-            const { error: profileError } = await supabase
-              .from('users')
-              .insert([
-                {
-                  id: data.user.id,
-                  email: data.user.email!,
-                  ...userData,
-                }
-              ])
-            if (profileError) {
-              console.error('Profile creation error:', profileError)
-              throw new Error('Failed to create user profile')
-            }
-          }
-          
-          console.log('✅ Signup completed, setting user state')
+          // Manually set the user state
           set({ 
             user: data.user, 
             loading: false, 
@@ -115,11 +73,95 @@ export const useAuthStore = create<AuthState>()(
             pendingUserData: null
           })
           
+          console.log('🎯 Auth state updated with user:', data.user.email)
+        } catch (error: any) {
+          console.error('❌ Sign in error:', error)
+          set({ loading: false })
+          throw new Error(error.message || 'Sign in failed')
+        }
+      },
+
+      signUp: async (email: string, password: string, userData?: any) => {
+        console.log('📝 Starting signup for:', email, 'with userData:', userData)
+        set({ loading: true })
+        
+        // Clear any existing auth state first
+        await supabase.auth.signOut()
+        
+        try {
+          // First, test if we can reach Supabase
+          console.log('🔍 Testing Supabase connection...')
+          const testResponse = await supabase.auth.getSession()
+          console.log('📡 Connection test result:', testResponse.error?.message || 'OK')
+          
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+          })
+          
+          console.log('📋 Signup response:', { 
+            user: data.user?.email || 'none',
+            session: data.session ? 'exists' : 'none',
+            error: error?.message || 'none' 
+          })
+          
+          if (error) {
+            console.error('🚨 Supabase signup error:', error)
+            throw error
+          }
+          
+          if (!data.user) {
+            throw new Error('Signup failed - no user returned from server')
+          }
+          
+          // If we have a session, the user is immediately signed in
+          if (data.session) {
+            console.log('👤 User immediately signed in, creating profile...')
+            
+            // Create user profile immediately
+            if (userData) {
+              try {
+                const { error: profileError } = await supabase
+                  .from('users')
+                  .insert([
+                    {
+                      id: data.user.id,
+                      email: data.user.email!,
+                      ...userData,
+                    }
+                  ])
+                
+                console.log('📝 Profile creation result:', profileError?.message || 'success')
+                
+                if (profileError) {
+                  console.error('Profile creation error:', profileError)
+                  // Don't fail the signup if profile creation fails
+                  console.warn('⚠️ Profile creation failed but signup succeeded')
+                }
+              } catch (profileErr) {
+                console.error('❌ Profile creation exception:', profileErr)
+              }
+            }
+            
+            console.log('✅ Signup completed successfully')
+            set({ 
+              user: data.user, 
+              loading: false, 
+              needsVerification: false,
+              verificationEmail: null,
+              pendingUserData: null
+            })
+          } else {
+            // User created but not signed in (shouldn't happen with email confirmation disabled)
+            console.warn('⚠️ User created but no session returned')
+            set({ loading: false })
+          }
+          
           return { needsVerification: false }
-        } catch (error) {
+        } catch (error: any) {
           console.error('❌ Signup error:', error)
           set({ loading: false })
-          throw error
+          throw new Error(error.message || 'Signup failed')
         }
       },
 
