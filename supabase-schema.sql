@@ -224,16 +224,51 @@ INSERT INTO storage.buckets (id, name, public) VALUES
   ('portfolio', 'portfolio', true)
 ON CONFLICT (id) DO NOTHING;
 
--- Storage policies
-DROP POLICY IF EXISTS "Public read access" ON storage.objects;
-DROP POLICY IF EXISTS "Users can upload profile images" ON storage.objects;
-DROP POLICY IF EXISTS "Users can upload posts" ON storage.objects;
-DROP POLICY IF EXISTS "Users can upload portfolio items" ON storage.objects;
-DROP POLICY IF EXISTS "Users can update own files" ON storage.objects;
-DROP POLICY IF EXISTS "Users can delete own files" ON storage.objects;
-CREATE POLICY "Public read access" ON storage.objects FOR SELECT USING (bucket_id IN ('profile-images', 'posts', 'portfolio'));
-CREATE POLICY "Users can upload profile images" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'profile-images' AND auth.uid()::text = (storage.foldername(name))[1]);
-CREATE POLICY "Users can upload posts" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'posts' AND auth.uid()::text = (storage.foldername(name))[1]);
-CREATE POLICY "Users can upload portfolio items" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'portfolio' AND auth.uid()::text = (storage.foldername(name))[1]);
-CREATE POLICY "Users can update own files" ON storage.objects FOR UPDATE USING (auth.uid()::text = (storage.foldername(name))[1]);
-CREATE POLICY "Users can delete own files" ON storage.objects FOR DELETE USING (auth.uid()::text = (storage.foldername(name))[1]);
+-- Storage policies (skip if errors occur - they may already exist)
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Public read access" ON storage.objects;
+    CREATE POLICY "Public read access" ON storage.objects FOR SELECT USING (bucket_id IN ('profile-images', 'posts', 'portfolio'));
+EXCEPTION
+    WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Users can upload profile images" ON storage.objects;
+    CREATE POLICY "Users can upload profile images" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'profile-images' AND auth.uid()::text = (storage.foldername(name))[1]);
+EXCEPTION
+    WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Users can upload posts" ON storage.objects;
+    CREATE POLICY "Users can upload posts" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'posts' AND auth.uid()::text = (storage.foldername(name))[1]);
+EXCEPTION
+    WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Users can upload portfolio items" ON storage.objects;
+    CREATE POLICY "Users can upload portfolio items" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'portfolio' AND auth.uid()::text = (storage.foldername(name))[1]);
+EXCEPTION
+    WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Users can update own files" ON storage.objects;
+    CREATE POLICY "Users can update own files" ON storage.objects FOR UPDATE USING (auth.uid()::text = (storage.foldername(name))[1]);
+EXCEPTION
+    WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Users can delete own files" ON storage.objects;
+    CREATE POLICY "Users can delete own files" ON storage.objects FOR DELETE USING (auth.uid()::text = (storage.foldername(name))[1]);
+EXCEPTION
+    WHEN OTHERS THEN NULL;
+END $$;

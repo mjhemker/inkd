@@ -8,7 +8,8 @@ import {
   MapPinIcon, 
   PlusIcon, 
   UserCircleIcon,
-  MagnifyingGlassIcon 
+  MagnifyingGlassIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline'
 import { useAuthStore } from '@/store/authStore'
 import { useAppStore } from '@/store/appStore'
@@ -24,6 +25,7 @@ export default function Header() {
   const navigation = [
     { name: 'Home', href: '/', icon: HomeIcon },
     { name: 'Local', href: '/local', icon: MapPinIcon },
+    ...(user?.user_metadata?.is_artist ? [{ name: 'Assistant', href: '/assistant', icon: SparklesIcon }] : []),
     { name: 'Profile', href: user ? `/profile/${user.id}` : '/profile', icon: UserCircleIcon },
   ]
 

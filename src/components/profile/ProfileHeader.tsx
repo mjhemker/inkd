@@ -104,11 +104,11 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
               {profile.is_artist && (
                 <>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-gray-900">1.2k</p>
+                    <p className="text-2xl font-bold text-gray-900">0</p>
                     <p className="text-sm text-gray-600">Followers</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-gray-900">4.8</p>
+                    <p className="text-2xl font-bold text-gray-900">-</p>
                     <p className="text-sm text-gray-600">Rating</p>
                   </div>
                 </>
@@ -116,11 +116,11 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
               {!profile.is_artist && (
                 <>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-gray-900">143</p>
+                    <p className="text-2xl font-bold text-gray-900">0</p>
                     <p className="text-sm text-gray-600">Following</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-gray-900">28</p>
+                    <p className="text-2xl font-bold text-gray-900">0</p>
                     <p className="text-sm text-gray-600">Saved</p>
                   </div>
                 </>
@@ -157,7 +157,7 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
             
             {isOwnProfile && (
               <>
-                <button className="flex items-center space-x-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <button className="flex items-center space-x-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
                   <Cog6ToothIcon className="h-4 w-4" />
                   <span>Edit Profile</span>
                 </button>
