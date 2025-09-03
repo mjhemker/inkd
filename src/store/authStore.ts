@@ -70,30 +70,27 @@ export const useAuthStore = create<AuthState>()(
       },
 
       signUp: async (email: string, password: string, userData?: any) => {
+        console.log('📝 Starting signup for:', email)
         set({ loading: true })
         try {
           const { data, error } = await supabase.auth.signUp({
             email,
             password,
           })
+          
+          console.log('📋 Signup response:', { data, error })
+          
           if (error) throw error
           
-          // Check if user needs email verification
-          const needsVerification = !data.session && data.user && !data.user.email_confirmed_at
-          
-          if (needsVerification) {
-            set({ 
-              loading: false, 
-              needsVerification: true, 
-              verificationEmail: email,
-              pendingUserData: userData,
-              user: null 
-            })
-            return { needsVerification: true }
+          // Since email confirmation is disabled, user should be immediately signed in
+          if (!data.user) {
+            throw new Error('Signup failed - no user returned')
           }
           
-          // If user is confirmed, create profile
-          if (data.user && userData) {
+          console.log('👤 Creating user profile')
+          
+          // Create user profile immediately
+          if (userData) {
             const { error: profileError } = await supabase
               .from('users')
               .insert([
@@ -103,12 +100,24 @@ export const useAuthStore = create<AuthState>()(
                   ...userData,
                 }
               ])
-            if (profileError) throw profileError
+            if (profileError) {
+              console.error('Profile creation error:', profileError)
+              throw new Error('Failed to create user profile')
+            }
           }
           
-          set({ user: data.user, loading: false, needsVerification: false })
+          console.log('✅ Signup completed, setting user state')
+          set({ 
+            user: data.user, 
+            loading: false, 
+            needsVerification: false,
+            verificationEmail: null,
+            pendingUserData: null
+          })
+          
           return { needsVerification: false }
         } catch (error) {
+          console.error('❌ Signup error:', error)
           set({ loading: false })
           throw error
         }

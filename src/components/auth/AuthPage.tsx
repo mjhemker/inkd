@@ -17,7 +17,7 @@ export default function AuthPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   
-  const { signIn, signUp, needsVerification, verificationEmail, clearVerification } = useAuthStore()
+  const { signIn, signUp } = useAuthStore()
 
   useEffect(() => {
     if (authStep === 'signin') {
@@ -56,10 +56,12 @@ export default function AuthPage() {
       
       if (err.message.includes('Invalid login credentials')) {
         errorMessage = 'Incorrect email or password'
-      } else if (err.message.includes('Email not confirmed')) {
-        errorMessage = 'Please check your email and click the verification link'
-      } else if (err.message.includes('User not found')) {
-        errorMessage = 'No account found with this email'
+      } else if (err.message.includes('User already registered')) {
+        errorMessage = 'An account with this email already exists'
+      } else if (err.message.includes('Password should be at least')) {
+        errorMessage = 'Password must be at least 6 characters long'
+      } else if (err.message.includes('Unable to validate email address')) {
+        errorMessage = 'Please enter a valid email address'
       } else if (err.message) {
         errorMessage = err.message
       }
@@ -351,47 +353,6 @@ export default function AuthPage() {
       </div>
     </div>
   )
-
-  // Show verification screen if needed
-  if (needsVerification) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center px-4">
-        <div className="max-w-md w-full">
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 text-center">
-            <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-green-400 to-emerald-400 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <h1 className="text-3xl font-bold text-white mb-4">Check Your Email</h1>
-            <p className="text-indigo-200 mb-6">
-              We've sent a verification link to <br />
-              <span className="font-medium text-white">{verificationEmail}</span>
-            </p>
-            <p className="text-sm text-indigo-300 mb-8">
-              Click the link in your email to verify your account and start using INKD.
-            </p>
-            <div className="space-y-3">
-              <button
-                onClick={() => {
-                  clearVerification()
-                  setAuthStep('choice')
-                  setAccountType(null)
-                  setEmail('')
-                  setPassword('')
-                  setName('')
-                  setHandle('')
-                }}
-                className="w-full px-4 py-2 border border-white/30 rounded-lg text-sm font-medium text-indigo-200 bg-white/10 hover:bg-white/20 transition-colors"
-              >
-                Back to Sign Up
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   if (authStep === 'choice') {
     return renderChoiceStep()
