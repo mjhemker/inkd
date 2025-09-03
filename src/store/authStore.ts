@@ -136,39 +136,19 @@ export const useAuthStore = create<AuthState>()(
       },
 
       initialize: async () => {
+        console.log('🚀 Initializing auth store')
         set({ loading: true })
         try {
-          const { data: { session } } = await supabase.auth.getSession()
+          const { data: { session }, error } = await supabase.auth.getSession()
+          console.log('📋 Initial session:', { session: session?.user?.email || 'none', error })
+          
           set({ user: session?.user || null, loading: false })
 
           supabase.auth.onAuthStateChange(async (event, session) => {
             console.log('🔄 Auth state change:', event, session?.user?.email || 'no user')
             
-            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-              const { pendingUserData } = get()
-              
-              // If user just verified email and we have pending data, create their profile
-              if (session?.user && pendingUserData && event === 'SIGNED_IN') {
-                console.log('👤 Creating profile for verified user')
-                try {
-                  const { error: profileError } = await supabase
-                    .from('users')
-                    .insert([
-                      {
-                        id: session.user.id,
-                        email: session.user.email!,
-                        ...pendingUserData,
-                      }
-                    ])
-                  if (profileError) {
-                    console.error('Error creating profile after verification:', profileError)
-                  }
-                } catch (error) {
-                  console.error('Error creating profile:', error)
-                }
-              }
-              
-              console.log('✅ Setting user in state:', session?.user?.email)
+            if (event === 'SIGNED_IN') {
+              console.log('✅ User signed in, updating state')
               set({ 
                 user: session?.user || null, 
                 loading: false, 
@@ -183,10 +163,14 @@ export const useAuthStore = create<AuthState>()(
                 needsVerification: false,
                 pendingUserData: null 
               })
+            } else if (event === 'TOKEN_REFRESHED') {
+              console.log('🔄 Token refreshed')
+              set({ user: session?.user || null, loading: false })
             }
           })
         } catch (error) {
-          set({ loading: false })
+          console.error('❌ Auth initialization error:', error)
+          set({ loading: false, user: null })
         }
       },
 

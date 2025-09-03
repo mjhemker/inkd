@@ -30,6 +30,27 @@ export default function AuthPage() {
     }
   }, [authStep])
 
+  // Test Supabase connection on component mount
+  useEffect(() => {
+    const testConnection = async () => {
+      try {
+        const response = await fetch(process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1/', {
+          headers: {
+            'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+          }
+        })
+        console.log('🔗 Supabase connection test:', { ok: response.ok, status: response.status })
+        if (!response.ok) {
+          setError('Authentication service unavailable. Please try again later.')
+        }
+      } catch (error) {
+        console.error('❌ Supabase connection failed:', error)
+        setError('Unable to connect to authentication service. Please check your internet connection.')
+      }
+    }
+    testConnection()
+  }, [])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -54,6 +75,7 @@ export default function AuthPage() {
       console.error('❌ Auth error:', err)
       let errorMessage = 'An error occurred'
       
+      // Handle specific error cases
       if (err.message.includes('Invalid login credentials')) {
         errorMessage = 'Incorrect email or password'
       } else if (err.message.includes('User already registered')) {
@@ -62,12 +84,18 @@ export default function AuthPage() {
         errorMessage = 'Password must be at least 6 characters long'
       } else if (err.message.includes('Unable to validate email address')) {
         errorMessage = 'Please enter a valid email address'
+      } else if (err.message.includes('Failed to load resource')) {
+        errorMessage = 'Connection error. Please check your internet and try again.'
+      } else if (err.message.includes('fetch')) {
+        errorMessage = 'Network error. Please try again.'
       } else if (err.message) {
         errorMessage = err.message
       }
       
+      console.log('🚨 Setting error message:', errorMessage)
       setError(errorMessage)
     } finally {
+      console.log('🏁 Auth request finished, setting loading to false')
       setLoading(false)
     }
   }
@@ -216,8 +244,13 @@ export default function AuthPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 text-sm text-red-200 bg-red-500/20 rounded-lg border border-red-400/30">
-                {error}
+              <div className="p-4 text-sm font-medium text-red-100 bg-red-500/30 rounded-lg border-2 border-red-400/50 shadow-lg">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-red-200" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <span>{error}</span>
+                </div>
               </div>
             )}
 
