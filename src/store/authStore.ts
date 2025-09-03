@@ -114,48 +114,47 @@ export const useAuthStore = create<AuthState>()(
             throw new Error('Signup failed - no user returned from server')
           }
           
-          // If we have a session, the user is immediately signed in
-          if (data.session) {
-            console.log('👤 User immediately signed in, creating profile...')
-            
-            // Create user profile immediately
-            if (userData) {
-              try {
-                const { error: profileError } = await supabase
-                  .from('users')
-                  .insert([
-                    {
-                      id: data.user.id,
-                      email: data.user.email!,
-                      ...userData,
-                    }
-                  ])
-                
-                console.log('📝 Profile creation result:', profileError?.message || 'success')
-                
-                if (profileError) {
-                  console.error('Profile creation error:', profileError)
-                  // Don't fail the signup if profile creation fails
-                  console.warn('⚠️ Profile creation failed but signup succeeded')
+          console.log('✅ Signup API call successful')
+          
+          // Create user profile if we have userData (optional - don't fail signup if this fails)
+          if (userData && data.user) {
+            console.log('👤 Attempting to create user profile...')
+            try {
+              const { error: profileError } = await supabase
+                .from('users')
+                .insert([
+                  {
+                    id: data.user.id,
+                    email: data.user.email!,
+                    ...userData,
+                  }
+                ])
+              
+              if (profileError) {
+                console.error('📝 Profile creation failed:', profileError.message)
+                if (profileError.message.includes('relation') && profileError.message.includes('does not exist')) {
+                  console.warn('⚠️ Users table does not exist - signup will proceed without profile')
+                } else {
+                  console.warn('⚠️ Profile creation failed but signup succeeded:', profileError.message)
                 }
-              } catch (profileErr) {
-                console.error('❌ Profile creation exception:', profileErr)
+              } else {
+                console.log('✅ Profile created successfully')
               }
+            } catch (profileErr) {
+              console.error('❌ Profile creation exception:', profileErr)
+              console.warn('⚠️ Profile creation failed but signup will continue')
             }
-            
-            console.log('✅ Signup completed successfully')
-            set({ 
-              user: data.user, 
-              loading: false, 
-              needsVerification: false,
-              verificationEmail: null,
-              pendingUserData: null
-            })
-          } else {
-            // User created but not signed in (shouldn't happen with email confirmation disabled)
-            console.warn('⚠️ User created but no session returned')
-            set({ loading: false })
           }
+          
+          // Set user state regardless of profile creation success
+          console.log('✅ Setting user state after signup')
+          set({ 
+            user: data.user, 
+            loading: false, 
+            needsVerification: false,
+            verificationEmail: null,
+            pendingUserData: null
+          })
           
           return { needsVerification: false }
         } catch (error: any) {
