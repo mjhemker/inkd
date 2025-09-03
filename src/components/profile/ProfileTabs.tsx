@@ -92,6 +92,7 @@ export default function ProfileTabs({ userId }: ProfileTabsProps) {
           </div>
           <p className="text-3xl font-bold text-green-600">$12,450</p>
           <p className="text-sm text-gray-600">This month</p>
+          <p className="text-xs text-green-600">+23% from last month</p>
         </div>
         
         <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200">
@@ -101,6 +102,7 @@ export default function ProfileTabs({ userId }: ProfileTabsProps) {
           </div>
           <p className="text-3xl font-bold text-blue-600">23</p>
           <p className="text-sm text-gray-600">Next 30 days</p>
+          <p className="text-xs text-blue-600">5 pending approval</p>
         </div>
         
         <div className="bg-gradient-to-br from-purple-50 to-violet-50 p-6 rounded-xl border border-purple-200">
@@ -110,12 +112,16 @@ export default function ProfileTabs({ userId }: ProfileTabsProps) {
           </div>
           <p className="text-3xl font-bold text-purple-600">+18%</p>
           <p className="text-sm text-gray-600">Profile views</p>
+          <p className="text-xs text-purple-600">1,247 this week</p>
         </div>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Pricing & Services</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Pricing & Services</h3>
+            <button className="text-sm text-indigo-600 hover:text-indigo-500">Edit</button>
+          </div>
           <div className="space-y-3">
             <div className="flex justify-between items-center py-2 border-b border-gray-100">
               <span className="text-gray-700">Small Tattoo (&lt; 3 inches)</span>
@@ -125,15 +131,22 @@ export default function ProfileTabs({ userId }: ProfileTabsProps) {
               <span className="text-gray-700">Medium Tattoo (3-6 inches)</span>
               <span className="font-medium">$300 - $600</span>
             </div>
-            <div className="flex justify-between items-center py-2">
+            <div className="flex justify-between items-center py-2 border-b border-gray-100">
               <span className="text-gray-700">Large Tattoo (6+ inches)</span>
               <span className="font-medium">$600+</span>
+            </div>
+            <div className="flex justify-between items-center py-2">
+              <span className="text-gray-700">Consultation</span>
+              <span className="font-medium text-green-600">Free</span>
             </div>
           </div>
         </div>
         
         <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Availability</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Studio Hours</h3>
+            <button className="text-sm text-indigo-600 hover:text-indigo-500">Edit</button>
+          </div>
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <span className="text-gray-700">Monday - Friday</span>
@@ -148,6 +161,32 @@ export default function ProfileTabs({ userId }: ProfileTabsProps) {
               <span className="text-gray-600">Closed</span>
             </div>
           </div>
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <p className="text-sm text-gray-600">📍 Studio Location</p>
+            <p className="text-sm font-medium text-gray-900">123 Art Street, Los Angeles, CA</p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Business Tools</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <button className="flex flex-col items-center gap-2 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <CalendarIcon className="w-6 h-6 text-indigo-600" />
+            <span className="text-sm font-medium text-gray-700">Schedule</span>
+          </button>
+          <button className="flex flex-col items-center gap-2 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <CurrencyDollarIcon className="w-6 h-6 text-green-600" />
+            <span className="text-sm font-medium text-gray-700">Invoicing</span>
+          </button>
+          <button className="flex flex-col items-center gap-2 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <ChartBarIcon className="w-6 h-6 text-purple-600" />
+            <span className="text-sm font-medium text-gray-700">Reports</span>
+          </button>
+          <button className="flex flex-col items-center gap-2 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <BriefcaseIcon className="w-6 h-6 text-blue-600" />
+            <span className="text-sm font-medium text-gray-700">Inventory</span>
+          </button>
         </div>
       </div>
     </div>
@@ -252,14 +291,41 @@ export default function ProfileTabs({ userId }: ProfileTabsProps) {
   )
 
   const renderClientSavedTab = () => (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900">Saved Posts</h3>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold text-gray-900">Saved Posts</h3>
+        <span className="text-sm text-gray-500">8 saved</span>
+      </div>
+      
+      <div className="flex gap-2 mb-4">
+        <button className="px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded-full">All</button>
+        <button className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">Tattoos</button>
+        <button className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">Flash</button>
+        <button className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full">Designs</button>
+      </div>
+      
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="aspect-square bg-gray-100 rounded-lg overflow-hidden group cursor-pointer">
+        {[
+          { artist: 'Alex Rivera', style: 'Neo-Traditional', likes: 234 },
+          { artist: 'Maya Chen', style: 'Minimalist', likes: 156 },
+          { artist: 'Jordan Smith', style: 'Blackwork', likes: 89 },
+          { artist: 'Sam Wilson', style: 'Watercolor', likes: 342 },
+          { artist: 'Luna Park', style: 'Japanese', likes: 178 },
+          { artist: 'Chris Taylor', style: 'Geometric', likes: 267 },
+        ].map((post, i) => (
+          <div key={i} className="aspect-square bg-gray-100 rounded-lg overflow-hidden group cursor-pointer relative">
             <div className="w-full h-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center">
               <BookmarkIcon className="w-8 h-8 text-white opacity-60" />
             </div>
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-end">
+              <div className="w-full p-3 bg-gradient-to-t from-black/60 to-transparent text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                <p className="text-xs font-medium">{post.artist}</p>
+                <p className="text-xs text-gray-200">{post.style} • {post.likes} likes</p>
+              </div>
+            </div>
+            <button className="absolute top-2 right-2 p-1 bg-white/20 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+              <BookmarkIcon className="w-4 h-4 text-white fill-current" />
+            </button>
           </div>
         ))}
       </div>
@@ -268,49 +334,121 @@ export default function ProfileTabs({ userId }: ProfileTabsProps) {
 
   const renderClientMessagesTab = () => (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900">Messages</h3>
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold text-gray-900">Messages</h3>
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded-full">2 unread</span>
+          <button className="text-sm text-indigo-600 hover:text-indigo-500">Mark all as read</button>
+        </div>
+      </div>
+      
       <div className="space-y-3">
         {[
-          { artist: 'Alex Rivera', preview: 'Thanks for your interest! I have availability next week...', time: '2 hours ago', unread: true },
-          { artist: 'Maya Chen', preview: 'Here are some design options for your sleeve...', time: '1 day ago', unread: false },
-          { artist: 'Jordan Smith', preview: 'Your appointment is confirmed for Friday at 3 PM', time: '3 days ago', unread: false },
+          { 
+            artist: 'Alex Rivera', 
+            preview: 'Thanks for your interest! I have availability next week...', 
+            time: '2 hours ago', 
+            unread: true,
+            avatar: 'AR',
+            type: 'booking_inquiry'
+          },
+          { 
+            artist: 'Maya Chen', 
+            preview: 'Here are some design options for your sleeve...', 
+            time: '1 day ago', 
+            unread: true,
+            avatar: 'MC',
+            type: 'design_share'
+          },
+          { 
+            artist: 'Jordan Smith', 
+            preview: 'Your appointment is confirmed for Friday at 3 PM', 
+            time: '3 days ago', 
+            unread: false,
+            avatar: 'JS',
+            type: 'booking_confirmation'
+          },
+          { 
+            artist: 'Sam Wilson', 
+            preview: 'Hey! Loved your latest post. Would love to work with you...', 
+            time: '1 week ago', 
+            unread: false,
+            avatar: 'SW',
+            type: 'general'
+          },
         ].map((message, index) => (
-          <div key={index} className={`p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer ${message.unread ? 'bg-blue-50 border-blue-200' : 'bg-white'}`}>
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h4 className={`font-medium ${message.unread ? 'text-blue-900' : 'text-gray-900'}`}>
-                  {message.artist}
-                </h4>
-                <p className="text-sm text-gray-600 mt-1">{message.preview}</p>
+          <div key={index} className={`p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-all ${message.unread ? 'bg-blue-50 border-blue-200 hover:bg-blue-100' : 'bg-white'}`}>
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-medium text-sm">{message.avatar}</span>
               </div>
-              <span className="text-xs text-gray-500">{message.time}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <h4 className={`font-medium ${message.unread ? 'text-blue-900' : 'text-gray-900'}`}>
+                    {message.artist}
+                  </h4>
+                  <span className="text-xs text-gray-500 flex-shrink-0">{message.time}</span>
+                </div>
+                <p className="text-sm text-gray-600 mt-1 line-clamp-2">{message.preview}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <span className={`text-xs px-2 py-1 rounded-full ${
+                    message.type === 'booking_inquiry' ? 'bg-yellow-100 text-yellow-700' :
+                    message.type === 'booking_confirmation' ? 'bg-green-100 text-green-700' :
+                    message.type === 'design_share' ? 'bg-purple-100 text-purple-700' :
+                    'bg-gray-100 text-gray-700'
+                  }`}>
+                    {message.type.replace('_', ' ')}
+                  </span>
+                  {message.unread && (
+                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         ))}
+      </div>
+      
+      <div className="text-center py-4">
+        <button className="text-sm text-indigo-600 hover:text-indigo-500">Load more messages</button>
       </div>
     </div>
   )
 
   const renderClientFavoritesTab = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-900">Favorite Artists</h3>
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold text-gray-900">Favorite Artists</h3>
+        <span className="text-sm text-gray-500">3 favorites</span>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[
-          { name: 'Alex Rivera', handle: '@alexink', location: 'Los Angeles, CA', style: 'Neo-Traditional' },
-          { name: 'Maya Chen', handle: '@mayatattoos', location: 'San Francisco, CA', style: 'Minimalist' },
-          { name: 'Jordan Smith', handle: '@jordanartistry', location: 'Portland, OR', style: 'Blackwork' },
+          { name: 'Alex Rivera', handle: '@alexink', location: 'Los Angeles, CA', style: 'Neo-Traditional', rating: 4.9 },
+          { name: 'Maya Chen', handle: '@mayatattoos', location: 'San Francisco, CA', style: 'Minimalist', rating: 4.8 },
+          { name: 'Jordan Smith', handle: '@jordanartistry', location: 'Portland, OR', style: 'Blackwork', rating: 4.7 },
         ].map((artist, index) => (
           <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+              <div className="w-12 h-12 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-medium text-sm">{artist.name.split(' ').map(n => n[0]).join('')}</span>
+              </div>
               <div className="flex-1">
                 <h4 className="font-medium text-gray-900">{artist.name}</h4>
                 <p className="text-sm text-gray-600">{artist.handle}</p>
                 <p className="text-xs text-gray-500">{artist.location} • {artist.style}</p>
+                <div className="flex items-center gap-1 mt-1">
+                  <span className="text-yellow-400">⭐</span>
+                  <span className="text-xs text-gray-600">{artist.rating}</span>
+                </div>
               </div>
-              <button className="px-3 py-1 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                View
-              </button>
+              <div className="flex flex-col gap-2">
+                <button className="px-3 py-1 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                  View
+                </button>
+                <button className="px-3 py-1 text-sm border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                  Message
+                </button>
+              </div>
             </div>
           </div>
         ))}

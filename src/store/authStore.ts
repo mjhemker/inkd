@@ -97,6 +97,13 @@ export const useAuthStore = create<AuthState>()(
           const { data, error } = await supabase.auth.signUp({
             email,
             password,
+            options: {
+              data: userData ? {
+                name: userData.name,
+                handle: userData.handle,
+                is_artist: userData.is_artist
+              } : {}
+            }
           })
           
           console.log('📋 Signup response:', { 

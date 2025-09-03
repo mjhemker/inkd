@@ -57,6 +57,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   portfolioLoading: false,
 
   fetchProfile: async (userId: string) => {
+    console.log('🔍 Fetching profile for user:', userId)
     set({ loading: true })
     try {
       const { data, error } = await supabase
@@ -65,11 +66,50 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         .eq('id', userId)
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Profile fetch error:', error)
+        
+        // If user doesn't exist in database, try to create from auth user
+        if (error.code === 'PGRST116' || error.message.includes('No rows')) {
+          console.log('👤 User not found in database, checking if this is current auth user')
+          
+          // Get current auth user
+          const { data: { user: authUser } } = await supabase.auth.getUser()
+          
+          if (authUser && authUser.id === userId) {
+            console.log('✅ This is the current auth user, creating profile')
+            // Create user profile from auth data
+            const { data: newUser, error: createError } = await supabase
+              .from('users')
+              .insert([{
+                id: authUser.id,
+                email: authUser.email!,
+                name: authUser.user_metadata?.name || null,
+                handle: authUser.user_metadata?.handle || null,
+                is_artist: authUser.user_metadata?.is_artist || false,
+              }])
+              .select()
+              .single()
+            
+            if (createError) {
+              console.error('❌ Failed to create user profile:', createError)
+              throw createError
+            }
+            
+            console.log('✅ Created user profile:', newUser)
+            set({ profile: newUser, loading: false })
+            return
+          }
+        }
+        
+        throw error
+      }
+      
+      console.log('✅ Profile fetched successfully:', data)
       set({ profile: data, loading: false })
     } catch (error) {
-      console.error('Error fetching profile:', error)
-      set({ loading: false })
+      console.error('❌ Error fetching profile:', error)
+      set({ profile: null, loading: false })
     }
   },
 

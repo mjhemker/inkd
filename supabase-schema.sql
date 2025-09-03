@@ -142,29 +142,45 @@ ALTER TABLE assistant_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assistant_reports ENABLE ROW LEVEL SECURITY;
 
 -- Users policies
+DROP POLICY IF EXISTS "Users can view all profiles" ON users;
+DROP POLICY IF EXISTS "Users can update own profile" ON users;
+DROP POLICY IF EXISTS "Users can insert own profile" ON users;
 CREATE POLICY "Users can view all profiles" ON users FOR SELECT USING (TRUE);
 CREATE POLICY "Users can update own profile" ON users FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "Users can insert own profile" ON users FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- Posts policies
+DROP POLICY IF EXISTS "Posts are viewable by everyone" ON posts;
+DROP POLICY IF EXISTS "Users can insert own posts" ON posts;
+DROP POLICY IF EXISTS "Users can update own posts" ON posts;
+DROP POLICY IF EXISTS "Users can delete own posts" ON posts;
 CREATE POLICY "Posts are viewable by everyone" ON posts FOR SELECT USING (TRUE);
 CREATE POLICY "Users can insert own posts" ON posts FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own posts" ON posts FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own posts" ON posts FOR DELETE USING (auth.uid() = user_id);
 
 -- Portfolio policies
+DROP POLICY IF EXISTS "Portfolio is viewable by everyone" ON portfolio;
+DROP POLICY IF EXISTS "Users can insert own portfolio items" ON portfolio;
+DROP POLICY IF EXISTS "Users can update own portfolio items" ON portfolio;
+DROP POLICY IF EXISTS "Users can delete own portfolio items" ON portfolio;
 CREATE POLICY "Portfolio is viewable by everyone" ON portfolio FOR SELECT USING (TRUE);
 CREATE POLICY "Users can insert own portfolio items" ON portfolio FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own portfolio items" ON portfolio FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own portfolio items" ON portfolio FOR DELETE USING (auth.uid() = user_id);
 
 -- Messages policies
+DROP POLICY IF EXISTS "Users can view messages they sent or received" ON messages;
+DROP POLICY IF EXISTS "Users can insert messages they send" ON messages;
 CREATE POLICY "Users can view messages they sent or received" ON messages 
   FOR SELECT USING (auth.uid() = sender_id OR auth.uid() = receiver_id);
 CREATE POLICY "Users can insert messages they send" ON messages 
   FOR INSERT WITH CHECK (auth.uid() = sender_id);
 
 -- Appointments policies
+DROP POLICY IF EXISTS "Users can view their appointments" ON appointments;
+DROP POLICY IF EXISTS "Users can insert appointments" ON appointments;
+DROP POLICY IF EXISTS "Artists can update appointments" ON appointments;
 CREATE POLICY "Users can view their appointments" ON appointments 
   FOR SELECT USING (auth.uid() = artist_id OR auth.uid() = user_id);
 CREATE POLICY "Users can insert appointments" ON appointments 
@@ -173,23 +189,31 @@ CREATE POLICY "Artists can update appointments" ON appointments
   FOR UPDATE USING (auth.uid() = artist_id);
 
 -- Comments policies
+DROP POLICY IF EXISTS "Comments are viewable by everyone" ON comments;
+DROP POLICY IF EXISTS "Users can insert own comments" ON comments;
+DROP POLICY IF EXISTS "Users can update own comments" ON comments;
+DROP POLICY IF EXISTS "Users can delete own comments" ON comments;
 CREATE POLICY "Comments are viewable by everyone" ON comments FOR SELECT USING (TRUE);
 CREATE POLICY "Users can insert own comments" ON comments FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own comments" ON comments FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own comments" ON comments FOR DELETE USING (auth.uid() = user_id);
 
--- Daily highlights policies (read-only for users, service role can write)
+-- Daily highlights policies
+DROP POLICY IF EXISTS "Daily highlights are viewable by everyone" ON daily_highlights;
 CREATE POLICY "Daily highlights are viewable by everyone" ON daily_highlights FOR SELECT USING (TRUE);
 
 -- Assistant events policies
+DROP POLICY IF EXISTS "Artists can view their assistant events" ON assistant_events;
 CREATE POLICY "Artists can view their assistant events" ON assistant_events 
   FOR SELECT USING (auth.uid() = artist_id);
 
 -- Assistant settings policies
+DROP POLICY IF EXISTS "Artists can view and update their settings" ON assistant_settings;
 CREATE POLICY "Artists can view and update their settings" ON assistant_settings 
   FOR ALL USING (auth.uid() = artist_id);
 
 -- Assistant reports policies
+DROP POLICY IF EXISTS "Artists can view their reports" ON assistant_reports;
 CREATE POLICY "Artists can view their reports" ON assistant_reports 
   FOR SELECT USING (auth.uid() = artist_id);
 
@@ -201,6 +225,12 @@ INSERT INTO storage.buckets (id, name, public) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Storage policies
+DROP POLICY IF EXISTS "Public read access" ON storage.objects;
+DROP POLICY IF EXISTS "Users can upload profile images" ON storage.objects;
+DROP POLICY IF EXISTS "Users can upload posts" ON storage.objects;
+DROP POLICY IF EXISTS "Users can upload portfolio items" ON storage.objects;
+DROP POLICY IF EXISTS "Users can update own files" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete own files" ON storage.objects;
 CREATE POLICY "Public read access" ON storage.objects FOR SELECT USING (bucket_id IN ('profile-images', 'posts', 'portfolio'));
 CREATE POLICY "Users can upload profile images" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'profile-images' AND auth.uid()::text = (storage.foldername(name))[1]);
 CREATE POLICY "Users can upload posts" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'posts' AND auth.uid()::text = (storage.foldername(name))[1]);
