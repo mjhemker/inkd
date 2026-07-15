@@ -6,9 +6,8 @@
  * storage policies granting public read on portfolio/avatar paths
  * (owner-only write everywhere else).
  *
- * // TODO(media-bucket): confirm bucket after merge
- *
- * CONFIRMED via MCP against the live `media` bucket (project khlpidflnvkqafkvkpfy,
+ * Bucket confirmed against the merged media_storage_bucket migration and the
+ * live `media` bucket (project khlpidflnvkqafkvkpfy,
  * created by the onboarding agent's parallel branch): the bucket is private,
  * writes are owner-scoped by the first path segment (`storage.foldername(name)[1]
  * = auth.uid()`), and `media_public_read` only grants anonymous SELECT when the

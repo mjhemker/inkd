@@ -4,12 +4,16 @@ import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { Button, Icon, TextArea } from "@inkd/ui/web";
 
 /**
- * Message composer. Attachments are gated off for now — INKD doesn't have a
- * media storage bucket wired up on this branch yet, so we ship text-first and
- * leave the affordance visibly disabled rather than silently missing.
- * // TODO(media-bucket): wire this button to Supabase Storage once a `media`
- * bucket + upload path exist, then pass the resulting path through
- * `sendMessage`'s `attachments` field.
+ * Message composer. Attachments are gated off for now and shipped text-first,
+ * with the affordance visibly disabled rather than silently missing.
+ * // TODO(media-bucket): the `media` bucket now exists, but chat image
+ * attachments are still blocked on storage RLS — the media bucket only grants
+ * public read on `avatar`/`portfolio` path segments and owner-only read
+ * elsewhere, so the *other* thread participant cannot read a sender's uploaded
+ * attachment. Enabling this needs a new storage policy granting thread
+ * participants read access to attachment objects, plus attachment rendering in
+ * the message bubble, before wiring this button to upload + pass the path
+ * through `sendMessage`'s `attachments` field.
  */
 export function Composer({
   onSend,
