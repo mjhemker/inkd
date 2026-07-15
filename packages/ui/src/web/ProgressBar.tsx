@@ -40,12 +40,12 @@ export function ProgressBar({
         aria-valuemax={max}
         aria-label={label}
         className={cx(
-          "w-full overflow-hidden rounded-full bg-surface-overlay",
+          "w-full overflow-hidden rounded-sm bg-surface-overlay",
           trackSizes[size],
         )}
       >
         <div
-          className="h-full rounded-full bg-brand transition-[width] duration-[180ms] ease-[cubic-bezier(0.2,0,0,1)]"
+          className="h-full rounded-sm bg-brand transition-[width] duration-[180ms] ease-[cubic-bezier(0.2,0,0,1)]"
           style={{ width: `${pct}%` }}
         />
       </div>

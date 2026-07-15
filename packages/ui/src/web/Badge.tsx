@@ -4,6 +4,7 @@ import { cx } from "../cx";
 export type BadgeVariant =
   | "neutral"
   | "brand"
+  | "ember"
   | "success"
   | "warning"
   | "danger"
@@ -11,16 +12,19 @@ export type BadgeVariant =
   | "outline";
 export type BadgeSize = "sm" | "md";
 
+// Solid "stamps": opaque plates with high-contrast ink, not low-opacity tints.
 const base =
-  "inline-flex items-center gap-1 rounded-md font-sans font-medium whitespace-nowrap";
+  "inline-flex items-center gap-1 rounded-sm font-sans font-semibold whitespace-nowrap";
 
 const variants: Record<BadgeVariant, string> = {
   neutral: "bg-surface-overlay text-content-secondary",
-  brand: "bg-brand/15 text-content-accent",
-  success: "bg-success-500/15 text-success-500",
-  warning: "bg-warning-500/15 text-warning-500",
-  danger: "bg-danger-500/15 text-danger-500",
-  info: "bg-info-500/15 text-info-500",
+  brand: "bg-brand text-brand-on",
+  // Ember stamp — flash drops / price marks. Warm plate, dark ink.
+  ember: "bg-surface-ember text-brand-on-ember",
+  success: "bg-success-600 text-neutral-50",
+  warning: "bg-warning-600 text-neutral-50",
+  danger: "bg-danger-600 text-neutral-50",
+  info: "bg-info-600 text-neutral-50",
   outline: "bg-transparent text-content-secondary border border-border",
 };
 

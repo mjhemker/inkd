@@ -34,7 +34,7 @@ export const Chip = forwardRef<View, ChipProps>(function Chip(
       className={cx(
         "flex-row items-center gap-1.5 self-start rounded-full border px-3 py-1.5",
         selected
-          ? "border-border-accent bg-brand/20"
+          ? "border-brand bg-brand"
           : "border-border bg-surface-overlay active:bg-surface-raised",
         disabled && "opacity-50",
         className,
@@ -46,7 +46,7 @@ export const Chip = forwardRef<View, ChipProps>(function Chip(
         <Text
           className={cx(
             "font-sans-medium text-sm",
-            selected ? "text-content-accent" : "text-content-secondary",
+            selected ? "text-brand-on" : "text-content-secondary",
           )}
         >
           {children}

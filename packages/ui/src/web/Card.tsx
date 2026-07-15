@@ -36,7 +36,8 @@ export function Card({
   return (
     <div
       className={cx(
-        "rounded-xl transition-[border-color,box-shadow] duration-[180ms] ease-[cubic-bezier(0.2,0,0,1)]",
+        // Placard discipline: near-square hard edge, not a soft rounded panel.
+        "rounded-sm transition-[border-color,box-shadow] duration-[180ms] ease-[cubic-bezier(0.2,0,0,1)]",
         variants[variant],
         paddings[padding],
         className,
@@ -44,6 +45,41 @@ export function Card({
       {...props}
     >
       {children}
+    </div>
+  );
+}
+
+/**
+ * Optional museum-placard header strip. Sits flush at the top of a Card (use
+ * `padding="none"` on the Card and pad the content yourself) to stamp a small
+ * mono label — an artwork's medium, a section kind, a status. Mono, uppercase,
+ * tracked, on a solid ink strip.
+ */
+export interface CardPlacardProps extends HTMLAttributes<HTMLDivElement> {
+  /** Right-aligned secondary mark, e.g. a stamped price or count. */
+  meta?: ReactNode;
+  className?: string;
+  children?: ReactNode;
+}
+
+export function CardPlacard({
+  meta,
+  className,
+  children,
+  ...props
+}: CardPlacardProps) {
+  return (
+    <div
+      className={cx(
+        "flex items-center justify-between gap-3 border-b border-border-subtle bg-surface-overlay px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-content-muted",
+        className,
+      )}
+      {...props}
+    >
+      <span className="truncate">{children}</span>
+      {meta != null && (
+        <span className="shrink-0 text-content-secondary">{meta}</span>
+      )}
     </div>
   );
 }

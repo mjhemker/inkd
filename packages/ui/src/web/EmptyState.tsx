@@ -6,6 +6,11 @@ export interface EmptyStateProps {
   title: string;
   description?: string;
   action?: ReactNode;
+  /**
+   * Optional hand-marked note (Caveat). A single warm aside above the title —
+   * "nothing here yet — go make something". Use sparingly; one per screen.
+   */
+  note?: ReactNode;
   className?: string;
 }
 
@@ -14,6 +19,7 @@ export function EmptyState({
   title,
   description,
   action,
+  note,
   className,
 }: EmptyStateProps) {
   return (
@@ -24,9 +30,14 @@ export function EmptyState({
       )}
     >
       {icon && (
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-surface-overlay text-content-muted">
+        <div className="flex h-14 w-14 items-center justify-center rounded-sm bg-surface-overlay text-content-muted">
           {icon}
         </div>
+      )}
+      {note != null && (
+        <p className="font-hand text-2xl leading-none text-content-ember">
+          {note}
+        </p>
       )}
       <div className="flex flex-col gap-1.5">
         <h3 className="font-sans text-base font-semibold text-content-primary">
