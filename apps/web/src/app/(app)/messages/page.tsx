@@ -1,17 +1,17 @@
-import type { Metadata } from "next";
-import { PlaceholderScreen } from "@/components/placeholder-screen";
+import { EmptyState, Icon } from "@inkd/ui/web";
 
-export const metadata: Metadata = { title: "Messages" };
-
-export default function MessagesPage() {
+/**
+ * Right pane at `/messages` with no thread selected (desktop only — mobile
+ * shows the list instead via `MessagesShell`'s route-based visibility).
+ */
+export default function MessagesIndexPage() {
   return (
-    <PlaceholderScreen
-      eyebrow="Inbox"
-      title="Messages"
-      subtitle="Client conversations, with your AI front desk drafting the replies."
-      icon="message-circle"
-      emptyTitle="No conversations yet"
-      description="When clients reach out, threads show up here. Your assistant drafts grounded replies for you to approve and send."
-    />
+    <div className="flex h-full w-full flex-col items-center justify-center">
+      <EmptyState
+        icon={<Icon name="message-circle" size={26} />}
+        title="Select a conversation"
+        description="Pick a thread on the left, or start a new one from an artist's profile."
+      />
+    </div>
   );
 }
