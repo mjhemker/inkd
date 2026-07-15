@@ -2,8 +2,8 @@
 
 /* Load the shared INKD Tailwind preset (design tokens from @inkd/ui) via the
    v4 backward-compat config bridge. Path is relative to this CSS file. This
-   makes token-backed utilities available: bg-surface, text-content, bg-brand,
-   font-display, font-mono, shadow-glow… */
+   makes token-backed utilities available: bg-surface, bg-surface-plate,
+   bg-surface-ember, text-content, bg-brand, font-display, font-mono, font-hand… */
 @config "../../tailwind.config.js";
 
 :root {
@@ -42,5 +42,47 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* --- Waiver paper surface (the one light surface in the product) -----------
+   Reserved ONLY for the exported / printable legal record (signed waivers).
+   The app stays dark; a `.waiver-document` block flips to ink-on-paper so the
+   record reads as an archival document. Values mirror the `paper` token ramp
+   in packages/ui/tokens.cjs. */
+.waiver-document {
+  background-color: #f6f2e9; /* paper.base */
+  color: #1c1917; /* paper.ink */
+}
+.waiver-document ::selection {
+  background-color: rgba(109, 40, 217, 0.18); /* violet stays the accent */
+  color: #1c1917;
+}
+
+/* Printing / "Save as PDF" a signed record: drop the dark chrome and let the
+   paper document fill the page. Classic visibility-isolation so only the
+   marked region prints. */
+@media print {
+  :root {
+    color-scheme: light;
+  }
+  body {
+    background: #ffffff !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .waiver-print-region,
+  .waiver-print-region * {
+    visibility: visible;
+  }
+  .waiver-print-region {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    max-height: none !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 }

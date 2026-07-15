@@ -117,7 +117,7 @@ function ThreadRow({
         aria-current={active ? "page" : undefined}
         className={cx(
           "flex items-center gap-3 border-b border-border-subtle/60 px-4 py-3 outline-none transition-colors focus-visible:bg-surface-raised",
-          active ? "bg-brand/10" : "hover:bg-surface-raised",
+          active ? "bg-surface-plate-ink" : "hover:bg-surface-raised",
         )}
       >
         <Avatar

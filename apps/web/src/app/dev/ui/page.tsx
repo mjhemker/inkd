@@ -10,6 +10,7 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
+  CardPlacard,
   CardTitle,
   Checkbox,
   Chip,
@@ -75,9 +76,10 @@ function Gallery() {
             Component gallery
           </h1>
           <p className="max-w-xl text-content-secondary">
-            Every primitive in <span className="font-mono text-content-accent">@inkd/ui/web</span>,
-            on the near-black canvas with the Bricolage / Manrope / JetBrains Mono
-            type system.
+            Every primitive in <span className="font-mono text-content-accent">@inkd/ui/web</span> —
+            solid violet plates, hard placard edges, and a warm{" "}
+            <span className="text-content-ember">ember</span> accent for flash and
+            price marks. Bricolage / Manrope / JetBrains Mono, plus Caveat by hand.
           </p>
         </div>
       </header>
@@ -95,6 +97,9 @@ function Gallery() {
             </p>
             <p className="font-mono text-sm text-content-muted">
               Mono — JetBrains Mono · IDs, timestamps, agent-log lines
+            </p>
+            <p className="font-hand text-3xl text-content-ember">
+              Hand — Caveat · annotations, stamps, congrats (sparingly)
             </p>
           </div>
         </Section>
@@ -123,6 +128,7 @@ function Gallery() {
         <Section title="Badges & chips">
           <Row>
             <Badge variant="brand">Draft-only</Badge>
+            <Badge variant="ember">Flash</Badge>
             <Badge variant="success">Deposit paid</Badge>
             <Badge variant="warning">Pending</Badge>
             <Badge variant="danger">Overdue</Badge>
@@ -187,6 +193,17 @@ function Gallery() {
                 <CardDescription>$1,200 · $300 deposit</CardDescription>
               </CardHeader>
               <CardContent>An interactive card — hover to feel the lift.</CardContent>
+            </Card>
+            {/* Placard card: a solid mono header strip + a stamped ember price. */}
+            <Card padding="none" variant="raised">
+              <CardPlacard meta="Flash">Neo-traditional</CardPlacard>
+              <div className="flex items-start justify-between gap-3 p-5">
+                <div className="flex flex-col gap-1">
+                  <CardTitle>Panther, ready to drop</CardTitle>
+                  <CardDescription>One sitting · @dez.ttt</CardDescription>
+                </div>
+                <Badge variant="ember">$260</Badge>
+              </div>
             </Card>
           </div>
         </Section>
@@ -348,9 +365,10 @@ function Gallery() {
         </Section>
 
         <Section title="Empty state">
-          <div className="rounded-2xl border border-border-subtle bg-surface-raised/40">
+          <div className="rounded-sm border border-border-subtle bg-surface-raised">
             <EmptyState
               icon={<Icon name="calendar" size={26} />}
+              note="nothing on the books — yet"
               title="No bookings yet"
               description="Inquiries, consults and sessions will move through here."
               action={<Button size="sm">Add a booking</Button>}
