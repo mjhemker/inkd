@@ -8,5 +8,7 @@ export * from "./supabase";
 export * from "./types";
 export * from "./auth";
 export * from "./api";
+export * from "./booking";
+export * from "./payments";
 export * from "./hooks";
 export * from "./domain/onboarding";

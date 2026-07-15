@@ -1,0 +1,368 @@
+/**
+ * Artist bookings cockpit: a requests inbox (triage), a pipeline (grouped by
+ * stage, vertical sections for mobile), and a sessions agenda ("Calendar").
+ */
+import { useMemo, useState } from "react";
+import { Pressable, Text, View } from "react-native";
+import { router } from "expo-router";
+import {
+  useArtistBookingRequests,
+  useArtistBookings,
+  useArtistSessions,
+  REQUEST_STATUS_META,
+  PIPELINE_STAGES,
+  SESSION_STATUS_META,
+  bookingStage,
+  isRequestOpen,
+  formatBudget,
+  type BookingRequest,
+  type Booking,
+  type Session,
+  type PipelineStage,
+  type StatusTone,
+} from "@inkd/core";
+import { Badge, Card, EmptyState, Eyebrow, Icon, Tabs, type IconName } from "@inkd/ui/native";
+import { StatusBadge, formatDay, formatTime } from "./shared";
+
+type View_ = "inbox" | "pipeline" | "calendar";
+
+export function ArtistBookings({
+  artistId,
+}: {
+  artistId: string;
+  artistProfileId: string;
+}) {
+  const [view, setView] = useState<View_>("inbox");
+  const requestsQ = useArtistBookingRequests(artistId);
+  const bookingsQ = useArtistBookings(artistId);
+
+  const requests = requestsQ.data ?? [];
+  const bookings = bookingsQ.data ?? [];
+  const openCount = requests.filter((r) => isRequestOpen(r.status)).length;
+  const activeCount = bookings.filter(
+    (b) => b.status !== "completed" && b.status !== "cancelled",
+  ).length;
+
+  return (
+    <View className="gap-6">
+      <View className="gap-2">
+        <Eyebrow>Studio · Pipeline</Eyebrow>
+        <Text className="font-display text-3xl text-content-primary">Bookings</Text>
+        <Text className="text-content-secondary">
+          Every request from first inquiry to healed and rebooked.
+        </Text>
+      </View>
+
+      <View className="flex-row gap-3">
+        <StatTile label="New requests" value={String(openCount)} icon="message-circle" />
+        <StatTile label="Active bookings" value={String(activeCount)} icon="calendar" />
+        <StatTile label="Total requests" value={String(requests.length)} icon="trending-up" />
+      </View>
+
+      <Tabs
+        value={view}
+        onValueChange={(v) => setView(v as View_)}
+        items={[
+          { value: "inbox", label: "Inbox" },
+          { value: "pipeline", label: "Pipeline" },
+          { value: "calendar", label: "Calendar" },
+        ]}
+      />
+
+      {view === "inbox" && <InboxView requests={requests} loading={requestsQ.isLoading} />}
+      {view === "pipeline" && <PipelineView bookings={bookings} loading={bookingsQ.isLoading} />}
+      {view === "calendar" && <CalendarView artistId={artistId} />}
+    </View>
+  );
+}
+
+function StatTile({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string;
+  icon: IconName;
+}) {
+  return (
+    <Card padding="md" className="flex-1 gap-2">
+      <View className="h-9 w-9 items-center justify-center rounded-lg bg-surface-overlay">
+        <Icon name={icon} size={18} color="#A78BFA" />
+      </View>
+      <Text className="font-display text-2xl text-content-primary">{value}</Text>
+      <Text className="text-sm text-content-secondary">{label}</Text>
+    </Card>
+  );
+}
+
+// --- Inbox ------------------------------------------------------------------
+function InboxView({
+  requests,
+  loading,
+}: {
+  requests: BookingRequest[];
+  loading: boolean;
+}) {
+  const open = requests.filter((r) => isRequestOpen(r.status));
+  const handled = requests.filter((r) => !isRequestOpen(r.status));
+
+  if (!loading && requests.length === 0) {
+    return (
+      <Card padding="none" className="overflow-hidden">
+        <EmptyState
+          icon={<Icon name="message-circle" size={26} color="#71717A" />}
+          title="No requests yet"
+          description="When a client sends a booking request, it lands here to triage — accept, ask a question, or decline."
+        />
+      </Card>
+    );
+  }
+
+  return (
+    <View className="gap-6">
+      <View className="gap-3">
+        <Text className="font-mono text-[11px] uppercase tracking-[0.18em] text-content-muted">
+          Needs review{open.length > 0 ? ` · ${open.length}` : ""}
+        </Text>
+        {open.length === 0 ? (
+          <Text className="text-sm text-content-muted">You&apos;re all caught up.</Text>
+        ) : (
+          <View className="gap-3">
+            {open.map((r) => (
+              <RequestRow key={r.id} request={r} />
+            ))}
+          </View>
+        )}
+      </View>
+      {handled.length > 0 && (
+        <View className="gap-3">
+          <Text className="font-mono text-[11px] uppercase tracking-[0.18em] text-content-muted">
+            Handled
+          </Text>
+          <View className="gap-3">
+            {handled.map((r) => (
+              <RequestRow key={r.id} request={r} muted />
+            ))}
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
+
+function RequestRow({ request, muted }: { request: BookingRequest; muted?: boolean }) {
+  const meta = REQUEST_STATUS_META[request.status];
+  return (
+    <Card
+      padding="md"
+      variant="interactive"
+      className={muted ? "gap-3 opacity-70" : "gap-3"}
+      onPress={() => router.push(`/bookings/requests/${request.id}`)}
+    >
+      <View className="flex-row flex-wrap items-center gap-2">
+        <Text className="flex-1 font-display text-base text-content-primary" numberOfLines={1}>
+          {request.placement || request.description?.slice(0, 44) || "Custom project"}
+        </Text>
+        <Icon name="chevron-right" size={18} color="#71717A" />
+      </View>
+      <View className="flex-row flex-wrap items-center gap-1.5">
+        <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
+        {request.has_medical_flags && (
+          <Badge variant="warning">
+            <View className="flex-row items-center gap-1">
+              <Icon name="shield" size={11} color="#FAFAFA" />
+              <Text className="font-sans-semibold text-xs text-neutral-50">Medical</Text>
+            </View>
+          </Badge>
+        )}
+      </View>
+      <Text className="font-mono text-xs text-content-muted">
+        {formatDay(request.created_at)} · Budget{" "}
+        {formatBudget(request.budget_min_cents, request.budget_max_cents)}
+        {request.is_first_tattoo ? " · First tattoo" : ""}
+      </Text>
+    </Card>
+  );
+}
+
+// --- Pipeline (vertical sections) -------------------------------------------
+function PipelineView({
+  bookings,
+  loading,
+}: {
+  bookings: Booking[];
+  loading: boolean;
+}) {
+  const columns = useMemo(() => {
+    const map = new Map<PipelineStage, Booking[]>();
+    for (const stage of PIPELINE_STAGES) map.set(stage.key, []);
+    for (const b of bookings) {
+      const key = bookingStage(b);
+      map.get(key)?.push(b);
+    }
+    return map;
+  }, [bookings]);
+
+  if (!loading && bookings.length === 0) {
+    return (
+      <Card padding="none" className="overflow-hidden">
+        <EmptyState
+          icon={<Icon name="layout-grid" size={26} color="#71717A" />}
+          title="No bookings in the pipeline"
+          description="Accept a request from the inbox and it starts moving through here — deposit, scheduled, in progress, healed."
+        />
+      </Card>
+    );
+  }
+
+  return (
+    <View className="gap-6">
+      {PIPELINE_STAGES.map((stage) => {
+        const items = columns.get(stage.key) ?? [];
+        return (
+          <View key={stage.key} className="gap-2">
+            <View className="flex-row items-center justify-between">
+              <Text className="font-mono text-[11px] uppercase tracking-[0.14em] text-content-muted">
+                {stage.label}
+              </Text>
+              <Badge variant="neutral" size="sm">
+                {String(items.length)}
+              </Badge>
+            </View>
+            {items.length === 0 ? (
+              <View className="items-center rounded-lg border border-dashed border-border-subtle py-5">
+                <Text className="text-xs text-content-muted">Empty</Text>
+              </View>
+            ) : (
+              <View className="gap-2">
+                {items.map((b) => (
+                  <PipelineCard key={b.id} booking={b} />
+                ))}
+              </View>
+            )}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+function PipelineCard({ booking }: { booking: Booking }) {
+  return (
+    <Card
+      padding="sm"
+      variant="interactive"
+      className="gap-2"
+      onPress={() => router.push(`/bookings/${booking.id}`)}
+    >
+      <Text className="font-sans-semibold text-sm text-content-primary" numberOfLines={2}>
+        {booking.title ?? "Tattoo project"}
+      </Text>
+      <View className="flex-row items-center justify-between">
+        <Text className="font-mono text-[10px] uppercase tracking-widest text-content-muted">
+          {formatDay(booking.updated_at)}
+        </Text>
+        <Icon name="chevron-right" size={14} color="#71717A" />
+      </View>
+    </Card>
+  );
+}
+
+// --- Calendar (agenda list) --------------------------------------------------
+const TONE_DOT: Record<StatusTone, string> = {
+  neutral: "bg-neutral-500",
+  brand: "bg-brand",
+  info: "bg-info-500",
+  success: "bg-success-500",
+  warning: "bg-warning-500",
+  danger: "bg-danger-500",
+};
+
+const AGENDA_DAYS = 60;
+
+function CalendarView({ artistId }: { artistId: string }) {
+  const range = useMemo(() => {
+    const from = new Date();
+    const to = new Date(from.getTime() + AGENDA_DAYS * 24 * 60 * 60 * 1000);
+    return { from: from.toISOString(), to: to.toISOString() };
+  }, []);
+  const sessionsQ = useArtistSessions(artistId, range);
+
+  const byDay = useMemo(() => {
+    const map = new Map<string, Session[]>();
+    for (const s of sessionsQ.data ?? []) {
+      if (!s.scheduled_start) continue;
+      const key = new Date(s.scheduled_start).toDateString();
+      map.set(key, [...(map.get(key) ?? []), s]);
+    }
+    return [...map.entries()].sort(
+      (a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime(),
+    );
+  }, [sessionsQ.data]);
+
+  if (!sessionsQ.isLoading && byDay.length === 0) {
+    return (
+      <Card padding="none" className="overflow-hidden">
+        <EmptyState
+          icon={<Icon name="calendar" size={26} color="#71717A" />}
+          title="Nothing on the calendar"
+          description="Sessions you schedule over the next 60 days will show up here, grouped by day."
+        />
+      </Card>
+    );
+  }
+
+  return (
+    <View className="gap-4">
+      <View className="flex-row flex-wrap gap-3">
+        {(["scheduled", "confirmed", "completed", "cancelled"] as const).map((s) => (
+          <View key={s} className="flex-row items-center gap-1.5">
+            <View className={`h-2 w-2 rounded-full ${TONE_DOT[SESSION_STATUS_META[s].tone]}`} />
+            <Text className="text-xs text-content-muted">{SESSION_STATUS_META[s].label}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View className="gap-3">
+        {byDay.map(([dayKey, sessions]) => {
+          const d = new Date(dayKey);
+          return (
+            <View
+              key={dayKey}
+              className="flex-row gap-4 rounded-lg border border-border-subtle bg-surface-raised px-4 py-3"
+            >
+              <View className="w-14 shrink-0">
+                <Text className="font-mono text-[10px] uppercase tracking-widest text-content-muted">
+                  {d.toLocaleDateString("en-US", { weekday: "short" })}
+                </Text>
+                <Text className="font-display text-xl text-content-primary">{d.getDate()}</Text>
+              </View>
+              <View className="flex-1 gap-1.5">
+                {sessions.map((s) => (
+                  <SessionPill key={s.id} session={s} />
+                ))}
+              </View>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+function SessionPill({ session }: { session: Session }) {
+  const meta = SESSION_STATUS_META[session.status];
+  return (
+    <Pressable
+      accessibilityRole="button"
+      className="flex-row items-center gap-1.5 rounded bg-surface-overlay px-1.5 py-1"
+      onPress={() => router.push(`/bookings/${session.booking_id}`)}
+    >
+      <View className={`h-1.5 w-1.5 shrink-0 rounded-full ${TONE_DOT[meta.tone]}`} />
+      <Text className="text-[11px] text-content-secondary" numberOfLines={1}>
+        {formatTime(session.scheduled_start)} · Session #{session.session_number}
+      </Text>
+    </Pressable>
+  );
+}

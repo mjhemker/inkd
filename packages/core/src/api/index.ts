@@ -10,6 +10,8 @@ export * from "./studioLocations";
 export * from "./services";
 export * from "./availability";
 export * from "./booking";
+export * from "./bookingFlow";
+export * from "./uploads";
 export * from "./messaging";
 export * from "./content";
 export * from "./waivers";
