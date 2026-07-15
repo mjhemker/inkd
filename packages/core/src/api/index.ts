@@ -15,3 +15,4 @@ export * from "./content";
 export * from "./waivers";
 export * from "./agentSettings";
 export * from "./notifications";
+export * from "./storage";
