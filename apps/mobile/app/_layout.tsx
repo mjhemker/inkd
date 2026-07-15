@@ -5,6 +5,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SessionProvider } from "@/providers/session";
 import {
   useFonts,
   BricolageGrotesque_700Bold,
@@ -50,13 +51,15 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: "#0A0A0B" },
-        }}
-      />
+      <SessionProvider>
+        <StatusBar style="light" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: "#0A0A0B" },
+          }}
+        />
+      </SessionProvider>
     </SafeAreaProvider>
   );
 }

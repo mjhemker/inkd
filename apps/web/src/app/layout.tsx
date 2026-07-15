@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { Providers } from "@/components/providers";
 
 /**
  * INKD type system (see packages/ui/tokens.cjs for the documented rationale):
@@ -68,7 +69,7 @@ export default function RootLayout({
       className={`${display.variable} ${sans.variable} ${mono.variable}`}
     >
       <body className="min-h-dvh bg-surface-base font-sans text-content-primary antialiased">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
