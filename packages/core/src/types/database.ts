@@ -268,7 +268,11 @@ export type Database = {
           onboarding_step: number
           profile_id: string
           stripe_account_id: string | null
+          stripe_charges_enabled: boolean
+          stripe_details_submitted: boolean
           stripe_identity_verified: boolean
+          stripe_onboarding_completed_at: string | null
+          stripe_payouts_enabled: boolean
           styles: string[]
           tagline: string | null
           travel_at_home: boolean
@@ -291,7 +295,11 @@ export type Database = {
           onboarding_step?: number
           profile_id: string
           stripe_account_id?: string | null
+          stripe_charges_enabled?: boolean
+          stripe_details_submitted?: boolean
           stripe_identity_verified?: boolean
+          stripe_onboarding_completed_at?: string | null
+          stripe_payouts_enabled?: boolean
           styles?: string[]
           tagline?: string | null
           travel_at_home?: boolean
@@ -314,7 +322,11 @@ export type Database = {
           onboarding_step?: number
           profile_id?: string
           stripe_account_id?: string | null
+          stripe_charges_enabled?: boolean
+          stripe_details_submitted?: boolean
           stripe_identity_verified?: boolean
+          stripe_onboarding_completed_at?: string | null
+          stripe_payouts_enabled?: boolean
           styles?: string[]
           tagline?: string | null
           travel_at_home?: boolean
@@ -1623,6 +1635,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      stripe_events: {
+        Row: {
+          api_version: string | null
+          id: string
+          livemode: boolean | null
+          payload: Json | null
+          received_at: string
+          type: string
+        }
+        Insert: {
+          api_version?: string | null
+          id: string
+          livemode?: boolean | null
+          payload?: Json | null
+          received_at?: string
+          type: string
+        }
+        Update: {
+          api_version?: string | null
+          id?: string
+          livemode?: boolean | null
+          payload?: Json | null
+          received_at?: string
+          type?: string
+        }
+        Relationships: []
       }
       studio_locations: {
         Row: {
