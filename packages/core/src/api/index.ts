@@ -23,3 +23,4 @@ export * from "./threadDirectory";
 export * from "./threadStarter";
 export * from "./contentExtras";
 export * from "./media";
+export * from "./chatAttachments";

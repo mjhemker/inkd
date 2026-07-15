@@ -12,6 +12,7 @@ import {
 } from "@inkd/core/hooks";
 import { groupByDay } from "@inkd/core/utils";
 import type { Message } from "@inkd/core/types";
+import type { ChatAttachment } from "@inkd/core";
 import { MessageBubble } from "./MessageBubble";
 import { Composer } from "./Composer";
 
@@ -36,7 +37,7 @@ export function ChatThread({ threadId }: { threadId: string }) {
     if (el) el.scrollTop = el.scrollHeight;
   }, [allMessages.length]);
 
-  function handleSend(body: string) {
+  function handleSend(body: string, attachments: ChatAttachment[]) {
     if (!profile) return;
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const now = new Date().toISOString();
@@ -46,8 +47,8 @@ export function ChatThread({ threadId }: { threadId: string }) {
       sender_kind: mySenderKind,
       sender_profile_id: profile.id,
       agent_action_id: null,
-      body,
-      attachments: [],
+      body: body || null,
+      attachments: attachments as unknown as Message["attachments"],
       drafted_by_agent: false,
       is_read: false,
       read_at: null,
@@ -60,7 +61,8 @@ export function ChatThread({ threadId }: { threadId: string }) {
         thread_id: threadId,
         sender_kind: mySenderKind,
         sender_profile_id: profile.id,
-        body,
+        body: body || null,
+        attachments: attachments as unknown as Record<string, unknown>[],
       },
       {
         onSuccess: () => setPending((prev) => prev.filter((m) => m.id !== tempId)),
@@ -143,7 +145,12 @@ export function ChatThread({ threadId }: { threadId: string }) {
         )}
       </div>
 
-      <Composer onSend={handleSend} disabled={!profile} />
+      <Composer
+        threadId={threadId}
+        senderId={profile?.id}
+        onSend={handleSend}
+        disabled={!profile}
+      />
     </div>
   );
 }
