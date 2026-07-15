@@ -37,7 +37,8 @@ export type IconName =
   | "credit-card"
   | "clock"
   | "shield"
-  | "trending-up";
+  | "trending-up"
+  | "alert-triangle";
 
 type FeatherName = ComponentProps<typeof Feather>["name"];
 
@@ -74,6 +75,7 @@ const glyphMap: Record<IconName, FeatherName> = {
   clock: "clock",
   shield: "shield",
   "trending-up": "trending-up",
+  "alert-triangle": "alert-triangle",
 };
 
 export interface IconProps {

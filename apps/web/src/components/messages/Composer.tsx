@@ -14,6 +14,8 @@ const MAX_ATTACHMENTS = 4;
 
 interface PendingAttachment {
   id: string;
+  /** Original picked file, retained so a failed upload can be retried. */
+  file: File;
   previewUrl: string;
   status: "uploading" | "done" | "error";
   result?: ChatAttachment;
@@ -65,6 +67,37 @@ export function Composer({
   const canSend =
     !disabled && !isUploading && (value.trim().length > 0 || readyAttachments.length > 0);
 
+  async function runUpload(id: string, file: File) {
+    setPending((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, status: "uploading", error: undefined } : p)),
+    );
+    try {
+      const resized = await resizeImageForUpload(file);
+      const result = await upload.mutateAsync({
+        file: resized.blob,
+        filename: file.name,
+        contentType: resized.blob.type || file.type || "image/jpeg",
+        width: resized.width || undefined,
+        height: resized.height || undefined,
+      });
+      setPending((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, status: "done", result } : p)),
+      );
+    } catch (err) {
+      setPending((prev) =>
+        prev.map((p) =>
+          p.id === id
+            ? {
+                ...p,
+                status: "error",
+                error: err instanceof Error ? err.message : "Upload failed",
+              }
+            : p,
+        ),
+      );
+    }
+  }
+
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0 || !senderId) return;
     const room = MAX_ATTACHMENTS - pending.length;
@@ -77,34 +110,15 @@ export function Composer({
     for (const file of picked) {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const previewUrl = URL.createObjectURL(file);
-      setPending((prev) => [...prev, { id, previewUrl, status: "uploading" }]);
-
-      try {
-        const resized = await resizeImageForUpload(file);
-        const result = await upload.mutateAsync({
-          file: resized.blob,
-          filename: file.name,
-          contentType: resized.blob.type || file.type || "image/jpeg",
-          width: resized.width || undefined,
-          height: resized.height || undefined,
-        });
-        setPending((prev) =>
-          prev.map((p) => (p.id === id ? { ...p, status: "done", result } : p)),
-        );
-      } catch (err) {
-        setPending((prev) =>
-          prev.map((p) =>
-            p.id === id
-              ? {
-                  ...p,
-                  status: "error",
-                  error: err instanceof Error ? err.message : "Upload failed",
-                }
-              : p,
-          ),
-        );
-      }
+      setPending((prev) => [...prev, { id, file, previewUrl, status: "uploading" }]);
+      await runUpload(id, file);
     }
+  }
+
+  /** Re-attempt a failed upload for its original file, in place. */
+  function retryPending(id: string) {
+    const target = pending.find((p) => p.id === id);
+    if (target) void runUpload(id, target.file);
   }
 
   function removePending(id: string) {
@@ -155,17 +169,35 @@ export function Composer({
                 className="h-full w-full object-cover"
               />
               {p.status === "uploading" && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5 bg-black/50">
                   <Spinner size={16} className="text-white" />
+                  <span className="font-mono text-[8px] uppercase tracking-wide text-white/90">
+                    Sending
+                  </span>
                 </div>
               )}
-              {p.status === "error" && (
-                <div
-                  className="absolute inset-0 flex items-center justify-center bg-danger-500/70"
-                  title={p.error ?? "Upload failed"}
+              {p.status === "done" && (
+                <span
+                  className="absolute bottom-0.5 left-0.5 grid h-4 w-4 place-items-center rounded-full bg-success-500 text-white"
+                  aria-label="Attached"
+                  title="Attached"
                 >
-                  <Icon name="x" size={16} className="text-white" />
-                </div>
+                  <Icon name="check" size={11} />
+                </span>
+              )}
+              {p.status === "error" && (
+                <button
+                  type="button"
+                  onClick={() => retryPending(p.id)}
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-0.5 bg-danger-500/75 text-white outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  aria-label={`Upload failed — retry. ${p.error ?? ""}`}
+                  title={p.error ?? "Upload failed — tap to retry"}
+                >
+                  <Icon name="alert-triangle" size={14} className="text-white" />
+                  <span className="font-mono text-[8px] font-semibold uppercase tracking-wide">
+                    Retry
+                  </span>
+                </button>
               )}
               <button
                 type="button"

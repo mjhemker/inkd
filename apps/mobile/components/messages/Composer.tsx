@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ActivityIndicator, Image, Pressable, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, Text, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useMutation } from "@tanstack/react-query";
 import { Button, Icon, TextArea, cx, useToast } from "@inkd/ui/native";
@@ -10,6 +10,9 @@ const MAX_ATTACHMENTS = 4;
 interface PendingAttachment {
   id: string;
   previewUri: string;
+  /** Retained so a failed upload can be retried from the same source asset. */
+  filename: string;
+  contentType: string;
   status: "uploading" | "done" | "error";
   result?: ChatAttachment;
   error?: string;
@@ -80,26 +83,42 @@ export function Composer({
 
     for (const asset of result.assets.slice(0, room)) {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      setPending((prev) => [...prev, { id, previewUri: asset.uri, status: "uploading" }]);
-      try {
-        const response = await fetch(asset.uri);
-        const blob = await response.blob();
-        const filename = asset.fileName ?? `photo-${Date.now()}.jpg`;
-        const contentType = asset.mimeType ?? "image/jpeg";
-        const uploaded = await upload.mutateAsync({ file: blob, filename, contentType });
-        setPending((prev) =>
-          prev.map((p) => (p.id === id ? { ...p, status: "done", result: uploaded } : p)),
-        );
-      } catch (err) {
-        setPending((prev) =>
-          prev.map((p) =>
-            p.id === id
-              ? { ...p, status: "error", error: err instanceof Error ? err.message : "Upload failed" }
-              : p,
-          ),
-        );
-      }
+      const filename = asset.fileName ?? `photo-${Date.now()}.jpg`;
+      const contentType = asset.mimeType ?? "image/jpeg";
+      setPending((prev) => [
+        ...prev,
+        { id, previewUri: asset.uri, filename, contentType, status: "uploading" },
+      ]);
+      await runUpload(id, asset.uri, filename, contentType);
     }
+  }
+
+  async function runUpload(id: string, uri: string, filename: string, contentType: string) {
+    setPending((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, status: "uploading", error: undefined } : p)),
+    );
+    try {
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const uploaded = await upload.mutateAsync({ file: blob, filename, contentType });
+      setPending((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, status: "done", result: uploaded } : p)),
+      );
+    } catch (err) {
+      setPending((prev) =>
+        prev.map((p) =>
+          p.id === id
+            ? { ...p, status: "error", error: err instanceof Error ? err.message : "Upload failed" }
+            : p,
+        ),
+      );
+    }
+  }
+
+  /** Re-attempt a failed upload from its original source asset, in place. */
+  function retryPending(id: string) {
+    const target = pending.find((p) => p.id === id);
+    if (target) void runUpload(id, target.previewUri, target.filename, target.contentType);
   }
 
   function removePending(id: string) {
@@ -125,14 +144,33 @@ export function Composer({
             >
               <Image source={{ uri: p.previewUri }} className="h-full w-full" resizeMode="cover" />
               {p.status === "uploading" && (
-                <View className="absolute inset-0 items-center justify-center bg-black/50">
+                <View className="absolute inset-0 items-center justify-center gap-0.5 bg-black/50">
                   <ActivityIndicator size="small" color="#FAFAFA" />
+                  <Text className="font-mono text-[8px] uppercase tracking-wide text-white/90">
+                    Sending
+                  </Text>
+                </View>
+              )}
+              {p.status === "done" && (
+                <View
+                  className="absolute bottom-0.5 left-0.5 h-4 w-4 items-center justify-center rounded-full bg-success-500"
+                  accessibilityLabel="Attached"
+                >
+                  <Icon name="check" size={11} color="#FAFAFA" />
                 </View>
               )}
               {p.status === "error" && (
-                <View className="absolute inset-0 items-center justify-center bg-danger-500/70">
-                  <Icon name="x" size={16} color="#FAFAFA" />
-                </View>
+                <Pressable
+                  onPress={() => retryPending(p.id)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Upload failed — tap to retry"
+                  className="absolute inset-0 items-center justify-center gap-0.5 bg-danger-500/75"
+                >
+                  <Icon name="alert-triangle" size={14} color="#FAFAFA" />
+                  <Text className="font-mono text-[8px] font-semibold uppercase tracking-wide text-white">
+                    Retry
+                  </Text>
+                </Pressable>
               )}
               <Pressable
                 onPress={() => removePending(p.id)}

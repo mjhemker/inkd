@@ -25,7 +25,8 @@ export type IconName =
   | "credit-card"
   | "clock"
   | "shield"
-  | "trending-up";
+  | "trending-up"
+  | "alert-triangle";
 
 export interface IconProps {
   name: IconName;
@@ -140,6 +141,13 @@ const paths: Record<IconName, () => ReactNode> = {
     <>
       <path d="m3.5 16.5 6-6 4 4 7-7.5" />
       <path d="M15 6.5h5.5V12" />
+    </>
+  ),
+  "alert-triangle": () => (
+    <>
+      <path d="M12 4 2.5 20.5h19L12 4Z" />
+      <path d="M12 10v4.5" />
+      <path d="M12 17.5h.01" />
     </>
   ),
 };
