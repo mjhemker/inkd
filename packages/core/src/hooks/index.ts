@@ -9,3 +9,7 @@ export * from "./useServices";
 export * from "./useAvailability";
 export * from "./useBookingRequests";
 export * from "./useMessages";
+export * from "./useArtist";
+export * from "./useStudioLocations";
+export * from "./useAgentSettings";
+export * from "./usePortfolio";

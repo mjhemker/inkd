@@ -1,30 +1,182 @@
-import { ScrollView } from "react-native";
+/**
+ * Artist settings — tabbed editor mirroring the web settings-view.tsx.
+ * Reuses the same shared editors as onboarding.tsx (components/artist/*),
+ * each rendered in `variant="settings"` so they show their own Save button
+ * instead of deferring to a parent Continue flow.
+ */
+import { useState } from "react";
+import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, EmptyState, Icon } from "@inkd/ui/native";
+import { useRouter } from "expo-router";
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  Icon,
+  Spinner,
+  Tabs,
+  ToastProvider,
+} from "@inkd/ui/native";
+import { useCurrentProfile, useCurrentArtistProfile } from "@inkd/core/hooks";
+import {
+  AgentAutonomyEditor,
+  BookingEditor,
+  IdentityEditor,
+  LocationsEditor,
+  ServicesEditor,
+} from "@/components/artist";
 
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { useSession } from "@/providers/session";
+
+const TABS = [
+  { value: "profile", label: "Profile" },
+  { value: "locations", label: "Locations" },
+  { value: "booking", label: "Hours & booking" },
+  { value: "services", label: "Services" },
+  { value: "ai", label: "AI staff" },
+  { value: "account", label: "Account" },
+];
 
 export default function SettingsScreen() {
   return (
+    <ToastProvider>
+      <SettingsView />
+    </ToastProvider>
+  );
+}
+
+function SettingsView() {
+  const router = useRouter();
+  const { data: profile, isLoading: pLoading } = useCurrentProfile();
+  const { data: artist, isLoading: aLoading } = useCurrentArtistProfile();
+  const [tab, setTab] = useState("profile");
+
+  if (pLoading || aLoading) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-surface-base">
+        <Spinner size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  return (
     <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
-      <ScrollView className="flex-1" contentContainerClassName="gap-8 px-6 py-8">
+      <ScrollView className="flex-1" contentContainerClassName="gap-6 px-6 py-6">
         <ScreenHeader
-          eyebrow="ACCOUNT"
-          title="Settings"
-          subtitle="Manage your account, notifications, and studio preferences."
+          eyebrow="Settings"
+          title="Studio settings"
+          subtitle="Manage everything clients see and how your books run."
         />
 
-        <EmptyState
-          icon={<Icon name="settings" size={32} color="#71717A" />}
-          title="Settings will live here"
-          description="Account details, notification preferences, and studio configuration are coming soon."
-          action={
-            <Button size="md" onPress={() => {}}>
-              Back to profile
+        {!profile ? (
+          <Text className="text-content-secondary">
+            We couldn&apos;t load your account. Try refreshing.
+          </Text>
+        ) : !artist ? (
+          <Card padding="lg" className="items-start gap-4">
+            <View className="h-12 w-12 items-center justify-center rounded-xl bg-surface-overlay">
+              <Icon name="sparkles" size={22} color="#A78BFA" />
+            </View>
+            <View className="gap-1.5">
+              <Text className="font-display text-xl text-content-primary">
+                Set up your artist profile
+              </Text>
+              <Text className="max-w-md text-content-secondary">
+                Finish onboarding to manage your studio, hours, services and AI staff here.
+              </Text>
+            </View>
+            <Button onPress={() => router.push("/onboarding")}>
+              Start setup
+              <Icon name="arrow-right" size={16} color="#FAFAFA" />
             </Button>
-          }
-        />
+          </Card>
+        ) : (
+          <>
+            <Tabs value={tab} onValueChange={setTab} items={TABS} />
+
+            <View>
+              {tab === "profile" && (
+                <IdentityEditor profile={profile} artist={artist} variant="settings" />
+              )}
+              {tab === "locations" && <LocationsEditor artist={artist} variant="settings" />}
+              {tab === "booking" && <BookingEditor artist={artist} variant="settings" />}
+              {tab === "services" && (
+                <ServicesEditor artistId={artist.id} variant="settings" />
+              )}
+              {tab === "ai" && <AgentAutonomyEditor artist={artist} variant="settings" />}
+              {tab === "account" && (
+                <AccountPanel
+                  profileName={profile.display_name}
+                  avatarUrl={profile.avatar_url}
+                  handle={profile.handle}
+                  published={artist.is_published}
+                />
+              )}
+            </View>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function AccountPanel({
+  profileName,
+  avatarUrl,
+  handle,
+  published,
+}: {
+  profileName: string | null;
+  avatarUrl: string | null;
+  handle: string | null;
+  published: boolean;
+}) {
+  const router = useRouter();
+  const { signOut } = useSession();
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    try {
+      await signOut();
+      router.replace("/auth");
+    } finally {
+      setSigningOut(false);
+    }
+  }
+
+  return (
+    <View className="gap-6">
+      <Card padding="md" className="flex-row items-center gap-4">
+        <Avatar src={avatarUrl ?? undefined} name={profileName ?? "You"} size="lg" />
+        <View className="flex-1">
+          <Text className="text-base font-sans-semibold text-content-primary">
+            {profileName ?? "Your account"}
+          </Text>
+          <Text className="font-mono text-sm text-content-muted">@{handle ?? "—"}</Text>
+        </View>
+        <Badge variant={published ? "success" : "neutral"}>
+          {published ? "Published" : "Draft"}
+        </Badge>
+      </Card>
+
+      <View className="gap-3 rounded-xl border border-border-subtle p-5">
+        <Text className="text-sm font-sans-medium text-content-primary">Session</Text>
+        <Text className="text-sm text-content-secondary">
+          Sign out on this device. You can always sign back in with your email.
+        </Text>
+        <Button
+          variant="outline"
+          onPress={() => void handleSignOut()}
+          loading={signingOut}
+          className="self-start"
+        >
+          <Icon name="arrow-right" size={16} color="#FAFAFA" />
+          Sign out
+        </Button>
+      </View>
+    </View>
   );
 }
