@@ -13,6 +13,7 @@ export * from "./useBookingFlow";
 export * from "./useMessages";
 export * from "./useArtist";
 export * from "./useStudioLocations";
+export * from "./useDiscover";
 export * from "./useAgentSettings";
 export * from "./useThreads";
 export * from "./queryKeysExtras";

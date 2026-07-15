@@ -1915,6 +1915,40 @@ export type Database = {
     }
     Functions: {
       current_artist_id: { Args: never; Returns: string }
+      search_artists: {
+        Args: {
+          p_lat?: number | null
+          p_lng?: number | null
+          p_radius_km?: number | null
+          p_style_slugs?: string[] | null
+          p_price_min?: number | null
+          p_price_max?: number | null
+          p_books_open?: boolean | null
+          p_state?: string | null
+          p_query?: string | null
+          p_limit?: number | null
+          p_offset?: number | null
+        }
+        Returns: {
+          artist_id: string
+          handle: string
+          display_name: string
+          avatar_url: string | null
+          styles: string[]
+          min_price_cents: number | null
+          city: string | null
+          state: string | null
+          lat: number | null
+          lng: number | null
+          distance_km: number | null
+          classification: Database["public"]["Enums"]["artist_classification"]
+          travel_fly_out: boolean
+          travel_house_calls: boolean
+          travel_at_home: boolean
+          books_open: boolean
+          has_active_flash: boolean
+        }[]
+      }
     }
     Enums: {
       agent_action_status:

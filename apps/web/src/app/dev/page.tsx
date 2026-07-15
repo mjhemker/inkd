@@ -49,6 +49,12 @@ const DEV_ROUTES: { href: string; title: string; description: string }[] = [
     description:
       "Messaging thread with image attachments (Composer, ChatThread, MessageBubble) against a mock chat client.",
   },
+  {
+    href: "/dev/discover",
+    title: "Local discovery",
+    description:
+      "The /discover map + list hybrid (FilterBar, ArtistPlacard, MapLibre map) with seeded cards and offline filter/sort semantics.",
+  },
 ];
 
 export default function DevIndexPage() {
