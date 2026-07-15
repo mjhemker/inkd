@@ -126,8 +126,15 @@ function Hero({ data }: { data: PublicArtistProfileData }) {
           {classificationLabel(artist.classification)}
         </Badge>
         {reviewSummary.count > 0 && (
-          <Badge variant="ember" size="sm">
-            {`${formatRatingAvg(reviewSummary.avg)} · ${reviewSummary.count} review${reviewSummary.count === 1 ? "" : "s"}`}
+          <Badge variant="ember" size="sm" className="gap-1.5">
+            {/* Stamped pip — same rating-mark family as <RatingStamps>. */}
+            <View
+              className="h-2 w-2 rounded-[2px] bg-brand-on-ember"
+              style={{ transform: [{ rotate: "-6deg" }] }}
+            />
+            <Text className="font-sans-semibold text-xs text-brand-on-ember">
+              {`${formatRatingAvg(reviewSummary.avg)} · ${reviewSummary.count} review${reviewSummary.count === 1 ? "" : "s"}`}
+            </Text>
           </Badge>
         )}
         {travelBadges(artist).map((label) => (

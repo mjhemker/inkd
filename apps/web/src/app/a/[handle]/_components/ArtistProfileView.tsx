@@ -121,7 +121,12 @@ export function ArtistProfileView({ data }: { data: PublicArtistData }) {
                 </Badge>
                 {reviewSummary.count > 0 && (
                   <Badge variant="ember" size="sm">
-                    <Icon name="star" size={12} />
+                    {/* Stamped pip — same rating-mark family as <RatingStamps>,
+                        not a generic star, so reviews iconography is uniform. */}
+                    <span
+                      aria-hidden
+                      className="inline-block h-2 w-2 shrink-0 rotate-[-6deg] rounded-[2px] bg-current"
+                    />
                     {formatRatingAvg(reviewSummary.avg)} · {reviewSummary.count} review
                     {reviewSummary.count === 1 ? "" : "s"}
                   </Badge>
