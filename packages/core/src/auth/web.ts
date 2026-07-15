@@ -14,13 +14,20 @@ import { resolveSupabaseEnv, type SupabaseEnv } from "../env";
 import type { Database } from "../types/database";
 import type { InkdSupabaseClient } from "../supabase/client";
 
-/** Route prefixes that require an authenticated session (SPEC §3/§4 surfaces). */
+/** Route prefixes that require an authenticated session (SPEC §3/§4 surfaces).
+ * Public-by-design surfaces stay OUT of this list: `/` (marketing), `/auth`,
+ * `/try-on` (deep-linkable fit check), `/a/[handle]` (public artist profile),
+ * and the discovery surfaces `/feed` + `/discover`. Everything that reads or
+ * writes the signed-in user's own data is gated here. */
 export const PROTECTED_ROUTE_PREFIXES = [
   "/dashboard",
   "/bookings",
   "/messages",
   "/settings",
   "/onboarding",
+  "/studio",
+  "/notifications",
+  "/profile",
 ] as const;
 
 /** True when `pathname` falls under a protected prefix. */
