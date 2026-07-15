@@ -28,6 +28,12 @@ const DEV_ROUTES: { href: string; title: string; description: string }[] = [
     description: "Full artist onboarding wizard driven by an offline fake client.",
   },
   {
+    href: "/dev/feed-preview",
+    title: "Discovery feed",
+    description:
+      "The signed-in home feed (FeedScreen, museum placards, flash ember stamps, post detail overlay) against a seeded mock feed client.",
+  },
+  {
     href: "/dev/profile-preview",
     title: "Own-profile management",
     description: "Artist self-profile editor against a seeded mock Supabase client.",

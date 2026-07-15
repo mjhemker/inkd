@@ -24,3 +24,5 @@ export * from "./threadStarter";
 export * from "./contentExtras";
 export * from "./media";
 export * from "./chatAttachments";
+export * from "./feed";
+export * from "./social";
