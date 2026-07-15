@@ -284,3 +284,114 @@ supabase functions deploy approve-agent-action  --project-ref khlpidflnvkqafkvkp
    `approve-agent-action`).
 
 That's the whole wiring. Nothing else in the code changes to go live.
+
+---
+
+## Scheduled jobs (Studio Manager)
+
+SPEC §5's third agent role — **Studio Manager**: "deposit chasing, no-show
+follow-up, rebooking nudges ..., weekly business digest." Unlike Front Desk /
+Booking Manager, these three jobs are **fully deterministic — no Anthropic API
+call, no `ANTHROPIC_API_KEY` dependency.** Every draft is a template filled
+straight from real DB facts, so this runs (and has been proven against live
+demo data) before the LLM key exists.
+
+**Why a sibling function, not an `agent-run` dispatch branch.** `agent-run`
+503s outright when `ANTHROPIC_API_KEY` is absent (see `agent-run/index.ts`) —
+that's correct for the LLM-backed roles, but wrong for jobs that must work
+without a key. `agent-scheduled` is a separate edge function with its own
+auth check (service-role bearer, same pattern) and zero model dependency.
+Both share the **same** `agent_jobs` queue and the **same**
+`agent_jobs_lease` RPC — a `job_kind` column discriminates dispatch instead
+of `agent_role`/`trigger_kind` the way `agent-run` uses role.
+
+### Files (this lane owns)
+
+- `supabase/migrations/20260716090000_studio_manager_scheduled_jobs_and_plan.sql`
+  — `agent_jobs.job_kind` + `scheduled_scan` trigger_kind, `agent_actions.dedupe_key`,
+  `agent_scheduled_enqueue()` / `agent_scheduled_tick()` (guarded/no-op-safe
+  exactly like `agent_run_tick()`), daily pg_cron `agent-scheduled-drain`.
+- `supabase/functions/_shared/agent-scheduled.ts` — pure selection logic +
+  templates for all three jobs (candidate selection, draft text, `context_used`,
+  dedupe keys). Zero DB/network imports — runs under `node --test` and Deno.
+- `supabase/functions/agent-scheduled/` — the drainer edge function: leases
+  `scheduled_scan` jobs via `agent_jobs_lease`, runs the DB reads (embedded
+  `bookings(services(name))` selects), find-or-creates the artist↔client
+  thread, and persists `agent_actions` (+ a `notifications` row for the
+  digest).
+
+### The three jobs
+
+| Job | Selection | Result |
+| --- | --- | --- |
+| `deposit_chase` | `sessions` with `status in (scheduled, confirmed)`, `deposit_cents > 0`, `deposit_paid = false`, booked (`created_at`) more than 72h ago | `reply.draft`, tier 2, **always proposed** — templated reminder into the booking's thread |
+| `rebook_nudge` | `sessions.status = 'completed'`, `coalesce(scheduled_end, updated_at)` 30+ days ago, client has no future `scheduled`/`confirmed` session with this artist (most recent completed session per client) | `reply.draft`, tier 2, **always proposed** — templated rebooking invite |
+| `weekly_digest` | Every Monday, per artist with Studio Manager enabled | `note.log`, tier 1, **always executed** (mirrors `note.log`'s existing always-executes rule) + a `notifications` row (new requests / sessions done / deposits held / pending approvals, past 7 days) |
+
+`deposit_chase`'s 72h window is measured from the session's `created_at`
+(when it was put on the books), not `scheduled_start` (the appointment
+itself) — the point is to chase a deposit that's gone stale since booking,
+regardless of how far out the session is.
+
+Tier and status are **fixed by business rule here**, not run through
+`agent-policy.ts`'s `decideAction`/autonomy lookup — `deposit_chase` and
+`rebook_nudge` always propose (never auto-send, regardless of autonomy,
+since a client-facing draft still needs a human okay) and `weekly_digest`
+always executes (it's an internal note, like `note.log` already is
+everywhere else in the runtime). This keeps "tier lives outside the model"
+true trivially: there is no model in this path at all.
+
+**Idempotency.** `agent_jobs.dedupe_key` makes the daily/weekly *enqueue*
+idempotent (`scheduled:<job_kind>:<artist_id>:<date-or-week>`); a second,
+independent `agent_actions.dedupe_key` (added by the same migration) makes
+each *candidate* idempotent within a job run — `deposit_chase:<session_id>:<week>`
+(re-chases weekly if still unpaid), `rebook_nudge:<session_id>` (one-shot,
+never re-fires once nudged), `weekly_digest:<artist_id>:<week>`.
+
+**Gating.** `deposit_chase`/`rebook_nudge` enqueue only when
+`agent_settings.studio_manager_enabled` **and** `autonomy <> 'no_ai'` (they
+draft client-facing text, so they respect the same AI-off gate as the
+message/booking_request triggers). `weekly_digest` only requires
+`studio_manager_enabled` — it's internal-only, so it isn't blocked by
+`no_ai` (same reasoning as `note.log`'s "always executes").
+
+**Trust UI.** These write plain `agent_actions` rows against the existing
+contract (`payload.trigger.kind` is additionally `"scheduled_scan"` — an
+informational value; the UI's `useAgentActionTriggerMessage` already treats
+any non-`"message"` kind as "nothing to fetch", so this needs zero UI code
+changes) with `agent_role = 'studio_manager'`. `StaffNameplate` doesn't have
+a `studio_manager` entry in `STAFF` (`apps/web/src/components/ai-staff/meta.ts`)
+on purpose — it falls back to a generic "AI staff" nameplate, because adding
+one there would also require teaching `StaffOverviewHeader`'s per-role on/off
+card about the third role (its `enabledByRole` lookup and 2-card grid layout
+both assume exactly Front Desk + Booking Manager). That's future UI work, not
+part of this lane. See `apps/web/src/app/dev/ai-staff-preview/page.tsx`
+fixtures `act-deposit-chase-1` / `act-rebook-nudge-1` / `act-weekly-digest-1`
+for proof the existing approvals inbox + activity feed render all three
+correctly today.
+
+### Deploying (same "not yet" as agent-run)
+
+```bash
+supabase functions deploy agent-scheduled --project-ref khlpidflnvkqafkvkpfy --no-verify-jwt
+```
+
+Then register the Vault secrets so the daily cron can reach it:
+
+```sql
+select vault.create_secret(
+  'https://khlpidflnvkqafkvkpfy.functions.supabase.co/agent-scheduled', 'agent_scheduled_url');
+-- 'agent_runner_service_key' is already registered for agent-run and is reused here.
+```
+
+No `ANTHROPIC_API_KEY` involvement anywhere in this path — it can go live the
+moment the function is deployed and the one Vault secret above is set,
+independent of the LLM key.
+
+### Tests (offline, zero dependencies)
+
+```bash
+node --test supabase/functions/_shared/agent-scheduled.test.ts
+# 24 tests, all green — selection logic (all three jobs, boundary conditions,
+# dedupe/status exclusions) + template/grounding + ISO-week helpers.
+```

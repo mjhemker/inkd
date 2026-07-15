@@ -12,6 +12,8 @@ export {
 } from "./connected-accounts";
 export { ShareKit, type ShareKitProps } from "./share-kit";
 export { QrMatrix, type QrMatrixProps } from "./qr-matrix";
+export { ProStamp } from "./ProStamp";
+export { PlanCard } from "./PlanCard";
 export { PickerSelect, PickerDateField, PickerTimeField, type PickerOption } from "./pickers";
 export { MoneyInput, formatMoney, centsToInput, inputToCents } from "./money";
 export type { EditorHandle } from "./types";

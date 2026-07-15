@@ -12,6 +12,7 @@ import { ACTION_CLASSES, AUTONOMY_BY_INDEX, AUTONOMY_LEVELS } from "@inkd/core";
 import { useAgentSettings, useUpsertAgentSettings } from "@inkd/core/hooks";
 
 import { PickerSelect } from "./pickers";
+import { ProStamp } from "./ProStamp";
 import type { EditorHandle } from "./types";
 
 const OVERRIDE_OPTIONS = [
@@ -115,6 +116,15 @@ export const AgentAutonomyEditor = forwardRef<EditorHandle, AgentAutonomyEditorP
           <Text className="rounded-lg bg-surface-overlay/60 px-3.5 py-3 text-sm text-content-secondary">
             {level.description}
           </Text>
+
+          {variant === "settings" && level.pilotNote && (
+            <View className="flex-row items-center gap-2">
+              <ProStamp />
+              <Text className="font-mono text-[11px] uppercase tracking-wide text-content-accent">
+                {level.pilotNote}
+              </Text>
+            </View>
+          )}
         </View>
 
         {variant === "settings" && (

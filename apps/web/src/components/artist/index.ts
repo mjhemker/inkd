@@ -14,3 +14,5 @@ export {
   type ConnectedAccountsEditorProps,
 } from "./connected-accounts";
 export { ShareKit, type ShareKitProps } from "./share-kit";
+export { ProStamp } from "./ProStamp";
+export { PlanCard } from "./PlanCard";
