@@ -8,6 +8,9 @@ import { Providers } from "@/components/providers";
  *  --font-display  Bricolage Grotesque — headlines, marquee, gallery placards
  *  --font-sans     Manrope — body + all dense ops UI (default)
  *  --font-mono     JetBrains Mono — eyebrows, IDs, timestamps, agent-log voice
+ *  --font-hand     Caveat — hand-marked notes ONLY: annotations, empty-state
+ *                  notes, congrats moments, "stamped" price marks. Sparingly,
+ *                  never body text. Utility: `font-hand`.
  *
  * Self-hosted from the same open-source files shipped by @expo-google-fonts so
  * web + mobile render the identical faces and the build needs no network.
@@ -43,6 +46,17 @@ const mono = localFont({
   ],
 });
 
+// Caveat — the hand-marked voice. Used sparingly (annotations, hand-notes,
+// congrats, stamped price marks); never body text.
+const hand = localFont({
+  variable: "--font-hand",
+  display: "swap",
+  src: [
+    { path: "./fonts/Caveat_600SemiBold.ttf", weight: "600", style: "normal" },
+    { path: "./fonts/Caveat_700Bold.ttf", weight: "700", style: "normal" },
+  ],
+});
+
 export const metadata: Metadata = {
   title: {
     default: "INKD — the operating system for tattoo artists",
@@ -66,7 +80,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${display.variable} ${sans.variable} ${mono.variable}`}
+      className={`${display.variable} ${sans.variable} ${mono.variable} ${hand.variable}`}
     >
       <body className="min-h-dvh bg-surface-base font-sans text-content-primary antialiased">
         <Providers>{children}</Providers>

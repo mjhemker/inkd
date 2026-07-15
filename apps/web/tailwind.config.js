@@ -18,6 +18,7 @@ module.exports = {
         display: ["var(--font-display)", ...tokens.fontFamily.display],
         sans: ["var(--font-sans)", ...tokens.fontFamily.sans],
         mono: ["var(--font-mono)", ...tokens.fontFamily.mono],
+        hand: ["var(--font-hand)", ...tokens.fontFamily.hand],
       },
     },
   },

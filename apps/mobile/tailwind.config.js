@@ -24,6 +24,9 @@ module.exports = {
         "sans-bold": ["Manrope_700Bold"],
         mono: ["JetBrainsMono_400Regular"],
         "mono-medium": ["JetBrainsMono_500Medium"],
+        // Hand-marked voice (Caveat) — annotations / stamps only, never body.
+        hand: ["Caveat_600SemiBold"],
+        "hand-bold": ["Caveat_700Bold"],
       },
     },
   },
