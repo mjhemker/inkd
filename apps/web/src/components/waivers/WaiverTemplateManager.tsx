@@ -379,10 +379,39 @@ export function WaiverTemplateManager() {
             : undefined
         }
         size="lg"
+        footer={
+          viewingSigned ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              leadingIcon={<Icon name="image" size={16} />}
+              onClick={() => window.print()}
+            >
+              Print / Save PDF
+            </Button>
+          ) : undefined
+        }
       >
         {viewingSigned && (
-          <div className="max-h-96 overflow-y-auto rounded-xl border border-border-subtle bg-surface-overlay p-4">
-            <pre className="whitespace-pre-wrap font-sans text-xs leading-relaxed text-content-secondary">
+          // The exported legal record: the one light "paper" surface in INKD.
+          <div className="waiver-document waiver-print-region max-h-96 overflow-y-auto rounded-sm border border-paper-border p-6">
+            <div className="mb-4 flex items-start justify-between gap-3 border-b border-paper-border pb-3">
+              <div className="flex flex-col gap-0.5">
+                <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-paper-muted">
+                  Record of consent
+                </span>
+                <span className="font-display text-lg font-bold text-paper-ink">
+                  {viewingSigned.signer_name}
+                </span>
+                <span className="font-mono text-[11px] text-paper-muted">
+                  Signed {new Date(viewingSigned.signed_at).toLocaleString()}
+                </span>
+              </div>
+              <span className="font-hand text-3xl leading-none text-paper-accent">
+                {viewingSigned.signer_name}
+              </span>
+            </div>
+            <pre className="whitespace-pre-wrap font-sans text-xs leading-relaxed text-paper-ink">
               {viewingSigned.content_snapshot}
             </pre>
           </div>
