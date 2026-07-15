@@ -9,3 +9,8 @@ export {
   type AgentAutonomyEditorProps,
 } from "./agent-autonomy-editor";
 export { ServicesEditor, type ServicesEditorProps } from "./services-editor";
+export {
+  ConnectedAccountsEditor,
+  type ConnectedAccountsEditorProps,
+} from "./connected-accounts";
+export { ShareKit, type ShareKitProps } from "./share-kit";

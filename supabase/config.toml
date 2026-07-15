@@ -27,3 +27,14 @@ verify_jwt = false
 # gateway verifies the JWT; the function re-resolves the owning artist in code.
 [functions.approve-agent-action]
 verify_jwt = true
+
+# Meta's OAuth callback redirects the browser here with NO Supabase JWT — the
+# gateway must let it through; the function authenticates the authorize-url /
+# disconnect / refresh / status actions itself via requireUser(), and the
+# callback leg via the signed `state` param instead (see instagram.ts).
+[functions.instagram-oauth]
+verify_jwt = false
+
+# A normal authenticated artist call (start an import run).
+[functions.instagram-import]
+verify_jwt = true

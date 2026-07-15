@@ -30,3 +30,4 @@ export * from "./chatAttachments";
 export * from "./feed";
 export * from "./social";
 export * from "./reviews";
+export * from "./instagram";

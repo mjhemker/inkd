@@ -29,6 +29,9 @@ import {
   useUploadMedia,
   usePortfolioPieces,
   usePortfolioMutations,
+  useInstagramStatus,
+  useInstagramAuthorizeUrl,
+  useStartInstagramImport,
 } from "@inkd/core/hooks";
 
 import type { EditorHandle } from "./types";
@@ -360,23 +363,7 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
             }}
           />
 
-          {/* Instagram import — coming soon */}
-          <div className="flex items-center justify-between rounded-xl border border-border-subtle bg-surface-raised/40 px-4 py-3">
-            <div className="flex items-center gap-3">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-surface-overlay text-content-muted">
-                <Icon name="image" size={16} />
-              </span>
-              <div className="flex flex-col">
-                <span className="text-sm font-medium text-content-secondary">
-                  Import from Instagram
-                </span>
-                <span className="text-xs text-content-muted">
-                  Pull your posts in as portfolio pieces.
-                </span>
-              </div>
-            </div>
-            <Badge variant="outline">Coming soon</Badge>
-          </div>
+          <InstagramImportRow artistId={artist.id} />
         </div>
 
         {variant === "settings" && (
@@ -390,3 +377,95 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
     );
   },
 );
+
+/**
+ * The portfolio section's Instagram row — shared by onboarding + settings.
+ * Reads the same config/connection state the full "Connected accounts"
+ * settings section does (`useInstagramStatus`), so this affordance is never
+ * out of sync with reality: "Coming soon" only shows while Michael hasn't set
+ * the Meta app secrets (see docs/instagram-integration.md §5); once
+ * configured it's a real Connect / Import control.
+ */
+function InstagramImportRow({ artistId }: { artistId: string }) {
+  const { toast } = useToast();
+  const { data: status } = useInstagramStatus(artistId);
+  const authorizeUrl = useInstagramAuthorizeUrl();
+  const startImport = useStartInstagramImport(artistId);
+
+  async function connect() {
+    try {
+      const { url } = await authorizeUrl.mutateAsync();
+      window.location.href = url;
+    } catch (err) {
+      toast({
+        title: "Couldn't start Instagram connect",
+        description: err instanceof Error ? err.message : "Try again.",
+        variant: "danger",
+      });
+    }
+  }
+
+  async function runImport() {
+    try {
+      const summary = await startImport.mutateAsync();
+      toast({
+        title: "Instagram import ran",
+        description:
+          summary.postsCreated > 0
+            ? `${summary.postsCreated} new ${summary.postsCreated === 1 ? "piece" : "pieces"} imported.`
+            : "Everything is already imported.",
+        variant: "success",
+      });
+    } catch (err) {
+      toast({
+        title: "Import failed",
+        description: err instanceof Error ? err.message : "Try again.",
+        variant: "danger",
+      });
+    }
+  }
+
+  const configured = status?.configured ?? false;
+  const connected = status?.connected ?? false;
+
+  return (
+    <div className="flex items-center justify-between rounded-xl border border-border-subtle bg-surface-raised/40 px-4 py-3">
+      <div className="flex items-center gap-3">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-surface-overlay text-content-muted">
+          <Icon name="image" size={16} />
+        </span>
+        <div className="flex flex-col">
+          <span className="text-sm font-medium text-content-secondary">
+            Import from Instagram
+          </span>
+          <span className="text-xs text-content-muted">
+            {connected && status?.ig_username
+              ? `Connected as @${status.ig_username}`
+              : "Pull your posts in as portfolio pieces."}
+          </span>
+        </div>
+      </div>
+      {!configured ? (
+        <Badge variant="outline">Coming soon</Badge>
+      ) : connected ? (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => void runImport()}
+          loading={startImport.isPending}
+        >
+          Import
+        </Button>
+      ) : (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => void connect()}
+          loading={authorizeUrl.isPending}
+        >
+          Connect
+        </Button>
+      )}
+    </div>
+  );
+}

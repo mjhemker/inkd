@@ -22,9 +22,11 @@ import { useCurrentProfile, useCurrentArtistProfile } from "@inkd/core/hooks";
 import {
   AgentAutonomyEditor,
   BookingEditor,
+  ConnectedAccountsEditor,
   IdentityEditor,
   LocationsEditor,
   ServicesEditor,
+  ShareKit,
 } from "@/components/artist";
 
 import { ScreenHeader } from "@/components/ScreenHeader";
@@ -37,6 +39,7 @@ const TABS = [
   { value: "services", label: "Services" },
   { value: "waivers", label: "Waivers" },
   { value: "ai", label: "AI staff" },
+  { value: "grow", label: "Share & connect" },
   { value: "account", label: "Account" },
 ];
 
@@ -148,6 +151,12 @@ function SettingsView() {
                     <Icon name="arrow-right" size={16} color="#71717A" />
                   </Card>
                   <AgentAutonomyEditor artist={artist} variant="settings" />
+                </View>
+              )}
+              {tab === "grow" && (
+                <View className="gap-10">
+                  <ShareKit profile={profile} />
+                  <ConnectedAccountsEditor artist={artist} />
                 </View>
               )}
               {tab === "account" && (

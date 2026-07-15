@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -12,6 +12,7 @@ import {
   Icon,
   Spinner,
   Tabs,
+  useToast,
 } from "@inkd/ui/web";
 import {
   useCurrentProfile,
@@ -20,9 +21,11 @@ import {
 import {
   AgentAutonomyEditor,
   BookingEditor,
+  ConnectedAccountsEditor,
   IdentityEditor,
   LocationsEditor,
   ServicesEditor,
+  ShareKit,
 } from "@/components/artist";
 
 const TABS = [
@@ -32,10 +35,12 @@ const TABS = [
   { value: "services", label: "Services" },
   { value: "waivers", label: "Waivers" },
   { value: "ai", label: "AI staff" },
+  { value: "grow", label: "Share & connect" },
   { value: "account", label: "Account" },
 ];
 
 export function SettingsView() {
+  const { toast } = useToast();
   const { data: profile, isLoading: pLoading } = useCurrentProfile();
   const { data: artist, isLoading: aLoading } = useCurrentArtistProfile();
   const searchParams = useSearchParams();
@@ -43,6 +48,26 @@ export function SettingsView() {
     ? (searchParams.get("tab") as string)
     : "profile";
   const [tab, setTab] = useState(initialTab);
+
+  // The instagram-oauth callback redirects here with ?instagram=connected|
+  // denied|error — surface the result once, on landing. Deliberately runs
+  // only on mount (searchParams/toast omitted from deps) so it never re-fires
+  // as the tab state changes afterward.
+  useEffect(() => {
+    const result = searchParams.get("instagram");
+    if (!result) return;
+    if (result === "connected") {
+      toast({ title: "Instagram connected", variant: "success" });
+    } else if (result === "denied") {
+      toast({ title: "Instagram connect cancelled" });
+    } else if (result === "error") {
+      toast({
+        title: "Couldn't connect Instagram",
+        description: searchParams.get("reason") ?? "Try again.",
+        variant: "danger",
+      });
+    }
+  }, []);
 
   if (pLoading || aLoading) {
     return (
@@ -99,7 +124,7 @@ export function SettingsView() {
 
       <Tabs value={tab} onValueChange={setTab} items={TABS} className="overflow-x-auto" />
 
-      <div className="max-w-2xl">
+      <div className={tab === "grow" ? "max-w-3xl" : "max-w-2xl"}>
         {tab === "profile" && (
           <IdentityEditor profile={profile} artist={artist} variant="settings" />
         )}
@@ -133,6 +158,12 @@ export function SettingsView() {
               <Icon name="arrow-right" size={16} className="text-content-muted" />
             </Link>
             <AgentAutonomyEditor artist={artist} variant="settings" />
+          </div>
+        )}
+        {tab === "grow" && (
+          <div className="flex flex-col gap-10">
+            <ShareKit profile={profile} />
+            <ConnectedAccountsEditor artist={artist} />
           </div>
         )}
         {tab === "account" && <AccountPanel profileName={profile.display_name} avatarUrl={profile.avatar_url} handle={profile.handle} published={artist.is_published} />}
