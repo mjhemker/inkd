@@ -18,7 +18,7 @@
  * a placard popover linking to /a/[handle]. On every move we report which pins
  * are in view so the list stays synced to the viewport.
  */
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import maplibregl, {
   type GeoJSONSource,
   type LngLatBoundsLike,
@@ -26,6 +26,7 @@ import maplibregl, {
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
+import { Icon } from "@inkd/ui/web";
 import { formatMinPrice, formatDistanceMiles, type ArtistCard } from "@inkd/core/api";
 
 const STYLE_URL = "https://tiles.openfreemap.org/styles/positron";
@@ -97,6 +98,10 @@ export function DiscoverMap({
   const onHoverRef = useRef(onHoverPin);
   onVisibleRef.current = onVisibleChange;
   onHoverRef.current = onHoverPin;
+  // "loading" until the basemap style loads; "error" if tiles never arrive
+  // (keyless OpenFreeMap down / offline) so we can show an honest placard
+  // instead of a blank gray canvas; "ready" once the map paints.
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
 
   // Init once.
   useEffect(() => {
@@ -109,6 +114,21 @@ export function DiscoverMap({
       attributionControl: { compact: true },
     });
     mapRef.current = map;
+
+    // If the basemap style hasn't loaded within a reasonable window, treat the
+    // tiles as unavailable and fall back to the placard (the list still works).
+    const loadTimeout = setTimeout(() => {
+      if (!readyRef.current) setStatus("error");
+    }, 8000);
+    // A hard style-load failure (not a single dropped tile) → error immediately.
+    map.on("error", (e) => {
+      if (!readyRef.current && !map.isStyleLoaded()) {
+        setStatus("error");
+      }
+      // Surface the underlying reason for debugging without blanking on
+      // transient per-tile fetch errors once the map is already up.
+      if (e?.error) console.warn("DiscoverMap tile/source error:", e.error.message);
+    });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
 
     const reportVisible = () => {
@@ -207,6 +227,8 @@ export function DiscoverMap({
       map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
 
       readyRef.current = true;
+      clearTimeout(loadTimeout);
+      setStatus("ready");
       reportVisible();
       fitToCards(map, cards, center);
     });
@@ -214,6 +236,7 @@ export function DiscoverMap({
     map.on("moveend", reportVisible);
 
     return () => {
+      clearTimeout(loadTimeout);
       map.remove();
       mapRef.current = null;
       readyRef.current = false;
@@ -238,13 +261,61 @@ export function DiscoverMap({
     map.easeTo({ center: [center.lng, center.lat], zoom: Math.max(map.getZoom(), 10) });
   }, [center?.lat, center?.lng]);
 
+  const pinCount = cards.filter((c) => c.lat != null && c.lng != null).length;
+
   return (
-    <div className={className}>
+    <div className={`relative ${className ?? ""}`}>
       <div
         ref={containerRef}
         className="h-full w-full"
         style={{ filter: "brightness(0.82) invert(0.92) hue-rotate(185deg) saturate(0.85) contrast(0.95)" }}
       />
+
+      {/* Loading — skeleton pins over a tinted plate until the basemap paints. */}
+      {status === "loading" && (
+        <div className="pointer-events-none absolute inset-0 grid place-items-center bg-surface-base/80">
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex gap-2">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="h-6 w-6 animate-pulse rounded-[3px] bg-surface-overlay"
+                  style={{ animationDelay: `${i * 150}ms` }}
+                />
+              ))}
+            </div>
+            <span className="font-mono text-[10px] uppercase tracking-widest text-content-muted">
+              Loading map
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Tiles unavailable — honest placard, the list still covers the results. */}
+      {status === "error" && (
+        <div className="absolute inset-0 grid place-items-center bg-surface-base p-6">
+          <div className="max-w-xs border border-border-subtle bg-surface-raised p-5 text-center">
+            <div className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-[3px] bg-surface-overlay text-content-muted">
+              <Icon name="map-pin" size={20} />
+            </div>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-content-muted">
+              Map unavailable
+            </p>
+            <p className="mt-1.5 text-sm text-content-secondary">
+              Map tiles couldn&apos;t load — the list has you covered.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Ready but nothing to plot — subtle honest note over the basemap. */}
+      {status === "ready" && pinCount === 0 && (
+        <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center">
+          <span className="rounded-full border border-border-subtle bg-surface-base/90 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-content-muted">
+            No artists in this area
+          </span>
+        </div>
+      )}
     </div>
   );
 }
