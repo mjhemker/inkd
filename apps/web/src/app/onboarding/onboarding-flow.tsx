@@ -283,6 +283,12 @@ export function OnboardingFlow() {
 }
 
 function VerifyStep() {
+  // Stripe Identity has no live keys yet (see docs/payments.md) — there's no
+  // verification session to start. Rather than hide the action, we show it
+  // and are honest about the gate on click, so the step feels complete
+  // (a real next action) instead of a dead end.
+  const [showGateNotice, setShowGateNotice] = useState(false);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start gap-3 rounded-xl border border-border-subtle bg-surface-raised/40 p-4">
@@ -313,6 +319,26 @@ function VerifyStep() {
           </li>
         ))}
       </ul>
+
+      <div className="flex flex-col gap-3">
+        <Button
+          size="lg"
+          onClick={() => setShowGateNotice(true)}
+          className="self-start"
+        >
+          <Icon name="shield" size={16} />
+          Start ID verification
+        </Button>
+        {showGateNotice && (
+          <div className="flex items-start gap-2.5 rounded-xl border border-border-subtle bg-surface-overlay px-4 py-3">
+            <Icon name="alert-triangle" size={16} className="mt-0.5 shrink-0 text-content-accent" />
+            <p className="text-sm text-content-secondary">
+              Verification opens once payments are configured — you can skip for
+              now.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
