@@ -84,6 +84,31 @@ export const RADIUS_OPTIONS_KM = [5, 10, 25, 50, 100] as const;
 export const DEFAULT_RADIUS_KM = 25;
 
 // ---------------------------------------------------------------------------
+// Miles — the presentation boundary. Storage, queries, and the search_artists
+// RPC all speak km/meters; every user-facing surface speaks miles. Convert
+// here so the two never drift.
+// ---------------------------------------------------------------------------
+export const KM_PER_MILE = 1.609344;
+export function kmToMiles(km: number): number {
+  return km / KM_PER_MILE;
+}
+export function milesToKm(mi: number): number {
+  return mi * KM_PER_MILE;
+}
+/** Format a stored distance (km) as a user-facing miles string, e.g. "2.4 mi". */
+export function formatDistanceMiles(km: number): string {
+  return `${kmToMiles(km).toFixed(1)} mi`;
+}
+/** Distance radius presets (miles) offered in the filter bar. */
+export const RADIUS_OPTIONS_MI = [3, 10, 25, 50] as const;
+export const DEFAULT_RADIUS_MI = 25;
+/** True if a stored km radius corresponds to a given mile preset (float-safe). */
+export function radiusMatchesMiles(radiusKm: number | undefined, mi: number): boolean {
+  if (radiusKm == null) return false;
+  return Math.abs(radiusKm - milesToKm(mi)) < 0.01;
+}
+
+// ---------------------------------------------------------------------------
 // Query
 // ---------------------------------------------------------------------------
 /** Run a discovery search. Undefined filters are omitted (sent as SQL NULL). */

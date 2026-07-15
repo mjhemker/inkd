@@ -7,7 +7,7 @@
 import Link from "next/link";
 import { Avatar, Icon } from "@inkd/ui/web";
 import { cx } from "@inkd/ui/web";
-import { formatMinPrice, type ArtistCard } from "@inkd/core/api";
+import { formatMinPrice, formatDistanceMiles, type ArtistCard } from "@inkd/core/api";
 
 const CLASSIFICATION_LABEL: Record<string, string> = {
   shop_owner: "Shop owner",
@@ -34,7 +34,7 @@ export interface ArtistPlacardProps {
 export function ArtistPlacard({ card, active, onHover, className }: ArtistPlacardProps) {
   const price = formatMinPrice(card.min_price_cents);
   const distance =
-    card.distance_km != null ? `${card.distance_km.toFixed(1)} km` : null;
+    card.distance_km != null ? formatDistanceMiles(card.distance_km) : null;
   const styles = card.styles.slice(0, 3);
   const extraStyles = card.styles.length - styles.length;
 

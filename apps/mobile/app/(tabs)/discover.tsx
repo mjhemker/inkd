@@ -22,7 +22,11 @@ import { useDiscover, useStyles } from "@inkd/core/hooks";
 import {
   DISCOVER_CITIES,
   PRICE_BANDS,
-  RADIUS_OPTIONS_KM,
+  RADIUS_OPTIONS_MI,
+  DEFAULT_RADIUS_MI,
+  milesToKm,
+  radiusMatchesMiles,
+  formatDistanceMiles,
   discoverFilterToParams,
   formatMinPrice,
   EMPTY_FILTER_STATE,
@@ -40,7 +44,7 @@ function styleLabel(slug: string): string {
 
 function ArtistPlacardCard({ card }: { card: ArtistCard }) {
   const price = formatMinPrice(card.min_price_cents);
-  const distance = card.distance_km != null ? `${card.distance_km.toFixed(1)} km` : null;
+  const distance = card.distance_km != null ? formatDistanceMiles(card.distance_km) : null;
   return (
     <Pressable
       onPress={() => router.push(`/artist/${card.handle}`)}
@@ -141,7 +145,7 @@ export default function DiscoverScreen() {
     if (filter.city === slug) {
       patch({ city: undefined, lat: undefined, lng: undefined, state: undefined, radiusKm: undefined });
     } else {
-      patch({ city: city.slug, lat: city.lat, lng: city.lng, state: city.state, radiusKm: filter.radiusKm ?? 25 });
+      patch({ city: city.slug, lat: city.lat, lng: city.lng, state: city.state, radiusKm: filter.radiusKm ?? milesToKm(DEFAULT_RADIUS_MI) });
     }
   };
 
@@ -160,7 +164,7 @@ export default function DiscoverScreen() {
         state: undefined,
         lat: pos.coords.latitude,
         lng: pos.coords.longitude,
-        radiusKm: filter.radiusKm ?? 25,
+        radiusKm: filter.radiusKm ?? milesToKm(DEFAULT_RADIUS_MI),
       });
     } catch {
       setLocError("Couldn't get your location — pick a city instead.");
@@ -208,9 +212,13 @@ export default function DiscoverScreen() {
       {hasCenter ? (
         <View className="flex-row flex-wrap items-center gap-2">
           <Text className="font-mono text-[10px] uppercase tracking-widest text-content-muted">Within</Text>
-          {RADIUS_OPTIONS_KM.map((km) => (
-            <Chip key={km} selected={filter.radiusKm === km} onPress={() => patch({ radiusKm: km })}>
-              {km} km
+          {RADIUS_OPTIONS_MI.map((mi) => (
+            <Chip
+              key={mi}
+              selected={radiusMatchesMiles(filter.radiusKm, mi)}
+              onPress={() => patch({ radiusKm: milesToKm(mi) })}
+            >
+              {mi} mi
             </Chip>
           ))}
         </View>

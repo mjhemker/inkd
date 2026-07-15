@@ -12,7 +12,10 @@ import { Icon, Input, Toggle, cx } from "@inkd/ui/web";
 import {
   DISCOVER_CITIES,
   PRICE_BANDS,
-  RADIUS_OPTIONS_KM,
+  RADIUS_OPTIONS_MI,
+  DEFAULT_RADIUS_MI,
+  milesToKm,
+  radiusMatchesMiles,
   type DiscoverFilterState,
 } from "@inkd/core/api";
 import type { Style } from "@inkd/core/types";
@@ -71,7 +74,7 @@ export function FilterBar({ filter, styles, resultCount, onChange, onReset }: Fi
     if (filter.city === slug) {
       patch({ city: undefined, lat: undefined, lng: undefined, state: undefined, radiusKm: undefined });
     } else {
-      patch({ city: city.slug, lat: city.lat, lng: city.lng, state: city.state, radiusKm: filter.radiusKm ?? 25 });
+      patch({ city: city.slug, lat: city.lat, lng: city.lng, state: city.state, radiusKm: filter.radiusKm ?? milesToKm(DEFAULT_RADIUS_MI) });
     }
   };
 
@@ -131,9 +134,13 @@ export function FilterBar({ filter, styles, resultCount, onChange, onReset }: Fi
         {hasCenter && (
           <span className="ml-auto inline-flex items-center gap-1">
             <span className="font-mono text-[10px] uppercase tracking-widest text-content-muted">Within</span>
-            {RADIUS_OPTIONS_KM.map((km) => (
-              <Chip key={km} selected={filter.radiusKm === km} onClick={() => patch({ radiusKm: km })}>
-                {km} km
+            {RADIUS_OPTIONS_MI.map((mi) => (
+              <Chip
+                key={mi}
+                selected={radiusMatchesMiles(filter.radiusKm, mi)}
+                onClick={() => patch({ radiusKm: milesToKm(mi) })}
+              >
+                {mi} mi
               </Chip>
             ))}
           </span>

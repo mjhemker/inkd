@@ -26,7 +26,7 @@ import maplibregl, {
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
-import { formatMinPrice, type ArtistCard } from "@inkd/core/api";
+import { formatMinPrice, formatDistanceMiles, type ArtistCard } from "@inkd/core/api";
 
 const STYLE_URL = "https://tiles.openfreemap.org/styles/positron";
 const SOURCE_ID = "artists";
@@ -59,7 +59,7 @@ function toFeatureCollection(cards: ArtistCard[]): GeoJSON.FeatureCollection {
           books_open: c.books_open,
           price: formatMinPrice(c.min_price_cents) ?? "",
           city: [c.city, c.state].filter(Boolean).join(", "),
-          distance: c.distance_km != null ? `${c.distance_km.toFixed(1)} km` : "",
+          distance: c.distance_km != null ? formatDistanceMiles(c.distance_km) : "",
         },
       })),
   };
