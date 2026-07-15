@@ -5,7 +5,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { Image, Pressable, Text, View } from "react-native";
+import { Image, Linking, Pressable, Text, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import {
   Avatar,
@@ -28,6 +28,9 @@ import {
   useUploadMedia,
   usePortfolioPieces,
   usePortfolioMutations,
+  useInstagramStatus,
+  useInstagramAuthorizeUrl,
+  useStartInstagramImport,
 } from "@inkd/core/hooks";
 
 import type { EditorHandle } from "./types";
@@ -384,23 +387,7 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
             </Pressable>
           </View>
 
-          {/* Instagram import — coming soon */}
-          <View className="flex-row items-center justify-between rounded-xl border border-border-subtle bg-surface-raised/40 px-4 py-3">
-            <View className="flex-1 flex-row items-center gap-3">
-              <View className="h-8 w-8 items-center justify-center rounded-lg bg-surface-overlay">
-                <Icon name="image" size={16} color="#71717A" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-sm font-sans-medium text-content-secondary">
-                  Import from Instagram
-                </Text>
-                <Text className="text-xs text-content-muted">
-                  Pull your posts in as portfolio pieces.
-                </Text>
-              </View>
-            </View>
-            <Badge variant="outline">Coming soon</Badge>
-          </View>
+          <InstagramImportRow artistId={artist.id} />
         </View>
 
         {variant === "settings" && (
@@ -414,3 +401,95 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
     );
   },
 );
+
+/**
+ * The portfolio section's Instagram row — shared by onboarding + settings.
+ * Reads the same config/connection state the full "Connected accounts"
+ * settings section does (`useInstagramStatus`), so this affordance is never
+ * out of sync with reality: "Coming soon" only shows while Michael hasn't set
+ * the Meta app secrets (see docs/instagram-integration.md §5); once
+ * configured it's a real Connect / Import control.
+ */
+function InstagramImportRow({ artistId }: { artistId: string }) {
+  const { toast } = useToast();
+  const { data: status } = useInstagramStatus(artistId);
+  const authorizeUrl = useInstagramAuthorizeUrl();
+  const startImport = useStartInstagramImport(artistId);
+
+  async function connect() {
+    try {
+      const { url } = await authorizeUrl.mutateAsync();
+      await Linking.openURL(url);
+    } catch (err) {
+      toast({
+        title: "Couldn't start Instagram connect",
+        description: err instanceof Error ? err.message : "Try again.",
+        variant: "danger",
+      });
+    }
+  }
+
+  async function runImport() {
+    try {
+      const summary = await startImport.mutateAsync();
+      toast({
+        title: "Instagram import ran",
+        description:
+          summary.postsCreated > 0
+            ? `${summary.postsCreated} new ${summary.postsCreated === 1 ? "piece" : "pieces"} imported.`
+            : "Everything is already imported.",
+        variant: "success",
+      });
+    } catch (err) {
+      toast({
+        title: "Import failed",
+        description: err instanceof Error ? err.message : "Try again.",
+        variant: "danger",
+      });
+    }
+  }
+
+  const configured = status?.configured ?? false;
+  const connected = status?.connected ?? false;
+
+  return (
+    <View className="flex-row items-center justify-between rounded-xl border border-border-subtle bg-surface-raised/40 px-4 py-3">
+      <View className="flex-1 flex-row items-center gap-3">
+        <View className="h-8 w-8 items-center justify-center rounded-lg bg-surface-overlay">
+          <Icon name="image" size={16} color="#71717A" />
+        </View>
+        <View className="flex-1">
+          <Text className="text-sm font-sans-medium text-content-secondary">
+            Import from Instagram
+          </Text>
+          <Text className="text-xs text-content-muted">
+            {connected && status?.ig_username
+              ? `Connected as @${status.ig_username}`
+              : "Pull your posts in as portfolio pieces."}
+          </Text>
+        </View>
+      </View>
+      {!configured ? (
+        <Badge variant="outline">Coming soon</Badge>
+      ) : connected ? (
+        <Button
+          size="sm"
+          variant="outline"
+          onPress={() => void runImport()}
+          loading={startImport.isPending}
+        >
+          Import
+        </Button>
+      ) : (
+        <Button
+          size="sm"
+          variant="outline"
+          onPress={() => void connect()}
+          loading={authorizeUrl.isPending}
+        >
+          Connect
+        </Button>
+      )}
+    </View>
+  );
+}

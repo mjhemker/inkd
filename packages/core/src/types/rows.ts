@@ -62,6 +62,7 @@ export type AgentSettings = Tables<"agent_settings">;
 export type AgentAction = Tables<"agent_actions">;
 export type AgentPlaybook = Tables<"agent_playbooks">;
 export type Notification = Tables<"notifications">;
+export type InstagramImportRun = Tables<"instagram_import_runs">;
 
 // --- Insert aliases (only the ones the api layer mutates through) -----------
 export type ProfileInsert = TablesInsert<"profiles">;

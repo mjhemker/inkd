@@ -34,6 +34,7 @@ export type Database = {
           client_id: string | null
           created_at: string
           data_consulted: Json
+          dedupe_key: string | null
           executed_at: string | null
           executed_message_id: string | null
           id: string
@@ -59,6 +60,7 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           data_consulted?: Json
+          dedupe_key?: string | null
           executed_at?: string | null
           executed_message_id?: string | null
           id?: string
@@ -84,6 +86,7 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           data_consulted?: Json
+          dedupe_key?: string | null
           executed_at?: string | null
           executed_message_id?: string | null
           id?: string
@@ -165,6 +168,7 @@ export type Database = {
           created_at: string
           dedupe_key: string
           id: string
+          job_kind: string | null
           last_error: string | null
           leased_at: string | null
           max_attempts: number
@@ -182,6 +186,7 @@ export type Database = {
           created_at?: string
           dedupe_key: string
           id?: string
+          job_kind?: string | null
           last_error?: string | null
           leased_at?: string | null
           max_attempts?: number
@@ -199,6 +204,7 @@ export type Database = {
           created_at?: string
           dedupe_key?: string
           id?: string
+          job_kind?: string | null
           last_error?: string | null
           leased_at?: string | null
           max_attempts?: number
@@ -352,6 +358,7 @@ export type Database = {
           is_published: boolean
           onboarding_completed_at: string | null
           onboarding_step: number
+          plan: string
           profile_id: string
           stripe_account_id: string | null
           stripe_charges_enabled: boolean
@@ -379,6 +386,7 @@ export type Database = {
           is_published?: boolean
           onboarding_completed_at?: string | null
           onboarding_step?: number
+          plan?: string
           profile_id: string
           stripe_account_id?: string | null
           stripe_charges_enabled?: boolean
@@ -406,6 +414,7 @@ export type Database = {
           is_published?: boolean
           onboarding_completed_at?: string | null
           onboarding_step?: number
+          plan?: string
           profile_id?: string
           stripe_account_id?: string | null
           stripe_charges_enabled?: boolean
@@ -964,6 +973,112 @@ export type Database = {
         }
         Relationships: []
       }
+      instagram_connections: {
+        Row: {
+          access_token: string
+          artist_id: string
+          connected_at: string
+          created_at: string
+          id: string
+          ig_user_id: string
+          ig_username: string | null
+          last_refreshed_at: string | null
+          last_synced_at: string | null
+          scopes: string[]
+          token_expires_at: string
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          artist_id: string
+          connected_at?: string
+          created_at?: string
+          id?: string
+          ig_user_id: string
+          ig_username?: string | null
+          last_refreshed_at?: string | null
+          last_synced_at?: string | null
+          scopes?: string[]
+          token_expires_at: string
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          artist_id?: string
+          connected_at?: string
+          created_at?: string
+          id?: string
+          ig_user_id?: string
+          ig_username?: string | null
+          last_refreshed_at?: string | null
+          last_synced_at?: string | null
+          scopes?: string[]
+          token_expires_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instagram_connections_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instagram_import_runs: {
+        Row: {
+          already_imported: number
+          artist_id: string
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          media_seen: number
+          media_skipped: number
+          pieces_created: number
+          posts_created: number
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          already_imported?: number
+          artist_id: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          media_seen?: number
+          media_skipped?: number
+          pieces_created?: number
+          posts_created?: number
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          already_imported?: number
+          artist_id?: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          media_seen?: number
+          media_skipped?: number
+          pieces_created?: number
+          posts_created?: number
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instagram_import_runs_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           agent_action_id: string | null
@@ -1180,6 +1295,7 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
+          instagram_media_id: string | null
           is_healed: boolean | null
           is_public: boolean
           placement: string | null
@@ -1195,6 +1311,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          instagram_media_id?: string | null
           is_healed?: boolean | null
           is_public?: boolean
           placement?: string | null
@@ -1210,6 +1327,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          instagram_media_id?: string | null
           is_healed?: boolean | null
           is_public?: boolean
           placement?: string | null
@@ -2045,6 +2163,7 @@ export type Database = {
           created_at: string
           dedupe_key: string
           id: string
+          job_kind: string | null
           last_error: string | null
           leased_at: string | null
           max_attempts: number
@@ -2063,6 +2182,8 @@ export type Database = {
         }
       }
       agent_run_tick: { Args: never; Returns: undefined }
+      agent_scheduled_enqueue: { Args: never; Returns: undefined }
+      agent_scheduled_tick: { Args: never; Returns: undefined }
       current_artist_id: { Args: never; Returns: string }
       search_artists: {
         Args: {

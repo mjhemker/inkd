@@ -58,6 +58,10 @@ const hand = localFont({
 });
 
 export const metadata: Metadata = {
+  // Resolves relative OG/social image URLs (e.g. the generated
+  // /a/[handle]/opengraph-image) to absolute getinkd.co URLs so shared links
+  // unfurl correctly regardless of the request origin.
+  metadataBase: new URL("https://getinkd.co"),
   title: {
     default: "INKD — the operating system for tattoo artists",
     template: "%s · INKD",

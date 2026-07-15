@@ -60,3 +60,22 @@ export function resolveCurrency(): string {
 export function resolveAppUrl(): string {
   return optionalEnv("INKD_APP_URL", "https://getinkd.co").replace(/\/+$/, "");
 }
+
+// --- Instagram (see docs/instagram-integration.md) --------------------------
+// Required secrets (set with `supabase secrets set`), all absent until Michael
+// creates the Meta app:
+//   IG_APP_ID          Instagram App ID from the Meta app's Instagram product
+//   IG_APP_SECRET       Instagram App Secret — also the HMAC key for the signed
+//                        OAuth `state` param (see _shared/instagram.ts)
+//   IG_REDIRECT_URL      must exactly match the redirect URI registered in the
+//                        Meta app's Instagram Platform settings
+
+/** True only when every Instagram secret is present. Gates every UI surface —
+ * see docs/instagram-integration.md §5. Never throws. */
+export function isInstagramConfigured(): boolean {
+  return (
+    Boolean(Deno.env.get("IG_APP_ID")?.trim()) &&
+    Boolean(Deno.env.get("IG_APP_SECRET")?.trim()) &&
+    Boolean(Deno.env.get("IG_REDIRECT_URL")?.trim())
+  );
+}

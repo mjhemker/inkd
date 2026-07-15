@@ -30,3 +30,4 @@ export * from "./queryKeysFeed";
 export * from "./useFeed";
 export * from "./useReviews";
 export * from "./useNotifications";
+export * from "./useInstagram";

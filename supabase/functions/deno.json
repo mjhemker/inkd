@@ -2,7 +2,7 @@
   "//": "Deno config for INKD edge functions. Runtime deps use npm: specifiers (see _shared/deps.ts). Tasks below are for local Deno; the offline unit tests also run under Node's built-in runner (see docs/payments.md).",
   "lock": false,
   "tasks": {
-    "check": "deno check connect-onboarding-link/index.ts create-deposit-checkout/index.ts stripe-webhook/index.ts agent-run/index.ts approve-agent-action/index.ts",
+    "check": "deno check connect-onboarding-link/index.ts create-deposit-checkout/index.ts stripe-webhook/index.ts agent-run/index.ts approve-agent-action/index.ts instagram-oauth/index.ts instagram-import/index.ts",
     "test": "deno test --allow-none _shared/"
   },
   "fmt": {

@@ -21,14 +21,26 @@ export async function generateMetadata({
     data.artist.tagline ??
     data.artist.bio?.slice(0, 160) ??
     `${name} on INKD — portfolio, flash, and booking.`;
+  const url = `/a/${data.profile.handle}`;
 
   return {
     title: name,
     description,
+    alternates: { canonical: url },
+    // No manual `images` override here — the /a/[handle]/opengraph-image
+    // route (next/og, branded placard) is picked up automatically by Next's
+    // file-convention metadata resolution.
     openGraph: {
+      type: "profile",
+      url,
+      siteName: "INKD",
       title: `${name} · INKD`,
       description,
-      images: data.profile.avatar_url ? [data.profile.avatar_url] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${name} · INKD`,
+      description,
     },
   };
 }

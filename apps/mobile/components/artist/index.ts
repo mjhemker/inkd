@@ -6,6 +6,12 @@ export {
   type AgentAutonomyEditorProps,
 } from "./agent-autonomy-editor";
 export { ServicesEditor, type ServicesEditorProps } from "./services-editor";
+export {
+  ConnectedAccountsEditor,
+  type ConnectedAccountsEditorProps,
+} from "./connected-accounts";
+export { ShareKit, type ShareKitProps } from "./share-kit";
+export { QrMatrix, type QrMatrixProps } from "./qr-matrix";
 export { PickerSelect, PickerDateField, PickerTimeField, type PickerOption } from "./pickers";
 export { MoneyInput, formatMoney, centsToInput, inputToCents } from "./money";
 export type { EditorHandle } from "./types";
