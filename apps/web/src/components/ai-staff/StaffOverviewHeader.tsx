@@ -7,9 +7,10 @@ import type { AgentSettings } from "@inkd/core";
 import { AUTONOMY_LABEL, STAFF } from "./meta";
 
 /**
- * The staff overview — Front Desk + Booking Manager presented as your team,
- * with mono nameplates, an on/off state, the current autonomy level (linking
- * to the settings slider), and the count of things waiting on you.
+ * The staff overview — Front Desk, Booking Manager + Studio Manager presented
+ * as your team, with mono nameplates, an on/off state, the current autonomy
+ * level (linking to the settings slider), and the count of things waiting on
+ * you. Renders one card per STAFF role; the layout flows to any staff count.
  */
 export function StaffOverviewHeader({
   settings,
@@ -22,6 +23,7 @@ export function StaffOverviewHeader({
   const enabledByRole: Record<string, boolean> = {
     front_desk: settings?.front_desk_enabled ?? true,
     booking_manager: settings?.booking_manager_enabled ?? true,
+    studio_manager: settings?.studio_manager_enabled ?? true,
   };
 
   return (
@@ -35,8 +37,9 @@ export function StaffOverviewHeader({
             AI staff
           </h1>
           <p className="max-w-xl text-content-secondary">
-            Your Front Desk and Booking Manager, working from your published info.
-            Everything they do is here for you to see, approve, or correct.
+            Your Front Desk, Booking Manager, and Studio Manager, working from
+            your published info. Everything they do is here for you to see,
+            approve, or correct.
           </p>
         </div>
         <Link
@@ -55,7 +58,8 @@ export function StaffOverviewHeader({
         </Link>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto]">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
+        <div className="grid flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {STAFF.map((staff) => {
           const on = enabledByRole[staff.role] ?? true;
           return (
@@ -86,6 +90,7 @@ export function StaffOverviewHeader({
             </Card>
           );
         })}
+        </div>
 
         <Card
           padding="md"

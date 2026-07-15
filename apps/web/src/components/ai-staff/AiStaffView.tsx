@@ -83,8 +83,8 @@ export function AiStaffView() {
             Set up your studio first
           </h2>
           <p className="max-w-md text-content-secondary">
-            Finish onboarding and your AI staff — Front Desk and Booking Manager —
-            switch on here.
+            Finish onboarding and your AI staff — Front Desk, Booking Manager,
+            and Studio Manager — switch on here.
           </p>
         </div>
         <Link href="/onboarding">

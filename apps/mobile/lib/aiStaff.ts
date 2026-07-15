@@ -91,6 +91,12 @@ export const STAFF: { role: AgentRole; name: string; title: string; icon: IconNa
     title: "Proposes session times, holds, and deposit steps",
     icon: "calendar",
   },
+  {
+    role: "studio_manager",
+    name: "Studio Manager",
+    title: "Chases deposits, nudges rebooks, writes your weekly digest",
+    icon: "trending-up",
+  },
 ];
 
 export const AUTONOMY_LABEL: Record<string, string> = {

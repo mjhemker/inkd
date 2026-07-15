@@ -99,14 +99,13 @@ export interface StaffMeta {
   icon: IconName;
 }
 
-/** The two v1 staff, presented as people with mono nameplates. Studio
- * Manager's actions (deposit_chase, rebook_nudge, weekly_digest — SPEC §5)
- * render through the same activity feed / approval queue today via the
- * `agent_role` column and the existing per-action-type meta below;
- * StaffNameplate's generic "AI staff" fallback covers it deliberately so
- * StaffOverviewHeader's per-role on/off card (bound to `${role}_enabled`)
- * doesn't need a matching change to stay correct — see ai-staff-preview
- * fixtures act-deposit-chase-1 / act-rebook-nudge-1 / act-weekly-digest-1. */
+/** The three v1 staff, presented as people with mono nameplates. Studio
+ * Manager's scheduled actions (deposit_chase, rebook_nudge, weekly_digest —
+ * SPEC §5) are written with `agent_role: "studio_manager"` by the runtime
+ * (`supabase/functions/agent-scheduled/index.ts`), so they resolve to a
+ * proper nameplate here rather than the generic "AI staff" fallback — see
+ * ai-staff-preview fixtures act-deposit-chase-1 / act-rebook-nudge-1 /
+ * act-weekly-digest-1. */
 export const STAFF: StaffMeta[] = [
   {
     role: "front_desk",
@@ -119,6 +118,12 @@ export const STAFF: StaffMeta[] = [
     name: "Booking Manager",
     title: "Proposes session times, holds, and deposit steps",
     icon: "calendar",
+  },
+  {
+    role: "studio_manager",
+    name: "Studio Manager",
+    title: "Chases deposits, nudges rebooks, writes your weekly digest",
+    icon: "trending-up",
   },
 ];
 
