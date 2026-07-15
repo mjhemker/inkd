@@ -19,6 +19,7 @@ import type { AgentAutonomyEnum, ArtistProfile } from "@inkd/core";
 import { useAgentSettings, useUpsertAgentSettings } from "@inkd/core/hooks";
 
 import { ACTION_CLASSES, AUTONOMY_BY_INDEX, AUTONOMY_LEVELS } from "./constants";
+import { ProStamp } from "./ProStamp";
 import type { EditorHandle } from "./types";
 
 const OVERRIDE_OPTIONS = [
@@ -122,6 +123,13 @@ export const AgentAutonomyEditor = forwardRef<
         <p className="rounded-lg bg-surface-overlay/60 px-3.5 py-3 text-sm text-content-secondary">
           {level.description}
         </p>
+
+        {variant === "settings" && level.pilotNote && (
+          <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.1em] text-content-accent">
+            <ProStamp />
+            {level.pilotNote}
+          </p>
+        )}
       </div>
 
       {variant === "settings" && (

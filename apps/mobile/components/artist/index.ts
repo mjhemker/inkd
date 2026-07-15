@@ -6,6 +6,8 @@ export {
   type AgentAutonomyEditorProps,
 } from "./agent-autonomy-editor";
 export { ServicesEditor, type ServicesEditorProps } from "./services-editor";
+export { ProStamp } from "./ProStamp";
+export { PlanCard } from "./PlanCard";
 export { PickerSelect, PickerDateField, PickerTimeField, type PickerOption } from "./pickers";
 export { MoneyInput, formatMoney, centsToInput, inputToCents } from "./money";
 export type { EditorHandle } from "./types";

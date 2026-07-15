@@ -25,11 +25,16 @@ export const AUTONOMY_LEVELS: {
   label: string;
   short: string;
   description: string;
+  /** Shown as a small note under the description, settings variant only.
+   * Assisted/Managed are the INKD Pro autonomy levels (see api/plan.ts) —
+   * pilot artists get them free, and this says so honestly rather than
+   * silently upselling. */
+  pilotNote?: string;
 }[] = [
   { value: "no_ai", index: 0, label: "No AI", short: "Off", description: "Your assistant only organizes behind the scenes — it never touches a client conversation." },
   { value: "draft_only", index: 1, label: "Draft-only", short: "Drafts", description: "Your assistant writes replies and you approve and send every one. The safe place to start." },
-  { value: "assisted", index: 2, label: "Assisted", short: "Assisted", description: "Simple answers (hours, policies, reminders) go out on their own. Anything about scheduling or money is drafted for you." },
-  { value: "managed", index: 3, label: "Managed", short: "Managed", description: "Your assistant handles routine replies and proposes bookings for one-tap confirmation. Payments and sensitive calls always stay with you." },
+  { value: "assisted", index: 2, label: "Assisted", short: "Assisted", description: "Simple answers (hours, policies, reminders) go out on their own. Anything about scheduling or money is drafted for you.", pilotNote: "Included free for pilot artists — this is normally an INKD Pro level." },
+  { value: "managed", index: 3, label: "Managed", short: "Managed", description: "Your assistant handles routine replies and proposes bookings for one-tap confirmation. Payments and sensitive calls always stay with you.", pilotNote: "Included free for pilot artists — this is normally an INKD Pro level." },
 ];
 
 export const AUTONOMY_BY_INDEX: Record<number, AgentAutonomyEnum> = {

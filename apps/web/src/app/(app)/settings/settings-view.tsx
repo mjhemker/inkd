@@ -22,6 +22,7 @@ import {
   BookingEditor,
   IdentityEditor,
   LocationsEditor,
+  PlanCard,
   ServicesEditor,
 } from "@/components/artist";
 
@@ -193,6 +194,8 @@ function AccountPanel({
           {published ? "Published" : "Draft"}
         </Badge>
       </Card>
+
+      <PlanCard />
 
       <div className="flex flex-col gap-3 rounded-xl border border-border-subtle p-5">
         <span className="text-sm font-medium text-content-primary">Session</span>

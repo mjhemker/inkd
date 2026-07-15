@@ -21,6 +21,8 @@ const ARTIST_ID = "demo-artist-jayden";
 const THREAD_A = "demo-thread-a";
 const THREAD_B = "demo-thread-b";
 const THREAD_C = "demo-thread-c";
+const THREAD_D = "demo-thread-d";
+const THREAD_E = "demo-thread-e";
 
 function hoursAgo(h: number): string {
   return new Date(NOW.getTime() - h * 60 * 60 * 1000).toISOString();
@@ -237,6 +239,79 @@ const agentActions = [
     },
     result: { rejected_reason: "Too optimistic on timeline — a back piece is more like 5–6 sessions for me." },
     created_at: hoursAgo(48),
+  },
+  // ── Studio Manager: scheduled jobs (deterministic, no LLM) ────────────────
+  {
+    id: "act-deposit-chase-1",
+    artist_id: ARTIST_ID,
+    agent_role: "studio_manager",
+    thread_id: THREAD_D,
+    booking_id: "demo-booking-2",
+    action_type: "reply.draft",
+    tier: 2,
+    status: "proposed",
+    reasoning_summary:
+      "This session's deposit has been outstanding since booking — I drafted a friendly reminder, nothing sent yet.",
+    data_consulted: [],
+    payload: {
+      thread_id: THREAD_D,
+      draft_text:
+        "Hey! Just a friendly reminder — your session for 2026-07-25 (Half-day session) is on the books, but the $150.00 deposit to lock it in is still outstanding. Whenever you get a chance, send that over and you're all set. Let me know if you have any questions!",
+      context_used: [
+        { source: "services", detail: "Half-day session — booked 96h ago" },
+        { source: "booking_policy", detail: "Deposit outstanding: $150.00, unpaid" },
+      ],
+      trigger: { kind: "scheduled_scan", id: "demo-session-1" },
+    },
+    dedupe_key: "deposit_chase:demo-session-1:2026-W29",
+    created_at: hoursAgo(4),
+  },
+  {
+    id: "act-rebook-nudge-1",
+    artist_id: ARTIST_ID,
+    agent_role: "studio_manager",
+    thread_id: THREAD_E,
+    booking_id: "demo-booking-3",
+    action_type: "reply.draft",
+    tier: 2,
+    status: "proposed",
+    reasoning_summary:
+      "It's been 30+ days since their last completed session and they have nothing else booked — I drafted a rebooking nudge.",
+    data_consulted: [],
+    payload: {
+      thread_id: THREAD_E,
+      draft_text:
+        "Hey! Hope you're loving how the piece healed up after your Full sleeve — session 2. Whenever you're ready for the next session (or something new), just say the word and I'll get you on the books.",
+      context_used: [
+        { source: "services", detail: "Full sleeve — session 2 completed 34d ago, no future session on file" },
+      ],
+      trigger: { kind: "scheduled_scan", id: "demo-session-2" },
+    },
+    dedupe_key: "rebook_nudge:demo-session-2",
+    created_at: hoursAgo(6),
+  },
+  {
+    id: "act-weekly-digest-1",
+    artist_id: ARTIST_ID,
+    agent_role: "studio_manager",
+    thread_id: null,
+    action_type: "note.log",
+    tier: 1,
+    status: "executed",
+    reasoning_summary: "Weekly digest for 2026-W29: 3 new requests · 2 sessions done · $450.00 in deposits held · 4 pending approvals.",
+    data_consulted: [],
+    payload: {
+      context_used: [
+        {
+          source: "booking_policy",
+          detail: "2026-W29: 3 new requests, 2 sessions done, $450.00 deposits held, 4 pending approvals",
+        },
+      ],
+      trigger: { kind: "scheduled_scan", id: ARTIST_ID },
+    },
+    dedupe_key: `weekly_digest:${ARTIST_ID}:2026-W29`,
+    executed_at: hoursAgo(18),
+    created_at: hoursAgo(18),
   },
 ];
 

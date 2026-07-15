@@ -99,7 +99,14 @@ export interface StaffMeta {
   icon: IconName;
 }
 
-/** The two v1 staff, presented as people with mono nameplates. */
+/** The two v1 staff, presented as people with mono nameplates. Studio
+ * Manager's actions (deposit_chase, rebook_nudge, weekly_digest — SPEC §5)
+ * render through the same activity feed / approval queue today via the
+ * `agent_role` column and the existing per-action-type meta below;
+ * StaffNameplate's generic "AI staff" fallback covers it deliberately so
+ * StaffOverviewHeader's per-role on/off card (bound to `${role}_enabled`)
+ * doesn't need a matching change to stay correct — see ai-staff-preview
+ * fixtures act-deposit-chase-1 / act-rebook-nudge-1 / act-weekly-digest-1. */
 export const STAFF: StaffMeta[] = [
   {
     role: "front_desk",

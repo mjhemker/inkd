@@ -27,3 +27,10 @@ verify_jwt = false
 # gateway verifies the JWT; the function re-resolves the owning artist in code.
 [functions.approve-agent-action]
 verify_jwt = true
+
+# Studio Manager's deterministic scheduled jobs (deposit_chase, rebook_nudge,
+# weekly_digest) — no ANTHROPIC_API_KEY dependency. Invoked by pg_cron
+# (agent-scheduled-drain, 20260716090000) with the service-role key as the
+# bearer, same pattern as agent-run.
+[functions.agent-scheduled]
+verify_jwt = false

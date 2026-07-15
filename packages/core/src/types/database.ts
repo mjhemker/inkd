@@ -34,6 +34,7 @@ export type Database = {
           client_id: string | null
           created_at: string
           data_consulted: Json
+          dedupe_key: string | null
           executed_at: string | null
           executed_message_id: string | null
           id: string
@@ -59,6 +60,7 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           data_consulted?: Json
+          dedupe_key?: string | null
           executed_at?: string | null
           executed_message_id?: string | null
           id?: string
@@ -84,6 +86,7 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           data_consulted?: Json
+          dedupe_key?: string | null
           executed_at?: string | null
           executed_message_id?: string | null
           id?: string
@@ -165,6 +168,7 @@ export type Database = {
           created_at: string
           dedupe_key: string
           id: string
+          job_kind: string | null
           last_error: string | null
           leased_at: string | null
           max_attempts: number
@@ -182,6 +186,7 @@ export type Database = {
           created_at?: string
           dedupe_key: string
           id?: string
+          job_kind?: string | null
           last_error?: string | null
           leased_at?: string | null
           max_attempts?: number
@@ -199,6 +204,7 @@ export type Database = {
           created_at?: string
           dedupe_key?: string
           id?: string
+          job_kind?: string | null
           last_error?: string | null
           leased_at?: string | null
           max_attempts?: number
@@ -352,6 +358,7 @@ export type Database = {
           is_published: boolean
           onboarding_completed_at: string | null
           onboarding_step: number
+          plan: string
           profile_id: string
           stripe_account_id: string | null
           stripe_charges_enabled: boolean
@@ -379,6 +386,7 @@ export type Database = {
           is_published?: boolean
           onboarding_completed_at?: string | null
           onboarding_step?: number
+          plan?: string
           profile_id: string
           stripe_account_id?: string | null
           stripe_charges_enabled?: boolean
@@ -406,6 +414,7 @@ export type Database = {
           is_published?: boolean
           onboarding_completed_at?: string | null
           onboarding_step?: number
+          plan?: string
           profile_id?: string
           stripe_account_id?: string | null
           stripe_charges_enabled?: boolean
@@ -2045,6 +2054,7 @@ export type Database = {
           created_at: string
           dedupe_key: string
           id: string
+          job_kind: string | null
           last_error: string | null
           leased_at: string | null
           max_attempts: number
@@ -2063,6 +2073,8 @@ export type Database = {
         }
       }
       agent_run_tick: { Args: never; Returns: undefined }
+      agent_scheduled_enqueue: { Args: never; Returns: undefined }
+      agent_scheduled_tick: { Args: never; Returns: undefined }
       current_artist_id: { Args: never; Returns: string }
       search_artists: {
         Args: {
