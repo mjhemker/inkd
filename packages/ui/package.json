@@ -2,10 +2,16 @@
   "name": "@inkd/ui",
   "version": "0.1.0",
   "private": true,
-  "description": "INKD design tokens (near-black + violet-purple) and shared UI primitives.",
+  "description": "INKD design system: tokens (near-black + violet-purple) and shared UI primitives for web (React + Tailwind) and mobile (React Native + NativeWind).",
   "main": "index.js",
   "types": "index.d.ts",
-  "files": ["index.js", "index.d.ts", "tokens.cjs", "tokens.d.ts"],
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "tokens.cjs",
+    "tokens.d.ts",
+    "src"
+  ],
   "exports": {
     ".": {
       "types": "./index.d.ts",
@@ -14,16 +20,39 @@
     "./tokens": {
       "types": "./tokens.d.ts",
       "default": "./tokens.cjs"
+    },
+    "./web": {
+      "types": "./src/web/index.ts",
+      "default": "./src/web/index.ts"
+    },
+    "./native": {
+      "types": "./src/native/index.ts",
+      "default": "./src/native/index.ts"
     }
   },
   "scripts": {
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit -p tsconfig.web.json"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-dom": ">=19"
+  },
+  "peerDependenciesMeta": {
+    "react-dom": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
+    "@types/react": "^19.0.7",
+    "@types/react-dom": "^19.0.3",
     "eslint": "^9.18.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
     "globals": "^15.14.0",
-    "typescript": "^5.7.3"
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0"
   }
 }

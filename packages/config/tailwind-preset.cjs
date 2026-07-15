@@ -10,8 +10,16 @@
  */
 const tokens = require("@inkd/ui/tokens");
 
-const { colors, spacing, radii, fontSize, fontWeight, lineHeight, fontFamily } =
-  tokens;
+const {
+  colors,
+  spacing,
+  radii,
+  fontSize,
+  fontWeight,
+  lineHeight,
+  fontFamily,
+  boxShadow,
+} = tokens;
 
 /** @type {import("tailwindcss").Config} */
 module.exports = {
@@ -59,6 +67,7 @@ module.exports = {
       fontWeight,
       lineHeight,
       fontFamily,
+      boxShadow,
     },
   },
 };

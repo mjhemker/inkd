@@ -1,0 +1,21 @@
+{
+  "$comment": "Typechecks the native component source against react-native + nativewind types (resolved from the hoisted root node_modules). Not part of the required verify set, but gives the native primitives a standalone feedback loop.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["DOM", "ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "types": ["react", "nativewind/types"]
+  },
+  "include": ["src/native", "src/cx.ts"],
+  "exclude": ["node_modules", "dist"]
+}

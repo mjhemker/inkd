@@ -9,6 +9,15 @@ import { z } from "zod";
  * Both are safe to expose to the client (the anon key is public by design; RLS
  * enforces access — SPEC §2).
  */
+
+// Local ambient so this file typechecks in consumers that don't ship
+// @types/node (e.g. the Expo app's tsconfig). The literal `process.env.*`
+// member expressions below are also what Next's DefinePlugin and Expo's Babel
+// transform statically inline at build time — keep them literal.
+declare const process:
+  | { env?: Record<string, string | undefined> }
+  | undefined;
+
 export const supabaseEnvSchema = z.object({
   url: z.string().url("Supabase URL must be a valid URL"),
   anonKey: z.string().min(1, "Supabase anon key is required"),
@@ -16,13 +25,8 @@ export const supabaseEnvSchema = z.object({
 
 export type SupabaseEnv = z.infer<typeof supabaseEnvSchema>;
 
-type EnvBag = Record<string, string | undefined>;
-
-function readEnv(): EnvBag {
-  if (typeof process !== "undefined" && process.env) {
-    return process.env as EnvBag;
-  }
-  return {};
+function hasEnv(): boolean {
+  return typeof process !== "undefined" && !!process && !!process.env;
 }
 
 /**
@@ -30,17 +34,17 @@ function readEnv(): EnvBag {
  * Accepts an explicit override (useful for tests / server-only keys).
  */
 export function resolveSupabaseEnv(override?: Partial<SupabaseEnv>): SupabaseEnv {
-  const env = readEnv();
+  const present = hasEnv();
 
   const url =
     override?.url ??
-    env.NEXT_PUBLIC_SUPABASE_URL ??
-    env.EXPO_PUBLIC_SUPABASE_URL;
+    (present ? process!.env!.NEXT_PUBLIC_SUPABASE_URL : undefined) ??
+    (present ? process!.env!.EXPO_PUBLIC_SUPABASE_URL : undefined);
 
   const anonKey =
     override?.anonKey ??
-    env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-    env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+    (present ? process!.env!.NEXT_PUBLIC_SUPABASE_ANON_KEY : undefined) ??
+    (present ? process!.env!.EXPO_PUBLIC_SUPABASE_ANON_KEY : undefined);
 
   return supabaseEnvSchema.parse({ url, anonKey });
 }

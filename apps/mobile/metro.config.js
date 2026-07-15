@@ -16,5 +16,8 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, "node_modules"),
 ];
 config.resolver.disableHierarchicalLookup = true;
+// Resolve the "exports" map in package.json so @inkd/ui/native (source-only
+// subpath export) resolves the same way @inkd/core does.
+config.resolver.unstable_enablePackageExports = true;
 
 module.exports = withNativeWind(config, { input: "./global.css" });

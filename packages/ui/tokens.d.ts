@@ -54,6 +54,9 @@ export interface InkdTokens {
   fontWeight: Record<string, string>;
   lineHeight: Record<string, string>;
   fontFamily: Record<string, string[]>;
+  boxShadow: Record<string, string>;
+  duration: Record<string, string>;
+  easing: Record<string, string>;
 }
 
 declare const tokens: InkdTokens;

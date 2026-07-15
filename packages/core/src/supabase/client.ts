@@ -19,7 +19,11 @@ export interface CreateSupabaseClientArgs extends Partial<SupabaseEnv> {
  *
  * Reads NEXT_PUBLIC_* (web) or EXPO_PUBLIC_* (mobile) env vars by default, or
  * accepts an explicit `url` / `anonKey` override. The returned client is typed
- * against the (currently placeholder) generated `Database` type.
+ * against the generated `Database` type (see `../types/database.ts`).
+ *
+ * This is the generic (no session-persistence) factory. For real apps prefer
+ * the platform helpers: `@inkd/core/auth/web` (cookie/ssr) or
+ * `@inkd/core/auth/mobile` (native storage).
  *
  * @example
  *   const supabase = createSupabaseClient();               // from env

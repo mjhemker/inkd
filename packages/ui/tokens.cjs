@@ -169,9 +169,32 @@ const lineHeight = {
   relaxed: "1.7",
 };
 
+/**
+ * Type pairing (documented brand choice):
+ *  - display — Bricolage Grotesque. An editorial contemporary grotesque with real
+ *    character; carries all headline personality. Used with restraint at large sizes
+ *    and tight tracking. Gallery-placard / marquee voice.
+ *  - sans — Manrope. A clean geometric-humanist workhorse that recedes so artwork and
+ *    data stay the hero. Every dense ops surface uses this.
+ *  - mono — JetBrains Mono. The utility voice: uppercase tracked micro-labels
+ *    ("eyebrows"), timestamps, IDs, agent-log lines, flash-sheet numbering.
+ *
+ * Loaded on web via next/font/google (CSS variables) and on mobile via
+ * @expo-google-fonts. Stacks below are plain family names + system fallbacks so the
+ * tokens stay platform-neutral; each app wires the real loaded faces in front.
+ */
 const fontFamily = {
+  display: [
+    "Bricolage Grotesque",
+    "Manrope",
+    "ui-sans-serif",
+    "system-ui",
+    "-apple-system",
+    "Segoe UI",
+    "sans-serif",
+  ],
   sans: [
-    "Inter",
+    "Manrope",
     "ui-sans-serif",
     "system-ui",
     "-apple-system",
@@ -182,6 +205,7 @@ const fontFamily = {
     "sans-serif",
   ],
   mono: [
+    "JetBrains Mono",
     "ui-monospace",
     "SFMono-Regular",
     "Menlo",
@@ -189,6 +213,29 @@ const fontFamily = {
     "Consolas",
     "monospace",
   ],
+};
+
+// --- Elevation / shadow language --------------------------------------------
+// Dark UI leans on surface layering + hairline borders rather than heavy shadows.
+// `glow` is the one expressive elevation: a soft violet focus/hero halo used
+// sparingly (primary CTA hover, focused fields, active nav).
+const boxShadow = {
+  none: "none",
+  sm: "0 1px 2px 0 rgba(0, 0, 0, 0.40)",
+  md: "0 4px 16px -4px rgba(0, 0, 0, 0.55)",
+  lg: "0 16px 48px -12px rgba(0, 0, 0, 0.65)",
+  glow: "0 0 0 1px rgba(124, 58, 237, 0.35), 0 8px 32px -8px rgba(124, 58, 237, 0.45)",
+};
+
+// --- Motion ------------------------------------------------------------------
+const duration = {
+  fast: "120ms",
+  base: "180ms",
+  slow: "260ms",
+};
+const easing = {
+  standard: "cubic-bezier(0.2, 0, 0, 1)",
+  emphasized: "cubic-bezier(0.3, 0, 0, 1)",
 };
 
 const tokens = {
@@ -207,6 +254,9 @@ const tokens = {
   fontWeight,
   lineHeight,
   fontFamily,
+  boxShadow,
+  duration,
+  easing,
 };
 
 module.exports = tokens;
