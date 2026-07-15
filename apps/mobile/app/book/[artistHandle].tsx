@@ -1,15 +1,17 @@
 /**
  * Client booking-request flow for /book/[artistHandle] (mobile).
  *
- * Five steps — service → details → health & references → dates → review —
+ * Five steps — service → details → references & health → dates → review —
  * that build one `booking_requests` row. Mirrors apps/web/src/components/book/
- * book-flow.tsx, minus native file upload (references are handled on web or
- * over chat after the request is sent).
+ * book-flow.tsx, including native reference uploads (image + PDF picks,
+ * honoring the artist's upload policy) via expo-image-picker / expo-document-picker.
  */
-import { useMemo, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { useMemo, useRef, useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
 import {
   useCurrentProfile,
   usePublicArtist,
@@ -17,9 +19,13 @@ import {
   usePublicLocations,
   useBookableDates,
   useCreateBookingRequest,
+  useUploadReference,
+  useRemoveReference,
+  newUploadBatchId,
   formatCents,
   type BookableDay,
   type PreferredDate,
+  type ReferenceUpload,
   type Service,
 } from "@inkd/core";
 import {
@@ -48,11 +54,11 @@ const MONTHS = [
 ];
 const MAX_PREFERRED = 3;
 
-type StepId = "service" | "details" | "health" | "dates" | "review";
+type StepId = "service" | "details" | "references" | "dates" | "review";
 const STEPS: { id: StepId; label: string }[] = [
   { id: "service", label: "Service" },
   { id: "details", label: "Details" },
-  { id: "health", label: "Health" },
+  { id: "references", label: "References" },
   { id: "dates", label: "Dates" },
   { id: "review", label: "Review" },
 ];
@@ -70,6 +76,7 @@ interface FormState {
   isCoverUp: boolean;
   hasMedical: boolean;
   medicalNotes: string;
+  references: ReferenceUpload[];
   preferred: PreferredDate[];
 }
 
@@ -84,6 +91,7 @@ const EMPTY: FormState = {
   isCoverUp: false,
   hasMedical: false,
   medicalNotes: "",
+  references: [],
   preferred: [],
 };
 
@@ -132,18 +140,103 @@ function BookLoaded({
   const locationsQ = usePublicLocations(artist.artist.id);
   const { days, policy } = useBookableDates(artist.artist.id);
   const createRequest = useCreateBookingRequest(profileQ.data?.id ?? "");
+  const uploadRef = useUploadReference();
+  const removeRef = useRemoveReference();
 
   const [stepIdx, setStepIdx] = useState(0);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [submitting, setSubmitting] = useState(false);
+  const batchId = useRef(newUploadBatchId());
+  const formRef = useRef(form);
+  formRef.current = form;
 
   const step = STEPS[stepIdx]!;
   const signedIn = Boolean(profileQ.data?.id);
   const booksClosed = policy?.booking_window === "closed" || !artist.artist.accepts_new_clients;
   const primaryLocation = locationsQ.data?.[0] ?? null;
+  const allowImages = policy?.allow_image_uploads ?? true;
+  const allowDocs = policy?.allow_document_uploads ?? true;
 
   function patch(next: Partial<FormState>) {
     setForm((f) => ({ ...f, ...next }));
+  }
+
+  async function pickReferenceImages() {
+    if (!signedIn || !profileQ.data) {
+      toast({ title: "Sign in to attach references", variant: "info" });
+      return;
+    }
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      toast({
+        title: "Photo access is off",
+        description: "Enable photo access in Settings to upload.",
+        variant: "danger",
+      });
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.85,
+      allowsMultipleSelection: true,
+    });
+    if (result.canceled || result.assets.length === 0) return;
+    for (const asset of result.assets) {
+      try {
+        const response = await fetch(asset.uri);
+        const blob = await response.blob();
+        const meta = await uploadRef.mutateAsync({
+          clientId: profileQ.data.id,
+          batchId: batchId.current,
+          file: blob,
+          filename: asset.fileName ?? `photo-${Date.now()}.jpg`,
+          contentType: asset.mimeType ?? "image/jpeg",
+          size: asset.fileSize,
+        });
+        patch({ references: [...formRef.current.references, meta] });
+      } catch {
+        toast({ title: "Couldn't upload that image", variant: "danger" });
+      }
+    }
+  }
+
+  async function pickReferenceDocument() {
+    if (!signedIn || !profileQ.data) {
+      toast({ title: "Sign in to attach references", variant: "info" });
+      return;
+    }
+    const result = await DocumentPicker.getDocumentAsync({
+      type: "application/pdf",
+      multiple: true,
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets) return;
+    for (const asset of result.assets) {
+      try {
+        const response = await fetch(asset.uri);
+        const blob = await response.blob();
+        const meta = await uploadRef.mutateAsync({
+          clientId: profileQ.data.id,
+          batchId: batchId.current,
+          file: blob,
+          filename: asset.name,
+          contentType: asset.mimeType ?? "application/pdf",
+          size: asset.size,
+        });
+        patch({ references: [...formRef.current.references, meta] });
+      } catch {
+        toast({ title: `Couldn't upload ${asset.name}`, variant: "danger" });
+      }
+    }
+  }
+
+  async function dropReference(ref: ReferenceUpload) {
+    patch({ references: form.references.filter((r) => r.path !== ref.path) });
+    try {
+      await removeRef.mutateAsync(ref.path);
+    } catch {
+      /* best-effort; the row is still gone from the request */
+    }
   }
 
   const selectedService: Service | null = useMemo(
@@ -179,7 +272,7 @@ function BookLoaded({
         placement: form.placement || null,
         size_description: form.sizeDescription || null,
         description: form.description || null,
-        reference_uploads: [] as Record<string, unknown>[],
+        reference_uploads: form.references as unknown as Record<string, unknown>[],
         budget_min_cents: toCents(form.budgetMin),
         budget_max_cents: toCents(form.budgetMax),
         is_first_tattoo: form.isFirstTattoo,
@@ -249,11 +342,18 @@ function BookLoaded({
               />
             )}
             {step.id === "details" && <StepDetails form={form} patch={patch} service={selectedService} />}
-            {step.id === "health" && (
-              <StepHealth
+            {step.id === "references" && (
+              <StepReferences
                 form={form}
                 patch={patch}
+                allowImages={allowImages}
+                allowDocs={allowDocs}
                 requireMedical={policy?.require_medical_disclosure ?? false}
+                signedIn={signedIn}
+                uploading={uploadRef.isPending}
+                onPickImages={() => void pickReferenceImages()}
+                onPickDocument={() => void pickReferenceDocument()}
+                onDrop={dropReference}
               />
             )}
             {step.id === "dates" && (
@@ -467,28 +567,106 @@ function StepDetails({
   );
 }
 
-function StepHealth({
+function StepReferences({
   form,
   patch,
+  allowImages,
+  allowDocs,
   requireMedical,
+  signedIn,
+  uploading,
+  onPickImages,
+  onPickDocument,
+  onDrop,
 }: {
   form: FormState;
   patch: (n: Partial<FormState>) => void;
+  allowImages: boolean;
+  allowDocs: boolean;
   requireMedical: boolean;
+  signedIn: boolean;
+  uploading: boolean;
+  onPickImages: () => void;
+  onPickDocument: () => void;
+  onDrop: (ref: ReferenceUpload) => void;
 }) {
+  const images = form.references.filter((r) => r.kind === "image");
+  const docs = form.references.filter((r) => r.kind === "document");
   return (
     <View className="gap-6">
       <StepHeading
         eyebrow="Step 3"
-        title="Health & references"
+        title="References & health"
         subtitle="Add inspiration and anything the artist should know before you sit."
       />
 
-      <Card padding="md">
-        <Text className="text-sm text-content-secondary">
-          Add reference photos from inkd.co on the web, or share them in chat after you request.
-        </Text>
-      </Card>
+      {!allowImages && !allowDocs ? (
+        <Card padding="md">
+          <Text className="text-sm text-content-secondary">
+            This artist collects references over chat after your request — nothing to upload
+            here.
+          </Text>
+        </Card>
+      ) : (
+        <View className="gap-4">
+          <View className="flex-row flex-wrap gap-3">
+            {allowImages && (
+              <Button
+                variant="secondary"
+                onPress={onPickImages}
+                disabled={!signedIn}
+                loading={uploading}
+                leadingIcon={<Icon name="image" size={16} color="#FAFAFA" />}
+              >
+                Add reference images
+              </Button>
+            )}
+            {allowDocs && (
+              <Button
+                variant="outline"
+                onPress={onPickDocument}
+                disabled={!signedIn}
+                leadingIcon={<Icon name="plus" size={16} color="#D4D4D8" />}
+              >
+                Add a PDF
+              </Button>
+            )}
+          </View>
+          {!signedIn && (
+            <Text className="text-sm text-content-muted">Sign in to attach files.</Text>
+          )}
+          {images.length > 0 && (
+            <View className="flex-row flex-wrap gap-2.5">
+              {images.map((r) => (
+                <RefImageTile key={r.path} item={r} onRemove={() => onDrop(r)} />
+              ))}
+            </View>
+          )}
+          {docs.length > 0 && (
+            <View className="gap-2">
+              {docs.map((r) => (
+                <View
+                  key={r.path}
+                  className="flex-row items-center gap-3 rounded-lg border border-border-subtle bg-surface-raised px-3 py-2"
+                >
+                  <Icon name="image" size={16} color="#71717A" />
+                  <Text className="flex-1 text-sm text-content-secondary" numberOfLines={1}>
+                    {r.name}
+                  </Text>
+                  <Pressable
+                    onPress={() => onDrop(r)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove ${r.name}`}
+                    hitSlop={6}
+                  >
+                    <Icon name="x" size={16} color="#71717A" />
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
 
       <Divider />
 
@@ -523,6 +701,32 @@ function StepHealth({
           </>
         )}
       </View>
+    </View>
+  );
+}
+
+/** Reference images live in the private booking-uploads bucket — rendered as a
+ * filename chip (no live thumbnail) rather than fetching a signed URL per
+ * tile, mirroring apps/web's RefTile. */
+function RefImageTile({ item, onRemove }: { item: ReferenceUpload; onRemove: () => void }) {
+  return (
+    <View className="h-24 w-24 overflow-hidden rounded-xl border border-border-subtle bg-surface-overlay">
+      <View className="h-full w-full items-center justify-center">
+        <Icon name="image" size={22} color="#71717A" />
+      </View>
+      <View className="absolute inset-x-0 bottom-0 bg-surface-base/80 px-1.5 py-1">
+        <Text className="text-[10px] text-content-muted" numberOfLines={1}>
+          {item.name}
+        </Text>
+      </View>
+      <Pressable
+        onPress={onRemove}
+        accessibilityRole="button"
+        accessibilityLabel={`Remove ${item.name}`}
+        className="absolute right-1 top-1 h-6 w-6 items-center justify-center rounded-full bg-surface-base/80"
+      >
+        <Icon name="x" size={13} color="#A1A1AA" />
+      </Pressable>
     </View>
   );
 }
@@ -643,6 +847,7 @@ function StepReview({
               .join(", ") || "None"
           }
         />
+        <ReviewRow label="References" value={`${form.references.length} attached`} />
         <ReviewRow
           label="Preferred days"
           value={form.preferred.length ? form.preferred.map((p) => fmtDate(p.date)).join(", ") : "Flexible"}

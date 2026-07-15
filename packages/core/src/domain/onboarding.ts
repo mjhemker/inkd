@@ -74,16 +74,72 @@ export interface ServicePreset {
   description: string;
   duration_minutes: number;
   price_type: "fixed" | "hourly" | "starting_at" | "quote";
+  /** Starting placeholder in cents — every artist is expected to tune this to
+   * their own rate before publishing; it is never charged as-is. */
   price_cents: number | null;
   deposit_type: "none" | "fixed" | "percent";
   deposit_amount_cents: number | null;
+  /** Built-in break after the session, in minutes. Omitted/0 = no break. */
+  break_time_minutes?: number;
+  /** Minimum hours of advance notice required to book this service. */
+  lead_time_hours?: number;
+  /** Whether this service can be offered over video call (e.g. consults). */
+  video_conferencing?: boolean;
 }
 
+/**
+ * Onboarding "quick add" presets (SPEC §3 step 4). These are TS constants,
+ * not DB-seeded — each app's `components/artist/services-editor.tsx` calls
+ * `addPreset()` to materialize its own `services` row from one of these, so
+ * there is nothing to migrate; changing a value here only affects services
+ * added after the change. All prices are starting placeholders the artist
+ * is expected to edit to their own rates before publishing.
+ */
 export const SERVICE_PRESETS: ServicePreset[] = [
-  { key: "consultation", name: "Consultation", description: "Talk through placement, size and references before booking.", duration_minutes: 30, price_type: "fixed", price_cents: 0, deposit_type: "none", deposit_amount_cents: null },
-  { key: "hour_session", name: "1-hour session", description: "A single hour of tattoo time.", duration_minutes: 60, price_type: "hourly", price_cents: 20000, deposit_type: "fixed", deposit_amount_cents: 5000 },
-  { key: "half_day", name: "Half day", description: "About four hours in the chair.", duration_minutes: 240, price_type: "fixed", price_cents: 60000, deposit_type: "fixed", deposit_amount_cents: 15000 },
-  { key: "full_day", name: "Full day", description: "A full day of work, roughly eight hours.", duration_minutes: 480, price_type: "fixed", price_cents: 120000, deposit_type: "fixed", deposit_amount_cents: 30000 },
+  {
+    key: "consultation",
+    name: "Consultation",
+    description: "Talk through placement, size and references before booking.",
+    duration_minutes: 30,
+    price_type: "fixed",
+    price_cents: 0,
+    deposit_type: "none",
+    deposit_amount_cents: null,
+    video_conferencing: true,
+  },
+  {
+    key: "hour_session",
+    name: "1-hour session",
+    description: "A single hour of tattoo time.",
+    duration_minutes: 60,
+    price_type: "hourly",
+    price_cents: 20000,
+    deposit_type: "fixed",
+    deposit_amount_cents: 5000,
+  },
+  {
+    key: "half_day",
+    name: "Half day",
+    description: "About four hours in the chair, with a built-in break.",
+    duration_minutes: 240,
+    price_type: "fixed",
+    price_cents: 60000,
+    deposit_type: "fixed",
+    deposit_amount_cents: 15000,
+    break_time_minutes: 30,
+  },
+  {
+    key: "full_day",
+    name: "Full day",
+    description: "A full day of work, roughly seven hours with breaks — book ahead.",
+    duration_minutes: 420,
+    price_type: "fixed",
+    price_cents: 105000,
+    deposit_type: "fixed",
+    deposit_amount_cents: 30000,
+    break_time_minutes: 45,
+    lead_time_hours: 72,
+  },
 ];
 
 /** Action classes for the per-action-class AI override list (SPEC §5 tiers). */

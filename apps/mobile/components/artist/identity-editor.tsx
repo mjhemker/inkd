@@ -6,6 +6,7 @@ import {
   useState,
 } from "react";
 import { Image, Pressable, Text, View } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import {
   Avatar,
   Badge,
@@ -24,6 +25,7 @@ import {
   useStyles,
   useUpdateArtistProfile,
   useUpdateProfile,
+  useUploadMedia,
   usePortfolioPieces,
   usePortfolioMutations,
 } from "@inkd/core/hooks";
@@ -44,17 +46,21 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
     const client = useInkdClient();
     const updateProfile = useUpdateProfile(profile.id);
     const updateArtist = useUpdateArtistProfile(artist.id);
+    const uploadMedia = useUploadMedia(profile.id);
     const { data: styles } = useStyles();
     const { data: pieces } = usePortfolioPieces(artist.id);
-    const { remove: deletePiece } = usePortfolioMutations(artist.id);
+    const { create: createPiece, remove: deletePiece } = usePortfolioMutations(artist.id);
 
     const [displayName, setDisplayName] = useState(profile.display_name ?? "");
     const [handle, setHandle] = useState(profile.handle ?? "");
     const [bio, setBio] = useState(artist.bio ?? profile.bio ?? "");
+    const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url ?? "");
     const [selectedStyles, setSelectedStyles] = useState<string[]>(
       artist.styles ?? [],
     );
     const [handleState, setHandleState] = useState<HandleState>("idle");
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const [portfolioProgress, setPortfolioProgress] = useState<{ done: number; total: number } | null>(null);
 
     const originalHandle = useMemo(
       () => (profile.handle ?? "").toLowerCase(),
@@ -87,6 +93,101 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
       }, 400);
       return () => clearTimeout(t);
     }, [handle, originalHandle, client]);
+
+    async function requestLibraryAccess(): Promise<boolean> {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        toast({
+          title: "Photo access is off",
+          description: "Enable photo access in Settings to upload.",
+          variant: "danger",
+        });
+        return false;
+      }
+      return true;
+    }
+
+    async function pickAvatar() {
+      if (!(await requestLibraryAccess())) return;
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        quality: 0.85,
+        allowsEditing: true,
+        aspect: [1, 1],
+      });
+      if (result.canceled) return;
+      const asset = result.assets[0];
+      if (!asset) return;
+
+      setUploadingAvatar(true);
+      try {
+        const response = await fetch(asset.uri);
+        const blob = await response.blob();
+        const { publicUrl } = await uploadMedia.mutateAsync({
+          folder: "avatars",
+          file: {
+            data: blob,
+            name: asset.fileName ?? `avatar-${Date.now()}.jpg`,
+            contentType: asset.mimeType ?? "image/jpeg",
+          },
+        });
+        setAvatarUrl(publicUrl);
+        await updateProfile.mutateAsync({ avatar_url: publicUrl });
+        toast({ title: "Avatar updated", variant: "success" });
+      } catch (err) {
+        toast({
+          title: "Upload failed",
+          description: err instanceof Error ? err.message : "Try another image.",
+          variant: "danger",
+        });
+      } finally {
+        setUploadingAvatar(false);
+      }
+    }
+
+    async function pickPortfolioImages() {
+      if (!(await requestLibraryAccess())) return;
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        quality: 0.85,
+        allowsMultipleSelection: true,
+      });
+      if (result.canceled || result.assets.length === 0) return;
+
+      const assets = result.assets;
+      setPortfolioProgress({ done: 0, total: assets.length });
+      let failed = 0;
+      for (let i = 0; i < assets.length; i++) {
+        const asset = assets[i]!;
+        try {
+          const response = await fetch(asset.uri);
+          const blob = await response.blob();
+          const { publicUrl } = await uploadMedia.mutateAsync({
+            folder: "portfolio",
+            file: {
+              data: blob,
+              name: asset.fileName ?? `portfolio-${Date.now()}-${i}.jpg`,
+              contentType: asset.mimeType ?? "image/jpeg",
+            },
+          });
+          await createPiece.mutateAsync({ image_url: publicUrl, is_public: true });
+        } catch {
+          failed += 1;
+        } finally {
+          setPortfolioProgress({ done: i + 1, total: assets.length });
+        }
+      }
+      setPortfolioProgress(null);
+      if (failed > 0) {
+        toast({
+          title: failed === assets.length ? "Upload failed" : "Some uploads failed",
+          description: `${assets.length - failed} of ${assets.length} added.`,
+          variant: "danger",
+        });
+      } else {
+        toast({ title: "Portfolio updated", variant: "success" });
+      }
+    }
 
     async function save(): Promise<boolean> {
       if (!displayName.trim()) {
@@ -137,14 +238,19 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
         {/* Avatar + name */}
         <View className="flex-row items-center gap-4">
           <View>
-            <Avatar src={profile.avatar_url ?? undefined} name={displayName || "You"} size="xl" />
+            <Avatar src={avatarUrl || undefined} name={displayName || "You"} size="xl" />
             <Pressable
-              disabled
+              onPress={() => void pickAvatar()}
+              disabled={uploadingAvatar}
               accessibilityRole="button"
-              accessibilityLabel="Add from library — coming soon"
-              className="absolute -bottom-1 -right-1 h-8 w-8 items-center justify-center rounded-full border border-border-strong bg-surface-overlay opacity-50"
+              accessibilityLabel="Upload avatar"
+              className="absolute -bottom-1 -right-1 h-8 w-8 items-center justify-center rounded-full border border-border-strong bg-surface-overlay"
             >
-              <Icon name="image" size={15} color="#71717A" />
+              {uploadingAvatar ? (
+                <Spinner size="small" />
+              ) : (
+                <Icon name="image" size={15} color="#71717A" />
+              )}
             </Pressable>
           </View>
           <View className="flex-1">
@@ -256,13 +362,25 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
             ))}
 
             <Pressable
-              disabled
+              onPress={() => void pickPortfolioImages()}
+              disabled={portfolioProgress !== null}
               accessibilityRole="button"
-              accessibilityLabel="Add images — coming soon"
-              className="h-24 w-24 items-center justify-center gap-1.5 rounded-xl border border-dashed border-border-strong bg-surface-raised/40 opacity-50"
+              accessibilityLabel="Add images"
+              className="h-24 w-24 items-center justify-center gap-1.5 rounded-xl border border-dashed border-border-strong bg-surface-raised/40"
             >
-              <Icon name="plus" size={18} color="#71717A" />
-              <Text className="text-[11px] font-sans-medium text-content-muted">Add images</Text>
+              {portfolioProgress ? (
+                <>
+                  <Spinner size="small" />
+                  <Text className="text-[11px] font-sans-medium text-content-muted">
+                    {portfolioProgress.done}/{portfolioProgress.total}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Icon name="plus" size={18} color="#71717A" />
+                  <Text className="text-[11px] font-sans-medium text-content-muted">Add images</Text>
+                </>
+              )}
             </Pressable>
           </View>
 
