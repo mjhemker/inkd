@@ -1,8 +1,14 @@
-/** Hooks: studio_locations CRUD for the current artist. */
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+/**
+ * Hooks: studio_locations write mutations for the current artist.
+ *
+ * The read hook (`useStudioLocations`) is the canonical one in
+ * `./useArtistContent`; this module owns the create/update/delete mutations
+ * (onboarding + settings). They invalidate the shared `["studioLocations",
+ * artistId]` key so the read stays in sync.
+ */
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
-  listStudioLocations,
   createStudioLocation,
   updateStudioLocation,
   deleteStudioLocation,
@@ -11,15 +17,6 @@ import { useInkdClient } from "./context";
 
 const locationsKey = (artistId: string) =>
   ["studioLocations", artistId] as const;
-
-export function useStudioLocations(artistId: string) {
-  const client = useInkdClient();
-  return useQuery({
-    queryKey: locationsKey(artistId),
-    queryFn: () => listStudioLocations(client, artistId),
-    enabled: Boolean(artistId),
-  });
-}
 
 export function useStudioLocationMutations(artistId: string) {
   const client = useInkdClient();

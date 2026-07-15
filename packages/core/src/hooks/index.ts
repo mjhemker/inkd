@@ -14,10 +14,12 @@ export * from "./useMessages";
 export * from "./useArtist";
 export * from "./useStudioLocations";
 export * from "./useAgentSettings";
-export * from "./usePortfolio";
-export * from "./useCurrentArtistProfile";
 export * from "./useThreads";
 export * from "./queryKeysExtras";
+// useArtistContent is the canonical artist/content/media hook module. It
+// supersedes the onboarding branch's usePortfolio.ts + messaging's
+// useCurrentArtistProfile.ts (both removed on merge) — those duplicated a
+// subset of these hooks with incompatible signatures.
 export * from "./useArtistContent";
 export * from "./usePublicArtistProfile";
 export * from "./useWaivers";

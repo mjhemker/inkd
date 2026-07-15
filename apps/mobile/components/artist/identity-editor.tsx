@@ -46,7 +46,7 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
     const updateArtist = useUpdateArtistProfile(artist.id);
     const { data: styles } = useStyles();
     const { data: pieces } = usePortfolioPieces(artist.id);
-    const { deletePiece } = usePortfolioMutations(artist.id);
+    const { remove: deletePiece } = usePortfolioMutations(artist.id);
 
     const [displayName, setDisplayName] = useState(profile.display_name ?? "");
     const [handle, setHandle] = useState(profile.handle ?? "");

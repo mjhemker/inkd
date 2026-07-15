@@ -47,10 +47,11 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
     const client = useInkdClient();
     const updateProfile = useUpdateProfile(profile.id);
     const updateArtist = useUpdateArtistProfile(artist.id);
-    const uploadMedia = useUploadMedia();
+    const uploadMedia = useUploadMedia(profile.id);
     const { data: styles } = useStyles();
     const { data: pieces } = usePortfolioPieces(artist.id);
-    const { createPiece, deletePiece } = usePortfolioMutations(artist.id);
+    const { create: createPiece, remove: deletePiece } =
+      usePortfolioMutations(artist.id);
 
     const [displayName, setDisplayName] = useState(profile.display_name ?? "");
     const [handle, setHandle] = useState(profile.handle ?? "");
@@ -100,15 +101,12 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
     async function handleAvatarFile(file: File) {
       setUploadingAvatar(true);
       try {
-        const { url } = await uploadMedia.mutateAsync({
-          userId: profile.id,
-          category: "avatar",
-          body: file,
-          contentType: file.type,
-          fileName: file.name,
+        const { publicUrl } = await uploadMedia.mutateAsync({
+          folder: "avatars",
+          file: { data: file, name: file.name, contentType: file.type },
         });
-        setAvatarUrl(url);
-        await updateProfile.mutateAsync({ avatar_url: url });
+        setAvatarUrl(publicUrl);
+        await updateProfile.mutateAsync({ avatar_url: publicUrl });
         toast({ title: "Avatar updated", variant: "success" });
       } catch (err) {
         toast({
@@ -125,14 +123,11 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
       setPortfolioBusy(true);
       try {
         for (const file of Array.from(files)) {
-          const { url } = await uploadMedia.mutateAsync({
-            userId: profile.id,
-            category: "portfolio",
-            body: file,
-            contentType: file.type,
-            fileName: file.name,
+          const { publicUrl } = await uploadMedia.mutateAsync({
+            folder: "portfolio",
+            file: { data: file, name: file.name, contentType: file.type },
           });
-          await createPiece.mutateAsync({ image_url: url, is_public: true });
+          await createPiece.mutateAsync({ image_url: publicUrl, is_public: true });
         }
         toast({ title: "Portfolio updated", variant: "success" });
       } catch (err) {
