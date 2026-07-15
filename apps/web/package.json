@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@inkd/core": "workspace:*",
@@ -22,6 +23,8 @@
     "@inkd/config": "workspace:*",
     "@next/eslint-plugin-next": "^15.5.0",
     "@tailwindcss/postcss": "^4.1.0",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
     "@types/node": "^22.10.7",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19.0.7",
@@ -29,6 +32,9 @@
     "eslint": "^9.18.0",
     "globals": "^15.14.0",
     "tailwindcss": "^4.1.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^25.0.1",
+    "vitest": "^2.1.8"
   }
 }

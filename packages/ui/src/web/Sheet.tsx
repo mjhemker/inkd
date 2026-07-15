@@ -24,6 +24,15 @@ const sideStyles: Record<SheetSide, string> = {
 export function Sheet({ open, onClose, title, children, side = "bottom" }: SheetProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // See Modal.tsx: keep onClose in a ref so the open/focus effect keys purely
+  // on `open`. Otherwise an inline `onClose` re-runs the effect every render and
+  // `panelRef.current?.focus()` steals focus from any field inside the sheet on
+  // each keystroke.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
   useEffect(() => {
     if (!open) return;
 
@@ -32,7 +41,7 @@ export function Sheet({ open, onClose, title, children, side = "bottom" }: Sheet
     panelRef.current?.focus();
 
     function handleKeyDown(event: globalThis.KeyboardEvent) {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") onCloseRef.current();
     }
 
     document.addEventListener("keydown", handleKeyDown);
@@ -40,7 +49,7 @@ export function Sheet({ open, onClose, title, children, side = "bottom" }: Sheet
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
