@@ -842,6 +842,42 @@ export type Database = {
           },
         ]
       }
+      geocode_cache: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          hit_count: number
+          id: string
+          lat: number | null
+          lng: number | null
+          provider: string
+          query: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          hit_count?: number
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          provider?: string
+          query: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          hit_count?: number
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          provider?: string
+          query?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           agent_action_id: string | null
@@ -1147,39 +1183,6 @@ export type Database = {
           },
         ]
       }
-      saved_posts: {
-        Row: {
-          created_at: string
-          post_id: string
-          profile_id: string
-        }
-        Insert: {
-          created_at?: string
-          post_id: string
-          profile_id: string
-        }
-        Update: {
-          created_at?: string
-          post_id?: string
-          profile_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "saved_posts_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "saved_posts_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       post_styles: {
         Row: {
           artist_id: string
@@ -1382,6 +1385,39 @@ export type Database = {
           {
             foreignKeyName: "reviews_client_id_fkey"
             columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_posts: {
+        Row: {
+          created_at: string
+          post_id: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_posts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_posts_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1917,36 +1953,36 @@ export type Database = {
       current_artist_id: { Args: never; Returns: string }
       search_artists: {
         Args: {
-          p_lat?: number | null
-          p_lng?: number | null
-          p_radius_km?: number | null
-          p_style_slugs?: string[] | null
-          p_price_min?: number | null
-          p_price_max?: number | null
-          p_books_open?: boolean | null
-          p_state?: string | null
-          p_query?: string | null
-          p_limit?: number | null
-          p_offset?: number | null
+          p_books_open?: boolean
+          p_lat?: number
+          p_limit?: number
+          p_lng?: number
+          p_offset?: number
+          p_price_max?: number
+          p_price_min?: number
+          p_query?: string
+          p_radius_km?: number
+          p_state?: string
+          p_style_slugs?: string[]
         }
         Returns: {
           artist_id: string
-          handle: string
-          display_name: string
-          avatar_url: string | null
-          styles: string[]
-          min_price_cents: number | null
-          city: string | null
-          state: string | null
-          lat: number | null
-          lng: number | null
-          distance_km: number | null
+          avatar_url: string
+          books_open: boolean
+          city: string
           classification: Database["public"]["Enums"]["artist_classification"]
+          display_name: string
+          distance_km: number
+          handle: string
+          has_active_flash: boolean
+          lat: number
+          lng: number
+          min_price_cents: number
+          state: string
+          styles: string[]
+          travel_at_home: boolean
           travel_fly_out: boolean
           travel_house_calls: boolean
-          travel_at_home: boolean
-          books_open: boolean
-          has_active_flash: boolean
         }[]
       }
     }
