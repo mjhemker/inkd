@@ -214,8 +214,8 @@ export function ClientSigningFlow({ bookingId }: { bookingId: string }) {
 
   if (submitted) {
     return (
-      <div className="flex flex-col items-start gap-4 rounded-2xl border border-success-500/30 bg-surface-raised p-8">
-        <span className="grid h-12 w-12 place-items-center rounded-xl bg-success-500/15 text-success-500">
+      <div className="flex flex-col items-start gap-4 rounded-sm border border-border-subtle bg-surface-raised p-8">
+        <span className="grid h-12 w-12 place-items-center rounded-sm bg-success-600 text-neutral-50">
           <Icon name="check" size={24} />
         </span>
         <div className="flex flex-col gap-2">

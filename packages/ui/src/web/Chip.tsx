@@ -25,8 +25,8 @@ export function Chip({
       className={cx(
         "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors duration-[180ms] ease-[cubic-bezier(0.2,0,0,1)]",
         selected
-          ? "border-border-accent bg-brand/15 text-content-accent"
-          : "border-border bg-surface-raised text-content-secondary",
+          ? "border-brand bg-brand text-brand-on"
+          : "border-border bg-surface-raised text-content-secondary hover:border-border-strong",
         disabled && "pointer-events-none opacity-50",
         className,
       )}

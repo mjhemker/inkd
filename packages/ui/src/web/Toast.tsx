@@ -31,11 +31,12 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
+// Solid stamped left rule per variant (no low-opacity borders).
 const variantStyles: Record<ToastVariant, string> = {
-  default: "border-border-subtle",
-  success: "border-success-500/40",
-  danger: "border-danger-500/40",
-  info: "border-info-500/40",
+  default: "border-border-subtle border-l-2 border-l-border-strong",
+  success: "border-border-subtle border-l-2 border-l-success-500",
+  danger: "border-border-subtle border-l-2 border-l-danger-500",
+  info: "border-border-subtle border-l-2 border-l-info-500",
 };
 
 const variantIconColor: Record<ToastVariant, string> = {
@@ -83,7 +84,7 @@ export function ToastProvider({ children }: { children?: ReactNode }) {
             key={item.id}
             role="status"
             className={cx(
-              "pointer-events-auto flex items-start gap-3 rounded-xl border bg-surface-raised p-4 shadow-lg",
+              "pointer-events-auto flex items-start gap-3 rounded-sm border bg-surface-raised p-4 shadow-lg",
               variantStyles[item.variant ?? "default"],
             )}
           >

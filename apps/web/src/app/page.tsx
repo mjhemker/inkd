@@ -14,16 +14,18 @@ interface WallPiece {
   handle: string;
   gradient: string;
   tall?: boolean;
+  flash?: boolean;
 }
 
-// A gallery wall stand-in: near-black frames with violet-leaning gradients and
-// flash-sheet placards. Artwork is the hero even before real images land.
+// A gallery wall stand-in: near-black frames with violet-leaning gradients, each
+// with a solid museum placard beneath it. Artwork is the hero even before real
+// images land. Two pieces carry an ember FLASH stamp.
 const wall: WallPiece[] = [
-  { style: "Blackwork", handle: "@jayden.ink", gradient: "linear-gradient(150deg,#241733,#0a0a0b 72%)", tall: true },
+  { style: "Blackwork", handle: "@jayden.ink", gradient: "linear-gradient(150deg,#241733,#0a0a0b 72%)", tall: true, flash: true },
   { style: "Fine line", handle: "@mara.fine", gradient: "linear-gradient(150deg,#15213a,#0a0a0b 72%)" },
   { style: "Neo-trad", handle: "@dez.ttt", gradient: "linear-gradient(150deg,#331327,#0a0a0b 72%)" },
   { style: "Japanese", handle: "@ito.irezumi", gradient: "linear-gradient(150deg,#1c1340,#0a0a0b 72%)", tall: true },
-  { style: "Lettering", handle: "@sol.script", gradient: "linear-gradient(150deg,#2a1030,#0a0a0b 72%)" },
+  { style: "Lettering", handle: "@sol.script", gradient: "linear-gradient(150deg,#2a1030,#0a0a0b 72%)", flash: true },
   { style: "Micro-real", handle: "@vee.micro", gradient: "linear-gradient(150deg,#101f33,#0a0a0b 72%)" },
 ];
 
@@ -80,6 +82,13 @@ export default function LandingPage() {
           <p className="pt-2 font-mono text-xs uppercase tracking-[0.18em] text-content-muted">
             Free during pilot · MD + PA ready · Instagram import
           </p>
+          {/* The one hand-marked note on the page — the artist's own aside. */}
+          <p
+            aria-hidden
+            className="-mt-1 -rotate-3 font-hand text-3xl leading-tight text-content-ember"
+          >
+            you make the art — we&apos;ll run the desk
+          </p>
         </div>
 
         <div
@@ -87,24 +96,34 @@ export default function LandingPage() {
           className="[column-fill:balance] columns-2 gap-3 [&>*]:mb-3"
         >
           {wall.map((piece) => (
-            <div
+            <figure
               key={piece.style}
-              className="group relative flex break-inside-avoid flex-col justify-end overflow-hidden rounded-xl border border-border-subtle p-3 transition-colors hover:border-border-accent"
-              style={{
-                background: piece.gradient,
-                minHeight: piece.tall ? 260 : 176,
-              }}
+              className="group mb-3 break-inside-avoid overflow-hidden rounded-sm border border-border-subtle transition-colors hover:border-border-accent"
             >
-              <span className="pointer-events-none absolute right-3 top-3 font-mono text-[10px] uppercase tracking-[0.2em] text-content-muted">
-                Flash
-              </span>
-              <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-content-secondary">
-                {piece.style}
-              </span>
-              <span className="font-mono text-[11px] text-content-muted">
-                {piece.handle}
-              </span>
-            </div>
+              {/* Framed artwork */}
+              <div
+                className="relative"
+                style={{
+                  background: piece.gradient,
+                  minHeight: piece.tall ? 240 : 156,
+                }}
+              >
+                {piece.flash && (
+                  <span className="absolute right-2 top-2 rounded-sm bg-surface-ember px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-on-ember">
+                    Flash
+                  </span>
+                )}
+              </div>
+              {/* Solid museum placard beneath the piece */}
+              <figcaption className="flex items-center justify-between gap-2 border-t border-border-subtle bg-surface-raised px-3 py-2">
+                <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-content-secondary">
+                  {piece.style}
+                </span>
+                <span className="font-mono text-[11px] text-content-muted">
+                  {piece.handle}
+                </span>
+              </figcaption>
+            </figure>
           ))}
         </div>
       </section>
@@ -122,9 +141,9 @@ export default function LandingPage() {
             {pillars.map((pillar) => (
               <article
                 key={pillar.title}
-                className="flex flex-col gap-4 rounded-2xl border border-border-subtle bg-surface-raised p-6"
+                className="flex flex-col gap-4 rounded-sm border border-border-subtle bg-surface-raised p-6"
               >
-                <span className="grid h-11 w-11 place-items-center rounded-xl bg-surface-overlay text-content-accent">
+                <span className="grid h-11 w-11 place-items-center rounded-sm bg-brand text-brand-on">
                   <Icon name={pillar.icon} size={22} />
                 </span>
                 <div className="flex flex-col gap-2">
@@ -144,7 +163,7 @@ export default function LandingPage() {
       <section className="border-t border-border-subtle">
         <div className="mx-auto w-full max-w-6xl px-5 py-16 md:px-8">
           <div
-            className="grid items-center gap-8 rounded-3xl border border-border-subtle p-8 md:p-12 lg:grid-cols-[1fr_1fr]"
+            className="grid items-center gap-8 rounded-sm border border-border-subtle p-8 md:p-12 lg:grid-cols-[1fr_1fr]"
             style={{ background: "linear-gradient(135deg,#180f2c,#141417 68%)" }}
           >
             <div className="flex flex-col gap-4">
@@ -172,9 +191,9 @@ export default function LandingPage() {
               ].map((row) => (
                 <li
                   key={row.text}
-                  className="flex items-start gap-3 rounded-xl border border-border-subtle bg-surface-base/50 p-4"
+                  className="flex items-start gap-3 rounded-sm border border-border-subtle bg-surface-base p-4"
                 >
-                  <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-surface-overlay text-content-accent">
+                  <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-sm bg-surface-overlay text-content-accent">
                     <Icon name={row.icon} size={16} />
                   </span>
                   <span className="text-sm text-content-secondary">{row.text}</span>

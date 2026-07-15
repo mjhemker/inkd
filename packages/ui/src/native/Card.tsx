@@ -32,7 +32,8 @@ export const Card = forwardRef<View, CardProps>(function Card(
   ref,
 ) {
   const classes = cx(
-    "rounded-xl",
+    // Placard discipline: near-square hard edge.
+    "rounded-sm",
     variantClass[variant],
     paddingClass[padding],
     className,
@@ -111,6 +112,35 @@ export function CardFooter({ children, className, ...props }: CardSectionProps) 
       {...props}
     >
       {children}
+    </View>
+  );
+}
+
+export interface CardPlacardProps extends Omit<ViewProps, "children"> {
+  /** Right-aligned secondary mark, e.g. a stamped price. */
+  meta?: ReactNode;
+  children?: ReactNode;
+  className?: string;
+}
+
+/** Museum-placard header strip: mono, uppercase, on a solid ink strip. */
+export function CardPlacard({ meta, children, className, ...props }: CardPlacardProps) {
+  return (
+    <View
+      className={cx(
+        "flex-row items-center justify-between gap-3 border-b border-border-subtle bg-surface-overlay px-4 py-2",
+        className,
+      )}
+      {...props}
+    >
+      <Text className="font-mono text-[11px] uppercase tracking-widest text-content-muted">
+        {children}
+      </Text>
+      {meta != null ? (
+        <Text className="font-mono text-[11px] uppercase tracking-widest text-content-secondary">
+          {meta}
+        </Text>
+      ) : null}
     </View>
   );
 }

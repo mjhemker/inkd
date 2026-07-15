@@ -21,6 +21,10 @@ import {
   JetBrainsMono_400Regular,
   JetBrainsMono_500Medium,
 } from "@expo-google-fonts/jetbrains-mono";
+import {
+  Caveat_600SemiBold,
+  Caveat_700Bold,
+} from "@expo-google-fonts/caveat";
 
 // Hold the native splash until the brand faces are registered — text should
 // never flash in a fallback system font. See tailwind.config.js for the family
@@ -37,6 +41,8 @@ export default function RootLayout() {
     Manrope_700Bold,
     JetBrainsMono_400Regular,
     JetBrainsMono_500Medium,
+    Caveat_600SemiBold,
+    Caveat_700Bold,
   });
 
   useEffect(() => {

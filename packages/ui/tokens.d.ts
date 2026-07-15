@@ -8,6 +8,10 @@ export interface SemanticColors {
     raised: string;
     overlay: string;
     inverse: string;
+    plate: string;
+    plateActive: string;
+    plateInk: string;
+    ember: string;
   };
   text: {
     primary: string;
@@ -15,18 +19,21 @@ export interface SemanticColors {
     muted: string;
     inverse: string;
     accent: string;
+    ember: string;
   };
   border: {
     subtle: string;
     default: string;
     strong: string;
     accent: string;
+    ember: string;
   };
   brand: {
     primary: string;
     primaryHover: string;
     primaryActive: string;
     onPrimary: string;
+    onEmber: string;
   };
   status: {
     success: string;
@@ -34,15 +41,25 @@ export interface SemanticColors {
     danger: string;
     info: string;
   };
+  paper: {
+    base: string;
+    raised: string;
+    ink: string;
+    muted: string;
+    border: string;
+    accent: string;
+  };
 }
 
 export interface InkdColors {
   primary: ColorRamp;
+  ember: ColorRamp;
   neutral: ColorRamp;
   success: ColorRamp;
   warning: ColorRamp;
   danger: ColorRamp;
   info: ColorRamp;
+  paper: ColorRamp;
   semantic: SemanticColors;
 }
 

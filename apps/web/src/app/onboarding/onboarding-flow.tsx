@@ -321,9 +321,12 @@ function CongratsScreen({ onFinish }: { onFinish: () => void }) {
   return (
     <div className="grid min-h-dvh place-items-center bg-surface-base px-5 text-content-primary">
       <div className="flex max-w-md flex-col items-center gap-6 text-center">
-        <span className="grid h-16 w-16 place-items-center rounded-2xl bg-brand text-brand-on shadow-glow">
+        <span className="grid h-16 w-16 place-items-center rounded-sm bg-brand text-brand-on shadow-plate">
           <Icon name="sparkles" size={30} />
         </span>
+        <p className="-mb-2 font-hand text-3xl leading-none text-content-ember">
+          welcome to the wall
+        </p>
         <div className="flex flex-col gap-2">
           <Eyebrow>You&apos;re set up</Eyebrow>
           <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">

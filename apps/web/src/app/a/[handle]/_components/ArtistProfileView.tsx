@@ -69,7 +69,7 @@ export function ArtistProfileView({ data }: { data: PublicArtistData }) {
       <TopBar handle={profile.handle} />
 
       {isOwnProfile && (
-        <div className="border-b border-border-subtle bg-brand/10">
+        <div className="border-b border-border-subtle bg-surface-plate-ink">
           <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-2.5 text-sm md:px-8">
             <span className="text-content-secondary">
               You&apos;re viewing your own public profile.

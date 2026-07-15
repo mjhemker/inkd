@@ -45,14 +45,10 @@ export default function AuthPage() {
 function AuthShell() {
   return (
     <div className="relative min-h-dvh overflow-hidden bg-surface-base text-content-primary">
-      {/* Ambient gallery-wall glow, echoing the landing page's frame gradients */}
+      {/* Solid violet plate rule across the top — no ambient glow. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px]"
-        style={{
-          background:
-            "radial-gradient(60% 60% at 50% 0%, rgba(124,58,237,0.18), transparent 70%)",
-        }}
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-1.5 bg-brand"
       />
 
       <header className="border-b border-border-subtle">

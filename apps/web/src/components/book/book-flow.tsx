@@ -300,7 +300,7 @@ function BookLoaded({
           </div>
 
           {!signedIn && (
-            <div className="mt-6 flex flex-wrap items-center gap-3 rounded-xl border border-brand/25 bg-brand/8 px-4 py-3">
+            <div className="mt-6 flex flex-wrap items-center gap-3 rounded-sm border border-border-accent bg-surface-plate-ink px-4 py-3">
               <Icon name="user" size={16} className="text-content-accent" />
               <p className="flex-1 text-sm text-content-secondary">
                 You can build your request now — you&apos;ll sign in to attach
@@ -478,9 +478,9 @@ function ServiceCard({
       onClick={onClick}
       aria-pressed={selected}
       className={
-        "group flex flex-col gap-1.5 rounded-xl border p-4 text-left outline-none transition-all focus-visible:ring-2 focus-visible:ring-brand " +
+        "group flex flex-col gap-1.5 rounded-sm border p-4 text-left outline-none transition-all focus-visible:ring-2 focus-visible:ring-brand " +
         (selected
-          ? "border-brand bg-brand/8 shadow-glow"
+          ? "border-brand bg-surface-plate-ink shadow-plate"
           : "border-border-subtle bg-surface-raised hover:border-border-strong")
       }
     >
@@ -810,7 +810,7 @@ function StepDates({
                       className={
                         "flex min-w-[4.5rem] flex-col items-center gap-0.5 rounded-lg border px-3 py-2 text-center outline-none transition-all focus-visible:ring-2 focus-visible:ring-brand " +
                         (isSel
-                          ? "border-brand bg-brand/12 text-content-primary"
+                          ? "border-brand bg-surface-plate-ink text-content-primary"
                           : "border-border-subtle bg-surface-raised text-content-secondary hover:border-border-strong")
                       }
                     >

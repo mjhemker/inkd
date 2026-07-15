@@ -125,7 +125,7 @@ function SidebarLink({ item, active }: { item: NavItem; active: string }) {
         className={cx(
           "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base",
           isActive
-            ? "bg-brand/12 text-content-primary"
+            ? "bg-surface-plate-ink text-content-primary"
             : "text-content-secondary hover:bg-surface-raised hover:text-content-primary",
         )}
       >

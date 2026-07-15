@@ -36,12 +36,14 @@ export {
   CardDescription,
   CardContent,
   CardFooter,
+  CardPlacard,
   type CardProps,
   type CardVariant,
   type CardPadding,
   type CardSectionProps,
   type CardTitleProps,
   type CardDescriptionProps,
+  type CardPlacardProps,
 } from "./Card";
 
 export { Divider, type DividerProps } from "./Divider";

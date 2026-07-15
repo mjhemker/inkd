@@ -31,11 +31,12 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
+// Solid stamped left rule per variant (no low-opacity borders).
 const variantClass: Record<ToastVariant, string> = {
-  default: "border-border-subtle bg-surface-overlay",
-  success: "border-success-700 bg-surface-overlay",
-  danger: "border-danger-700 bg-surface-overlay",
-  info: "border-info-700 bg-surface-overlay",
+  default: "border-border-subtle border-l-2 border-l-border-strong bg-surface-overlay",
+  success: "border-border-subtle border-l-2 border-l-success-500 bg-surface-overlay",
+  danger: "border-border-subtle border-l-2 border-l-danger-500 bg-surface-overlay",
+  info: "border-border-subtle border-l-2 border-l-info-500 bg-surface-overlay",
 };
 
 const variantIcon: Record<ToastVariant, "check" | "x" | "bell"> = {
@@ -89,7 +90,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
             accessibilityRole="alert"
             onPress={() => dismiss(entry.id)}
             className={cx(
-              "w-full max-w-md flex-row items-start gap-2 rounded-xl border p-3",
+              "w-full max-w-md flex-row items-start gap-2 rounded-sm border p-3",
               variantClass[entry.variant],
             )}
           >

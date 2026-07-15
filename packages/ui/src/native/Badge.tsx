@@ -5,6 +5,7 @@ import { cx } from "../cx";
 export type BadgeVariant =
   | "neutral"
   | "brand"
+  | "ember"
   | "success"
   | "warning"
   | "danger"
@@ -15,6 +16,8 @@ export type BadgeSize = "sm" | "md";
 const container: Record<BadgeVariant, string> = {
   neutral: "bg-surface-overlay",
   brand: "bg-brand",
+  // Ember stamp — flash drops / price marks. Warm plate, dark ink.
+  ember: "bg-surface-ember",
   success: "bg-success-600",
   warning: "bg-warning-600",
   danger: "bg-danger-600",
@@ -25,6 +28,7 @@ const container: Record<BadgeVariant, string> = {
 const label: Record<BadgeVariant, string> = {
   neutral: "text-content-secondary",
   brand: "text-brand-on",
+  ember: "text-brand-on-ember",
   success: "text-neutral-50",
   warning: "text-neutral-50",
   danger: "text-neutral-50",

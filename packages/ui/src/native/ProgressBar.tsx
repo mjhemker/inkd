@@ -45,10 +45,10 @@ export function ProgressBar({
       <View
         accessibilityRole="progressbar"
         accessibilityValue={{ min: 0, max, now: clamped }}
-        className={cx("w-full overflow-hidden rounded-full bg-surface-overlay", trackHeight[size])}
+        className={cx("w-full overflow-hidden rounded-sm bg-surface-overlay", trackHeight[size])}
       >
         <View
-          className={cx("h-full rounded-full bg-brand")}
+          className={cx("h-full rounded-sm bg-brand")}
           style={{ width: `${percent}%` }}
         />
       </View>
