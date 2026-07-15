@@ -1,0 +1,36 @@
+{
+  "name": "@inkd/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "INKD shared domain layer: typed Supabase client, env resolution, zod schemas, types.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./supabase": {
+      "types": "./src/supabase/index.ts",
+      "default": "./src/supabase/index.ts"
+    },
+    "./types": {
+      "types": "./src/types/index.ts",
+      "default": "./src/types/index.ts"
+    }
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.48.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@inkd/config": "workspace:*",
+    "eslint": "^9.18.0",
+    "typescript": "^5.7.3"
+  }
+}
