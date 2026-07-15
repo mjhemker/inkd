@@ -143,6 +143,27 @@ function ProfileScreenContent() {
               Edit profile
             </Button>
           </View>
+
+          {isArtist && (
+            <View className="flex-row gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="flex-1"
+                onPress={() => router.push("/dashboard")}
+              >
+                Dashboard
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="flex-1"
+                onPress={() => router.push("/settings")}
+              >
+                Studio settings
+              </Button>
+            </View>
+          )}
         </Card>
 
         {isArtist && artist ? (
