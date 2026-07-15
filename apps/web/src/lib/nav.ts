@@ -18,6 +18,7 @@ export const primaryNav: NavItem[] = [
 /** Artist-only surfaces — the ops wedge. Shown in the desktop sidebar. */
 export const artistNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: "layout-grid" },
+  { label: "AI staff", href: "/studio/ai", icon: "sparkles" },
   { label: "Settings", href: "/settings", icon: "settings" },
 ];
 

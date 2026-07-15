@@ -15,6 +15,7 @@ export * from "./useArtist";
 export * from "./useStudioLocations";
 export * from "./useDiscover";
 export * from "./useAgentSettings";
+export * from "./useAgentStaff";
 export * from "./useThreads";
 export * from "./queryKeysExtras";
 // useArtistContent is the canonical artist/content/media hook module. It

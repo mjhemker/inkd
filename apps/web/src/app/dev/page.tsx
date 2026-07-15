@@ -67,6 +67,12 @@ const DEV_ROUTES: { href: string; title: string; description: string }[] = [
     description:
       "Bell + unread badge, dropdown panel, and the full /notifications page (NotificationBell, NotificationsHub) against seeded fixture data.",
   },
+  {
+    href: "/dev/ai-staff-preview",
+    title: "AI staff — trust surfaces",
+    description:
+      "The /studio/ai area (AiStaffView): approvals inbox with placard cards, provenance + tier stamps, the activity ledger, and the playbook editor — against a seeded mock of the agent_actions contract.",
+  },
 ];
 
 export default function DevIndexPage() {

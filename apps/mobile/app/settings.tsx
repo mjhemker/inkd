@@ -124,7 +124,32 @@ function SettingsView() {
                   </Button>
                 </View>
               )}
-              {tab === "ai" && <AgentAutonomyEditor artist={artist} variant="settings" />}
+              {tab === "ai" && (
+                <View className="gap-5">
+                  <Card
+                    padding="md"
+                    variant="interactive"
+                    onPress={() => router.push("/studio/ai")}
+                    className="flex-row items-center justify-between"
+                  >
+                    <View className="flex-row items-center gap-3">
+                      <View className="h-9 w-9 items-center justify-center rounded-sm bg-surface-ember">
+                        <Icon name="sparkles" size={17} color="#0A0A0B" />
+                      </View>
+                      <View>
+                        <Text className="text-sm font-sans-semibold text-content-primary">
+                          Your AI staff area
+                        </Text>
+                        <Text className="text-xs text-content-muted">
+                          Approvals, activity ledger, and playbook
+                        </Text>
+                      </View>
+                    </View>
+                    <Icon name="arrow-right" size={16} color="#71717A" />
+                  </Card>
+                  <AgentAutonomyEditor artist={artist} variant="settings" />
+                </View>
+              )}
               {tab === "account" && (
                 <AccountPanel
                   profileName={profile.display_name}
