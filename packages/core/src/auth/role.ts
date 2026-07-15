@@ -8,6 +8,7 @@ import { z } from "zod";
 
 import type { InkdSupabaseClient } from "../supabase/client";
 import { getUser } from "./core";
+import { seedOnboardingPlaybook } from "../agent/onboardingPlaybook";
 import type {
   Profile,
   ProfileUpdate,
@@ -154,5 +155,17 @@ export async function setOnboardingStep(
     .select("*")
     .single();
   if (error) throw error;
+
+  // On onboarding completion, seed the agent's starter playbook from the data
+  // the artist just entered (idempotent). Best-effort: a failure here must never
+  // block the artist from finishing onboarding.
+  if (opts.completed) {
+    try {
+      await seedOnboardingPlaybook(client, artistId);
+    } catch {
+      // swallow — the playbook can be (re)generated later from settings.
+    }
+  }
+
   return data;
 }
