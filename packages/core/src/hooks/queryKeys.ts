@@ -15,4 +15,9 @@ export const queryKeys = {
     ["bookingRequests", "client", clientId] as const,
   threadMessages: (threadId: string) => ["messages", threadId] as const,
   notifications: (profileId: string) => ["notifications", profileId] as const,
+  artistPayments: (artistId: string) => ["payments", "artist", artistId] as const,
+  artistEarnings: (artistId: string) => ["earnings", artistId] as const,
+  sessionPayments: (sessionId: string) =>
+    ["payments", "session", sessionId] as const,
+  connectStatus: (artistId: string) => ["connectStatus", artistId] as const,
 } as const;
