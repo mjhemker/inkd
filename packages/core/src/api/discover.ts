@@ -17,9 +17,20 @@ import type { InkdSupabaseClient } from "../supabase/client";
 import type { Database } from "../types/database";
 import type { UsState } from "../types/rows";
 
-/** A single discovery result row (mirrors `search_artists` RETURNS TABLE). */
-export type ArtistCard =
-  Database["public"]["Functions"]["search_artists"]["Returns"][number];
+/**
+ * A single discovery result row (mirrors `search_artists` RETURNS TABLE).
+ *
+ * `distance_km` is overridden to `number | null`: the RPC computes it only when
+ * a center (`p_lat`/`p_lng`) is supplied and returns SQL NULL otherwise, but
+ * the Supabase type generator can't express nullability of SET-RETURNING
+ * function columns and emits it as non-null. Every consumer already guards
+ * `distance_km != null`, so we reconcile the type to the real runtime shape
+ * here instead of hand-editing the regenerated database.ts.
+ */
+export type ArtistCard = Omit<
+  Database["public"]["Functions"]["search_artists"]["Returns"][number],
+  "distance_km"
+> & { distance_km: number | null };
 
 // ---------------------------------------------------------------------------
 // Params — the app speaks camelCase; the RPC speaks p_snake_case.
@@ -82,15 +93,15 @@ export async function searchArtists(
 ): Promise<ArtistCard[]> {
   const p = discoverParamsSchema.parse(params);
   const { data, error } = await client.rpc("search_artists", {
-    p_lat: p.lat ?? null,
-    p_lng: p.lng ?? null,
-    p_radius_km: p.radiusKm ?? null,
-    p_style_slugs: p.styles && p.styles.length > 0 ? p.styles : null,
-    p_price_min: p.priceMin ?? null,
-    p_price_max: p.priceMax ?? null,
-    p_books_open: p.booksOpen ?? null,
-    p_state: p.state ?? null,
-    p_query: p.query && p.query.length > 0 ? p.query : null,
+    p_lat: p.lat ?? undefined,
+    p_lng: p.lng ?? undefined,
+    p_radius_km: p.radiusKm ?? undefined,
+    p_style_slugs: p.styles && p.styles.length > 0 ? p.styles : undefined,
+    p_price_min: p.priceMin ?? undefined,
+    p_price_max: p.priceMax ?? undefined,
+    p_books_open: p.booksOpen ?? undefined,
+    p_state: p.state ?? undefined,
+    p_query: p.query && p.query.length > 0 ? p.query : undefined,
     p_limit: p.limit ?? 60,
     p_offset: p.offset ?? 0,
   });
