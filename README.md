@@ -4,7 +4,9 @@ The operating system for independent tattoo artists — artist ops first (the we
 
 Brand: near-black canvas + violet-purple accent. Domain: [getinkd.co](https://getinkd.co). Pilot: Baltimore + Philadelphia.
 
-See [`docs/SPEC.md`](docs/SPEC.md) for the canonical build specification.
+See [`docs/SPEC.md`](docs/SPEC.md) for the canonical build specification, and
+[`docs/TESTING.md`](docs/TESTING.md) for the hands-on pilot test script (demo
+logins, what to click, what works vs. what's awaiting keys).
 
 ## Monorepo layout
 
@@ -68,8 +70,38 @@ The project URL (`https://khlpidflnvkqafkvkpfy.supabase.co`) is committed in the
 `.env.example` files; the anon key is a placeholder — pull the real one from the
 Supabase dashboard and keep it out of git.
 
-## Status
+## Documentation
 
-Phase 0 (foundation) — monorepo scaffold, design tokens, shared core, and app
-shells. Feature work (onboarding, bookings, discovery, AI staff) follows the
-phases in `docs/SPEC.md`.
+- [`docs/SPEC.md`](docs/SPEC.md) — canonical build spec (locked decisions, data
+  model, phases, AI agent architecture).
+- [`docs/TESTING.md`](docs/TESTING.md) — pilot test script: demo personas +
+  password, per-platform walkthroughs, deploy checklist, gates.
+- [`docs/agents-runtime.md`](docs/agents-runtime.md) — AI staff runtime, policy
+  engine, tiers, and the scheduled-jobs lane.
+- [`docs/payments.md`](docs/payments.md) — Stripe Connect deposits + fee ledger.
+- [`docs/instagram-integration.md`](docs/instagram-integration.md) — IG import +
+  share kit.
+- [`docs/waivers-DRAFT-for-review.md`](docs/waivers-DRAFT-for-review.md) — MD/PA
+  waiver templates + e-signature.
+
+## Status — pilot build
+
+All five phases are implemented and green on lint / typecheck / web build /
+mobile tsc / 144 edge-function tests:
+
+- **P0 Foundation** — monorepo, design tokens, Supabase schema v1 + RLS + seed,
+  dual-role auth, CI. ✅
+- **P1 Artist core** — onboarding wizard, dashboard, profile/portfolio, booking
+  pipeline, waivers, realtime chat. ✅ (Stripe deposits & ID verification are
+  code-complete but key-gated — see the deploy checklist in `docs/TESTING.md`.)
+- **P2 Client discovery** — feed, map + working filters, public profiles,
+  booking flow, reviews. ✅
+- **P3 AI staff** — runtime + deterministic policy/tier engine, Front Desk &
+  Booking Manager, approvals inbox, activity ledger, playbook. ✅ (Live drafting
+  needs `ANTHROPIC_API_KEY`; the trust surfaces + approve/reject are live.)
+- **P4 Growth** — Instagram share kit (live) + key-gated import, photo try-on,
+  Studio Manager scheduled jobs, Pro-tier scaffold. ✅
+
+Two edge functions (`geocode-location`, `approve-agent-action`) are deployed and
+ACTIVE; the payments / AI-run / Instagram functions await API keys. See
+[`docs/TESTING.md`](docs/TESTING.md) §5 for the function × secret deploy table.
