@@ -267,23 +267,22 @@ export function RequestDetail({ requestId }: { requestId: string }) {
           </>
         }
       >
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-5">
           <FormField label="Project title" htmlFor="ac-title">
-            <Input id="ac-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Half-sleeve — heron" />
+            <Input id="ac-title" size="lg" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Half-sleeve — heron" />
           </FormField>
-          <div className="grid grid-cols-2 gap-4">
-            <FormField label="Deposit" htmlFor="ac-dep" description="On the first session.">
-              <Input id="ac-dep" inputMode="numeric" value={deposit} onChange={(e) => setDeposit(e.target.value)} placeholder="$150" leadingIcon={<Icon name="credit-card" size={16} />} />
-            </FormField>
-            <FormField label="Sessions" htmlFor="ac-sessions">
-              <Select
-                id="ac-sessions"
-                value={sessions}
-                onChange={(e) => setSessions(e.target.value)}
-                options={["1", "2", "3", "4", "5", "6"].map((n) => ({ label: n, value: n }))}
-              />
-            </FormField>
-          </div>
+          <FormField label="Deposit" htmlFor="ac-dep" description="On the first session.">
+            <Input id="ac-dep" size="lg" inputMode="numeric" value={deposit} onChange={(e) => setDeposit(e.target.value)} placeholder="$150" leadingIcon={<Icon name="credit-card" size={18} />} />
+          </FormField>
+          <FormField label="Sessions" htmlFor="ac-sessions">
+            <Select
+              id="ac-sessions"
+              size="lg"
+              value={sessions}
+              onChange={(e) => setSessions(e.target.value)}
+              options={["1", "2", "3", "4", "5", "6"].map((n) => ({ label: n, value: n }))}
+            />
+          </FormField>
         </div>
       </Modal>
 
