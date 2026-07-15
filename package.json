@@ -1,0 +1,23 @@
+{
+  "name": "inkd",
+  "version": "0.1.0",
+  "private": true,
+  "description": "INKD — artist-ops + client-discovery platform (pnpm + Turborepo monorepo)",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "turbo": "^2.10.5",
+    "typescript": "^5.7.3"
+  }
+}

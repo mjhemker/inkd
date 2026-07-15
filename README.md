@@ -1,72 +1,75 @@
-# INKD Web Application
+# INKD
 
-A comprehensive web platform for tattoo enthusiasts and artists featuring social feeds, local artist discovery, portfolio management, and AI-powered assistance.
+The operating system for independent tattoo artists — artist ops first (the wedge), client discovery second, with operational AI staff layered on top. Web and mobile are built **in tandem** on a shared Supabase backend.
 
-## Features
+Brand: near-black canvas + violet-purple accent. Domain: [getinkd.co](https://getinkd.co). Pilot: Baltimore + Philadelphia.
 
-- **Social Feed**: Browse and share tattoo posts with responsive grid layout
-- **Local Discovery**: Find nearby artists with interactive map and card interface
-- **Artist Profiles**: Comprehensive profiles with Info, Posts, and Portfolio tabs
-- **AI Assistant**: Booking assistance, inquiry triage, and market research
-- **Daily Highlights**: Curated content to drive user engagement
-- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
+See [`docs/SPEC.md`](docs/SPEC.md) for the canonical build specification.
 
-## Tech Stack
+## Monorepo layout
 
-- **Frontend**: Next.js 15 with TypeScript, Tailwind CSS v4
-- **State Management**: Zustand
-- **Backend**: Supabase (Auth, Database, Storage)
-- **Maps**: Mapbox GL JS / React Map GL
-- **UI Components**: Headless UI, Heroicons
+```
+INKD (pnpm workspaces + Turborepo)
+├── apps/
+│   ├── web/       Next.js 15 (App Router, TS, Tailwind v4)
+│   └── mobile/    Expo (expo-router, TS, NativeWind v4)
+├── packages/
+│   ├── core/      typed Supabase client, env resolver, zod, shared types
+│   ├── ui/        design tokens (near-black / violet) + shared primitives
+│   └── config/    tsconfig bases, ESLint config, Tailwind preset
+├── supabase/      migrations, edge functions, RLS, seed (owned separately)
+└── docs/          SPEC.md, ADRs, phase reports
+```
 
-## Setup
+Design tokens live in `packages/ui` and feed a shared Tailwind preset in
+`packages/config`, which both web (Tailwind v4, via `@config`) and mobile
+(NativeWind v4) consume — so brand colors, spacing, radii and type scale stay in
+lockstep across platforms.
 
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+## Prerequisites
 
-2. **Environment Variables:**
-   Create a `.env.local` file with:
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=https://rzubqnqqvjkwnavmzcgz.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_access_token
-   ```
+- Node.js >= 20
+- pnpm 10 (`corepack enable` or `npm i -g pnpm`)
 
-3. **Database Setup:**
-   - Run the SQL in `supabase-schema.sql` in your Supabase SQL editor
-   - This creates all necessary tables, indexes, and RLS policies
+## Getting started
 
-4. **Development:**
-   ```bash
-   npm run dev
-   ```
+```bash
+pnpm install
 
-## Database Schema
+# copy env templates and fill in the Supabase anon key
+cp apps/web/.env.example apps/web/.env.local
+cp apps/mobile/.env.example apps/mobile/.env
 
-The application uses the following main tables:
-- `users` - User profiles and artist information
-- `posts` - Social feed posts with images and metadata
-- `portfolio` - Artist portfolio items categorized by type
-- `messages` - Direct messaging between users
-- `appointments` - Booking requests and confirmations
-- `daily_highlights` - Curated daily content
-- `assistant_*` - AI assistant events, settings, and reports
+pnpm dev            # run all apps via Turborepo
+pnpm --filter web dev
+pnpm --filter mobile dev
+```
 
-## Development
+## Scripts (root)
 
-- `npm run dev` - Start development server with Turbopack
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
+| Command          | What it does                     |
+| ---------------- | -------------------------------- |
+| `pnpm dev`       | Run every app in dev (Turborepo) |
+| `pnpm build`     | Build all packages and apps      |
+| `pnpm lint`      | Lint all workspaces              |
+| `pnpm typecheck` | Type-check all workspaces        |
+| `pnpm format`    | Prettier across the repo         |
 
-## Deployment
+Filter a single workspace with `pnpm --filter <web|mobile|@inkd/core|@inkd/ui> <script>`.
 
-The application is ready for deployment on Vercel, Netlify, or any other Next.js-compatible platform.
+## Environment variables
 
-### Environment Setup
-Ensure all environment variables are configured in your deployment platform.
+`@inkd/core` resolves Supabase config from platform-specific public env vars:
 
-### Database Migrations
-Run the SQL schema in your Supabase project before deploying.
+- Web: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- Mobile: `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+
+The project URL (`https://khlpidflnvkqafkvkpfy.supabase.co`) is committed in the
+`.env.example` files; the anon key is a placeholder — pull the real one from the
+Supabase dashboard and keep it out of git.
+
+## Status
+
+Phase 0 (foundation) — monorepo scaffold, design tokens, shared core, and app
+shells. Feature work (onboarding, bookings, discovery, AI staff) follows the
+phases in `docs/SPEC.md`.
