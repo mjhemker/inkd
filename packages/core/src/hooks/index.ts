@@ -15,3 +15,5 @@ export * from "./useArtist";
 export * from "./useStudioLocations";
 export * from "./useAgentSettings";
 export * from "./usePortfolio";
+export * from "./useCurrentArtistProfile";
+export * from "./useThreads";
