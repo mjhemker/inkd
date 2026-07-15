@@ -9,3 +9,4 @@ export * from "./types";
 export * from "./auth";
 export * from "./api";
 export * from "./hooks";
+export * from "./domain/onboarding";
