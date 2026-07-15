@@ -68,6 +68,12 @@ const DEV_ROUTES: { href: string; title: string; description: string }[] = [
       "Bell + unread badge, dropdown panel, and the full /notifications page (NotificationBell, NotificationsHub) against seeded fixture data.",
   },
   {
+    href: "/dev/try-on-preview",
+    title: "Fit check (try-on)",
+    description:
+      "The photo-based tattoo fit-check editor preloaded with a sample body photo + design: drag/scale/rotate, ink (multiply) blend, wrap/opacity, before/after, and the stamped export placard. Fully offline, client-side only.",
+  },
+  {
     href: "/dev/ai-staff-preview",
     title: "AI staff — trust surfaces",
     description:

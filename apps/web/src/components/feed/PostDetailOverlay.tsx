@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { Avatar, Button, Icon, cx } from "@inkd/ui/web";
-import type { FeedItem } from "@inkd/core";
+import { tryOnHref, type FeedItem } from "@inkd/core";
 import { LinkButton } from "@/components/link-button";
 import { flashPriceLabel } from "@/lib/format";
 import { artworkGradient } from "./artwork";
@@ -201,6 +201,12 @@ export function PostDetailOverlay({
 
           {/* CTAs */}
           <div className="mt-auto flex flex-col gap-2 pt-2">
+            {src && (
+              <LinkButton href={tryOnHref(src)} size="md" variant="secondary">
+                <Icon name="sparkles" size={16} />
+                Try it on — fit check
+              </LinkButton>
+            )}
             {isFlash && handle && (
               <LinkButton href={`/book/${handle}`} size="md">
                 Book this flash

@@ -149,6 +149,20 @@ export function PostDetailSheet({ item, onClose }: PostDetailSheetProps) {
               </View>
             )}
 
+            {imageUrl ? (
+              <Button
+                variant="secondary"
+                onPress={() => {
+                  onClose();
+                  router.push(
+                    `/try-on?design=${encodeURIComponent(imageUrl)}` as never,
+                  );
+                }}
+              >
+                Try it on — fit check
+              </Button>
+            ) : null}
+
             <View className="flex-row gap-3 pt-2">
               <Button
                 variant="secondary"

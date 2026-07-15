@@ -16,3 +16,4 @@ export * from "./agent";
 export * from "./utils";
 export * from "./waivers";
 export * from "./reviews";
+export * from "./tryon";
