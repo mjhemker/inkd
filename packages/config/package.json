@@ -1,0 +1,30 @@
+{
+  "name": "@inkd/config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared build configuration for INKD: tsconfig bases, ESLint flat config, Tailwind preset.",
+  "type": "module",
+  "files": [
+    "tsconfig.base.json",
+    "tsconfig.nextjs.json",
+    "tsconfig.react-native.json",
+    "eslint.base.js",
+    "tailwind-preset.cjs"
+  ],
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./tsconfig.nextjs.json": "./tsconfig.nextjs.json",
+    "./tsconfig.react-native.json": "./tsconfig.react-native.json",
+    "./eslint": "./eslint.base.js",
+    "./tailwind-preset": "./tailwind-preset.cjs"
+  },
+  "dependencies": {
+    "@inkd/ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "eslint": "^9.18.0",
+    "typescript-eslint": "^8.20.0",
+    "globals": "^15.14.0"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "$comment": "Standalone: @inkd/ui is a leaf package (design tokens) and deliberately depends on no other workspace package, so it does not extend @inkd/config.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true
+  },
+  "include": ["index.js", "index.d.ts", "tokens.cjs", "tokens.d.ts"],
+  "exclude": ["node_modules", "dist"]
+}
