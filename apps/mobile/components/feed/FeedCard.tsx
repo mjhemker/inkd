@@ -27,9 +27,12 @@ export function FeedCard({ item, onOpen }: FeedCardProps) {
   const toggleSave = useToggleSave();
 
   const imageUrl = item.kind === "post" ? item.coverUrl : item.imageUrl;
+  const handle = item.artist.handle;
+  // Style + location only — the handle is rendered separately below as its
+  // own pressable link so it can navigate to the artist profile.
   const placard = placardLine({
     styleNames: item.styleTags.map((t) => t.name),
-    handle: item.artist.handle,
+    handle: null,
     city: item.artist.city,
     state: item.artist.state,
   });
@@ -72,12 +75,31 @@ export function FeedCard({ item, onOpen }: FeedCardProps) {
 
       <View className="gap-2 border-t border-border-subtle bg-surface-overlay px-3 py-2.5">
         <View className="flex-row items-start justify-between gap-2">
-          <Text
-            numberOfLines={1}
-            className="flex-1 font-mono text-[11px] uppercase tracking-widest text-content-secondary"
-          >
-            {placard}
-          </Text>
+          <View className="flex-1 flex-row flex-wrap items-baseline gap-x-1.5">
+            {(placard !== "INKD ARTIST" || !handle) && (
+              <Text
+                numberOfLines={1}
+                className="font-mono text-[11px] uppercase tracking-widest text-content-secondary"
+              >
+                {placard}
+              </Text>
+            )}
+            {handle && (
+              <Pressable
+                onPress={() => router.push(`/artist/${handle}` as never)}
+                hitSlop={6}
+                accessibilityRole="link"
+                accessibilityLabel={`View @${handle}'s profile`}
+              >
+                <Text
+                  numberOfLines={1}
+                  className="font-mono text-[11px] uppercase tracking-widest text-content-accent"
+                >
+                  @{handle}
+                </Text>
+              </Pressable>
+            )}
+          </View>
           <BooksSignal acceptsNewClients={item.artist.acceptsNewClients} />
         </View>
 

@@ -69,16 +69,26 @@ function CardShell({
   label: string;
   children: React.ReactNode;
 }) {
+  // A div (not a <button>) so the placard below can nest a real <Link> to the
+  // artist's profile — interactive elements can't validly nest inside <button>.
+  // Keyboard activation (Enter/Space) mirrors native button semantics.
   return (
     <article className="group overflow-hidden rounded-sm border border-border-subtle bg-surface-base transition-colors duration-[180ms] hover:border-border-accent">
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={onOpen}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onOpen();
+          }
+        }}
         aria-label={label}
-        className="block w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base"
+        className="block w-full cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base"
       >
         {children}
-      </button>
+      </div>
     </article>
   );
 }

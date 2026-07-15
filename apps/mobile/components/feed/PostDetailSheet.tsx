@@ -98,16 +98,40 @@ export function PostDetailSheet({ item, onClose }: PostDetailSheetProps) {
             <Divider />
 
             <View className="flex-row items-center gap-3">
-              <Avatar src={item.artist.avatarUrl ?? undefined} name={artistLabel} size="md" />
-              <View className="flex-1 gap-0.5">
-                <Text className="font-sans-semibold text-sm text-content-primary" numberOfLines={1}>
-                  {artistLabel}
-                </Text>
-                <View className="flex-row flex-wrap items-center gap-2">
-                  {handle && <Text className="font-mono text-xs text-content-muted">@{handle}</Text>}
-                  {location ? <Text className="text-xs text-content-muted">{location}</Text> : null}
+              {handle ? (
+                <Pressable
+                  onPress={() => {
+                    onClose();
+                    router.push(`/artist/${handle}` as never);
+                  }}
+                  className="flex-1 flex-row items-center gap-3"
+                  accessibilityRole="link"
+                  accessibilityLabel={`View @${handle}'s profile`}
+                >
+                  <Avatar src={item.artist.avatarUrl ?? undefined} name={artistLabel} size="md" />
+                  <View className="flex-1 gap-0.5">
+                    <Text className="font-sans-semibold text-sm text-content-primary" numberOfLines={1}>
+                      {artistLabel}
+                    </Text>
+                    <View className="flex-row flex-wrap items-center gap-2">
+                      <Text className="font-mono text-xs text-content-muted">@{handle}</Text>
+                      {location ? <Text className="text-xs text-content-muted">{location}</Text> : null}
+                    </View>
+                  </View>
+                </Pressable>
+              ) : (
+                <View className="flex-1 flex-row items-center gap-3">
+                  <Avatar src={item.artist.avatarUrl ?? undefined} name={artistLabel} size="md" />
+                  <View className="flex-1 gap-0.5">
+                    <Text className="font-sans-semibold text-sm text-content-primary" numberOfLines={1}>
+                      {artistLabel}
+                    </Text>
+                    <View className="flex-row flex-wrap items-center gap-2">
+                      {location ? <Text className="text-xs text-content-muted">{location}</Text> : null}
+                    </View>
+                  </View>
                 </View>
-              </View>
+              )}
               <Button
                 size="sm"
                 variant={item.artist.isFollowedByViewer ? "secondary" : "primary"}
