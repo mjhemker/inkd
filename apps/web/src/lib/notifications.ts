@@ -9,13 +9,13 @@ export interface NotificationKindMeta {
 }
 
 const KIND_META: Record<string, NotificationKindMeta> = {
-  booking_request_new: { icon: "calendar", label: "Booking requests" },
-  booking_request_accepted: { icon: "check", label: "Booking requests" },
-  booking_request_declined: { icon: "x", label: "Booking requests" },
+  booking_request_new: { icon: "calendar", label: "Requests" },
+  booking_request_accepted: { icon: "check", label: "Accepted" },
+  booking_request_declined: { icon: "x", label: "Declined" },
   session_scheduled: { icon: "calendar", label: "Sessions" },
-  payment_deposit_received: { icon: "credit-card", label: "Payments" },
+  payment_deposit_received: { icon: "credit-card", label: "Deposits" },
   review_new: { icon: "star", label: "Reviews" },
-  review_response: { icon: "star", label: "Reviews" },
+  review_response: { icon: "star", label: "Responses" },
   message_new: { icon: "message-circle", label: "Messages" },
 };
 
