@@ -38,6 +38,10 @@
     "./hooks": {
       "types": "./src/hooks/index.ts",
       "default": "./src/hooks/index.ts"
+    },
+    "./waivers": {
+      "types": "./src/waivers/index.ts",
+      "default": "./src/waivers/index.ts"
     }
   },
   "scripts": {
