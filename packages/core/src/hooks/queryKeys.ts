@@ -15,4 +15,7 @@ export const queryKeys = {
     ["bookingRequests", "client", clientId] as const,
   threadMessages: (threadId: string) => ["messages", threadId] as const,
   notifications: (profileId: string) => ["notifications", profileId] as const,
+  currentArtistProfile: () => ["currentArtistProfile"] as const,
+  threadSummaries: (profileId: string, artistProfileId?: string | null) =>
+    ["threadSummaries", profileId, artistProfileId ?? null] as const,
 } as const;

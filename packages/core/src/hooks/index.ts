@@ -9,3 +9,5 @@ export * from "./useServices";
 export * from "./useAvailability";
 export * from "./useBookingRequests";
 export * from "./useMessages";
+export * from "./useCurrentArtistProfile";
+export * from "./useThreads";
