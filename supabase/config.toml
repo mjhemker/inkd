@@ -16,3 +16,14 @@ verify_jwt = true
 # signature itself.
 [functions.stripe-webhook]
 verify_jwt = false
+
+# The agent runner is invoked by pg_cron (agent-run-drain) with the service-role
+# key as the bearer, so the gateway must not require a user JWT; the function
+# itself enforces the service-role bearer (see agent-run/index.ts).
+[functions.agent-run]
+verify_jwt = false
+
+# The trust UI's approve/reject control — a normal authenticated artist call. The
+# gateway verifies the JWT; the function re-resolves the owning artist in code.
+[functions.approve-agent-action]
+verify_jwt = true

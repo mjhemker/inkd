@@ -12,6 +12,7 @@ export * from "./booking";
 export * from "./payments";
 export * from "./hooks";
 export * from "./domain/onboarding";
+export * from "./agent";
 export * from "./utils";
 export * from "./waivers";
 export * from "./reviews";
