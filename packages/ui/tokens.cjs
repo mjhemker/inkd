@@ -6,10 +6,16 @@
  * engine at build time) can `require()` it directly, while `tokens.d.ts` gives
  * TypeScript consumers full types.
  *
- * Brand direction: near-black canvas + violet-purple primary.
+ * Brand direction (2026-07 restyle — "Placard discipline + Wall warmth"):
+ * near-black canvas + SOLID violet-purple primary plates (no glow), with a warm
+ * "Ember" accent used sparingly for flash/price warmth. Hard placard edges over
+ * rounded pills; solid surfaces over low-opacity tints. Dark-only for the pilot;
+ * a light "paper" surface set is reserved ONLY for printable/exported legal
+ * records (waivers). See boxShadow / radii / semantic notes below.
  */
 
 // --- Violet / purple primary ramp (brand accent, #7C3AED family) -------------
+// Used SOLID: filled violet plates carry emphasis where the old glow used to.
 const primary = {
   50: "#F5F3FF",
   100: "#EDE9FE",
@@ -22,6 +28,33 @@ const primary = {
   800: "#5B21B6",
   900: "#4C1D95",
   950: "#2E1065",
+};
+
+// --- Ember warm accent ramp (#E8A15C family) ---------------------------------
+// The "Wall warmth" note: a stamped, hand-inked warmth. Reserved for flash
+// drops, "stamped" price marks, and small moments of heat — NEVER a second CTA
+// and never competing with violet's primary/CTA role. Ember reads as a warm
+// pigment on a dark wall; text on solid ember is dark ink (see brand.onEmber).
+const ember = {
+  300: "#F3C89B",
+  400: "#EDB073",
+  500: "#E8A15C", // ember base — the stamp color
+  600: "#D3813F",
+  700: "#A9612B",
+};
+
+// --- Paper ramp (PRINT ONLY) -------------------------------------------------
+// Warm off-white surface for exported/printable legal records (signed waivers).
+// The live app never renders on paper; this set exists so a print stylesheet /
+// print-preview block can flip a single document to an archival, ink-on-paper
+// look. Violet stays the accent so the brand carries onto the printed page.
+const paper = {
+  base: "#F6F2E9", // sheet
+  raised: "#FFFFFF", // inset panels on the sheet
+  ink: "#1C1917", // body ink
+  muted: "#6B6257", // secondary ink
+  border: "#D8D0BF", // hairline rules
+  accent: "#6D28D9", // violet stamp/heading accent (primary[700])
 };
 
 // --- Neutral / near-black ramp (#0A0A0B base) --------------------------------
@@ -73,9 +106,14 @@ const info = {
 const semantic = {
   surface: {
     base: neutral[950], // app canvas
-    raised: neutral[900], // cards, sheets
+    raised: neutral[900], // cards, sheets — solid raised ink
     overlay: neutral[800], // popovers, menus
     inverse: neutral[50],
+    // SOLID accent plates — replace old low-opacity brand tints (bg-brand/15).
+    plate: primary[600], // solid violet plate (emphasis block, active fill)
+    plateActive: primary[700], // pressed / stronger violet plate
+    plateInk: primary[950], // deep violet plate on dark (subtle, still solid)
+    ember: ember[500], // solid ember stamp plate (flash / price marks)
   },
   text: {
     primary: neutral[50],
@@ -83,24 +121,36 @@ const semantic = {
     muted: neutral[400],
     inverse: neutral[950],
     accent: primary[400],
+    ember: ember[500], // warm accent text (labels only, never CTAs)
   },
   border: {
     subtle: neutral[800],
     default: neutral[700],
     strong: neutral[600],
     accent: primary[600],
+    ember: ember[600],
   },
   brand: {
     primary: primary[600],
     primaryHover: primary[500],
     primaryActive: primary[700],
     onPrimary: neutral[50],
+    onEmber: neutral[950], // dark ink on a solid ember plate
   },
   status: {
     success: success[500],
     warning: warning[500],
     danger: danger[500],
     info: info[500],
+  },
+  // PRINT-ONLY paper semantics (see `paper` ramp). Not used on-screen.
+  paper: {
+    base: paper.base,
+    raised: paper.raised,
+    ink: paper.ink,
+    muted: paper.muted,
+    border: paper.border,
+    accent: paper.accent,
   },
 };
 
@@ -129,16 +179,20 @@ const spacing = {
   32: "128px",
 };
 
-// --- Radii -------------------------------------------------------------------
+// --- Radii (placard discipline) ----------------------------------------------
+// Shifted hard toward printed-catalog edges. Cards read as museum placards
+// (2–4px, near-square); controls stay small; only chips earn a full pill.
+// The utility names are unchanged so existing screens keep compiling — their
+// resolved values just got sharper.
 const radii = {
   none: "0px",
-  sm: "4px",
-  md: "8px",
-  lg: "12px",
-  xl: "16px",
-  "2xl": "24px",
-  "3xl": "32px",
-  full: "9999px",
+  sm: "2px", // placard hard edge — cards, stamps, badges
+  md: "3px", // controls, inputs
+  lg: "4px", // buttons, larger cards
+  xl: "6px", // grouped panels
+  "2xl": "10px", // modals / sheets (restrained, still not soft)
+  "3xl": "14px",
+  full: "9999px", // pills — chips only, where earned
 };
 
 // --- Type scale --------------------------------------------------------------
@@ -178,8 +232,12 @@ const lineHeight = {
  *    data stay the hero. Every dense ops surface uses this.
  *  - mono — JetBrains Mono. The utility voice: uppercase tracked micro-labels
  *    ("eyebrows"), timestamps, IDs, agent-log lines, flash-sheet numbering.
+ *  - hand — Caveat. The hand-marked voice, used SPARINGLY: annotations,
+ *    empty-state hand-notes, congrats moments, and "stamped" price marks. NEVER
+ *    body text, never a control label, never a data value. One hand-note per
+ *    surface is the ceiling — it should feel like the artist wrote on the wall.
  *
- * Loaded on web via next/font/google (CSS variables) and on mobile via
+ * Loaded on web via next/font/local (CSS variables) and on mobile via
  * @expo-google-fonts. Stacks below are plain family names + system fallbacks so the
  * tokens stay platform-neutral; each app wires the real loaded faces in front.
  */
@@ -193,6 +251,7 @@ const fontFamily = {
     "Segoe UI",
     "sans-serif",
   ],
+  hand: ["Caveat", "Bricolage Grotesque", "ui-sans-serif", "cursive"],
   sans: [
     "Manrope",
     "ui-sans-serif",
@@ -216,15 +275,21 @@ const fontFamily = {
 };
 
 // --- Elevation / shadow language --------------------------------------------
-// Dark UI leans on surface layering + hairline borders rather than heavy shadows.
-// `glow` is the one expressive elevation: a soft violet focus/hero halo used
-// sparingly (primary CTA hover, focused fields, active nav).
+// Dark UI leans on solid surface layering + hairline borders rather than heavy
+// shadows. The old expressive violet `glow` halo was RETIRED in the 2026-07
+// restyle (it read as AI-generated). Emphasis is now carried by SOLID violet
+// plates (surface.plate) and decisive borders, not light bloom.
+//   `plate` — a tight, opaque drop that seats a placard/stamp on the wall.
+//   `glow`  — DEPRECATED. Kept only so any un-swept `shadow-glow` reference
+//             still compiles; it now resolves to the neutral `plate` lift with
+//             no violet bloom. Do not reach for it in new code.
 const boxShadow = {
   none: "none",
   sm: "0 1px 2px 0 rgba(0, 0, 0, 0.40)",
   md: "0 4px 16px -4px rgba(0, 0, 0, 0.55)",
   lg: "0 16px 48px -12px rgba(0, 0, 0, 0.65)",
-  glow: "0 0 0 1px rgba(124, 58, 237, 0.35), 0 8px 32px -8px rgba(124, 58, 237, 0.45)",
+  plate: "0 2px 0 0 rgba(0, 0, 0, 0.55), 0 6px 20px -10px rgba(0, 0, 0, 0.7)",
+  glow: "0 2px 0 0 rgba(0, 0, 0, 0.55), 0 6px 20px -10px rgba(0, 0, 0, 0.7)",
 };
 
 // --- Motion ------------------------------------------------------------------
@@ -241,11 +306,13 @@ const easing = {
 const tokens = {
   colors: {
     primary,
+    ember,
     neutral,
     success,
     warning,
     danger,
     info,
+    paper,
     semantic,
   },
   spacing,
