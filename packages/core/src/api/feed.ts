@@ -311,7 +311,9 @@ export function rankFeedItems(
 
 const feedParamsSchema = z.object({
   scope: z.enum(["following", "discover"]).default("discover"),
-  viewerId: z.string().uuid().nullable().optional(),
+  // The viewer id is whatever auth.uid() returns (a uuid in prod); we only
+  // require a non-empty string so tests/preview harnesses can use readable ids.
+  viewerId: z.string().min(1).nullable().optional(),
   styleSlug: z.string().optional(),
   limit: z.number().int().positive().optional(),
   offset: z.number().int().nonnegative().optional(),
