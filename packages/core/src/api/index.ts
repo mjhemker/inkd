@@ -13,5 +13,6 @@ export * from "./booking";
 export * from "./messaging";
 export * from "./content";
 export * from "./waivers";
+export * from "./waiverTemplateManagement";
 export * from "./agentSettings";
 export * from "./notifications";
