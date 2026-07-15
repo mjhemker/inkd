@@ -35,6 +35,7 @@ export type Database = {
           created_at: string
           data_consulted: Json
           executed_at: string | null
+          executed_message_id: string | null
           id: string
           payload: Json
           proposed_at: string
@@ -59,6 +60,7 @@ export type Database = {
           created_at?: string
           data_consulted?: Json
           executed_at?: string | null
+          executed_message_id?: string | null
           id?: string
           payload?: Json
           proposed_at?: string
@@ -83,6 +85,7 @@ export type Database = {
           created_at?: string
           data_consulted?: Json
           executed_at?: string | null
+          executed_message_id?: string | null
           id?: string
           payload?: Json
           proposed_at?: string
@@ -132,6 +135,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "agent_actions_executed_message_id_fkey"
+            columns: ["executed_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "agent_actions_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
@@ -140,6 +150,82 @@ export type Database = {
           },
           {
             foreignKeyName: "agent_actions_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_jobs: {
+        Row: {
+          artist_id: string
+          attempts: number
+          booking_request_id: string | null
+          created_at: string
+          dedupe_key: string
+          id: string
+          last_error: string | null
+          leased_at: string | null
+          max_attempts: number
+          scheduled_at: string
+          status: string
+          thread_id: string | null
+          trigger_id: string
+          trigger_kind: string
+          updated_at: string
+        }
+        Insert: {
+          artist_id: string
+          attempts?: number
+          booking_request_id?: string | null
+          created_at?: string
+          dedupe_key: string
+          id?: string
+          last_error?: string | null
+          leased_at?: string | null
+          max_attempts?: number
+          scheduled_at?: string
+          status?: string
+          thread_id?: string | null
+          trigger_id: string
+          trigger_kind: string
+          updated_at?: string
+        }
+        Update: {
+          artist_id?: string
+          attempts?: number
+          booking_request_id?: string | null
+          created_at?: string
+          dedupe_key?: string
+          id?: string
+          last_error?: string | null
+          leased_at?: string | null
+          max_attempts?: number
+          scheduled_at?: string
+          status?: string
+          thread_id?: string | null
+          trigger_id?: string
+          trigger_kind?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_jobs_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_jobs_booking_request_id_fkey"
+            columns: ["booking_request_id"]
+            isOneToOne: false
+            referencedRelation: "booking_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_jobs_thread_id_fkey"
             columns: ["thread_id"]
             isOneToOne: false
             referencedRelation: "threads"
@@ -1950,6 +2036,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      agent_jobs_lease: {
+        Args: { p_limit?: number }
+        Returns: {
+          artist_id: string
+          attempts: number
+          booking_request_id: string | null
+          created_at: string
+          dedupe_key: string
+          id: string
+          last_error: string | null
+          leased_at: string | null
+          max_attempts: number
+          scheduled_at: string
+          status: string
+          thread_id: string | null
+          trigger_id: string
+          trigger_kind: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "agent_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      agent_run_tick: { Args: never; Returns: undefined }
       current_artist_id: { Args: never; Returns: string }
       search_artists: {
         Args: {
