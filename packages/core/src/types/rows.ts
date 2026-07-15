@@ -81,6 +81,7 @@ export type PostInsert = TablesInsert<"posts">;
 export type PortfolioPieceInsert = TablesInsert<"portfolio_pieces">;
 export type FlashSheetInsert = TablesInsert<"flash_sheets">;
 export type FlashItemInsert = TablesInsert<"flash_items">;
+export type ReviewInsert = TablesInsert<"reviews">;
 export type AgentSettingsInsert = TablesInsert<"agent_settings">;
 export type NotificationInsert = TablesInsert<"notifications">;
 
@@ -98,3 +99,4 @@ export type SessionUpdate = TablesUpdate<"sessions">;
 export type ThreadUpdate = TablesUpdate<"threads">;
 export type AgentSettingsUpdate = TablesUpdate<"agent_settings">;
 export type NotificationUpdate = TablesUpdate<"notifications">;
+export type ReviewUpdate = TablesUpdate<"reviews">;

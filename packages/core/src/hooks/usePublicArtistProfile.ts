@@ -11,11 +11,13 @@ import {
   getBookingPolicy,
   getProfileByHandle,
   listArtistPosts,
+  listArtistReviews,
   listArtistStyles,
   listAvailabilityRules,
   listFlashItems,
   listFlashSheets,
   listPortfolioPieces,
+  listProfilesByIds,
   listPublicServices,
   listStudioLocations,
 } from "../api";
@@ -28,6 +30,7 @@ import type {
   PortfolioPiece,
   Post,
   Profile,
+  Review,
   Service,
   StudioLocation,
   Style,
@@ -46,6 +49,8 @@ export interface PublicArtistProfileData {
   services: Service[];
   availabilityRules: AvailabilityRule[];
   bookingPolicy: BookingPolicy | null;
+  reviews: Review[];
+  reviewerProfiles: Record<string, Profile>;
 }
 
 export function usePublicArtistProfile(handle: string | undefined) {
@@ -75,6 +80,7 @@ export function usePublicArtistProfile(handle: string | undefined) {
         services,
         availabilityRules,
         bookingPolicy,
+        reviews,
       ] = await Promise.all([
         listStudioLocations(client, artist.id),
         listArtistStyles(client, artist.id),
@@ -84,6 +90,7 @@ export function usePublicArtistProfile(handle: string | undefined) {
         listPublicServices(client, artist.id),
         listAvailabilityRules(client, artist.id),
         getBookingPolicy(client, artist.id),
+        listArtistReviews(client, artist.id),
       ]);
 
       const flashSheetsWithItems = await Promise.all(
@@ -92,6 +99,13 @@ export function usePublicArtistProfile(handle: string | undefined) {
           items: await listFlashItems(client, sheet.id),
         })),
       );
+
+      const visibleReviews = reviews.filter((r) => r.is_public || isOwnProfile);
+      const reviewerProfileList = await listProfilesByIds(
+        client,
+        visibleReviews.map((r) => r.client_id),
+      );
+      const reviewerProfiles = Object.fromEntries(reviewerProfileList.map((p) => [p.id, p]));
 
       return {
         profile,
@@ -105,6 +119,8 @@ export function usePublicArtistProfile(handle: string | undefined) {
         services,
         availabilityRules,
         bookingPolicy,
+        reviews: visibleReviews,
+        reviewerProfiles,
       };
     },
   });

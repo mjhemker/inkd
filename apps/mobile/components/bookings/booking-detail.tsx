@@ -29,6 +29,11 @@ import {
   bookingStage,
   isBookingCancellable,
   formatCents,
+  useBookingReview,
+  useCreateReview,
+  useUpdateReview,
+  useSetArtistReviewResponse,
+  isReviewEditable,
   type Session,
   type Payment,
   type BookingStatus,
@@ -55,6 +60,9 @@ import {
   formatDay,
   toRefs,
 } from "./shared";
+import { ArtistResponseForm } from "../reviews/artist-response-form";
+import { ReviewCard } from "../reviews/review-card";
+import { ReviewFormModal, type ReviewFormValues } from "../reviews/review-form-modal";
 
 export function BookingDetail({ bookingId }: { bookingId: string }) {
   const client = useInkdClient();
@@ -85,6 +93,13 @@ export function BookingDetail({ bookingId }: { bookingId: string }) {
   const setStatus = useSetBookingStatus(artistId);
   const createSession = useCreateSession(artistId);
   const updateSession = useUpdateSession(artistId);
+
+  const reviewQ = useBookingReview(booking?.id);
+  const review = reviewQ.data ?? null;
+  const createReview = useCreateReview({ artistId, clientId: booking?.client_id, bookingId: booking?.id });
+  const updateReviewMut = useUpdateReview({ artistId, clientId: booking?.client_id, bookingId: booking?.id });
+  const setResponse = useSetArtistReviewResponse({ artistId, bookingId: booking?.id });
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
 
   const [reschedule, setReschedule] = useState<{ id: string; value: string } | null>(null);
   const [depositBusy, setDepositBusy] = useState<string | null>(null);
@@ -165,6 +180,49 @@ export function BookingDetail({ bookingId }: { bookingId: string }) {
     } catch (err) {
       toast({
         title: "Couldn't add session",
+        description: err instanceof Error ? err.message : undefined,
+        variant: "danger",
+      });
+    }
+  }
+
+  async function submitReview(values: ReviewFormValues) {
+    if (!booking) return;
+    try {
+      if (review) {
+        await updateReviewMut.mutateAsync({
+          id: review.id,
+          patch: { rating: values.rating, title: values.title || null, body: values.body || null },
+        });
+        toast({ title: "Review updated", variant: "success" });
+      } else {
+        await createReview.mutateAsync({
+          artist_id: artistId,
+          booking_id: booking.id,
+          rating: values.rating,
+          title: values.title || null,
+          body: values.body || null,
+        });
+        toast({ title: "Review submitted — thanks!", variant: "success" });
+      }
+      setReviewModalOpen(false);
+    } catch (err) {
+      toast({
+        title: "Couldn't save review",
+        description: err instanceof Error ? err.message : undefined,
+        variant: "danger",
+      });
+    }
+  }
+
+  async function submitResponse(response: string) {
+    if (!review) return;
+    try {
+      await setResponse.mutateAsync({ id: review.id, response });
+      toast({ title: "Response posted", variant: "success" });
+    } catch (err) {
+      toast({
+        title: "Couldn't post response",
         description: err instanceof Error ? err.message : undefined,
         variant: "danger",
       });
@@ -290,6 +348,55 @@ export function BookingDetail({ bookingId }: { bookingId: string }) {
         </View>
       </DetailSection>
 
+      {/* Review — client leaves one on a healed booking; artist may respond */}
+      {booking.status === "completed" && (
+        <>
+          <Divider />
+          <DetailSection title="Review">
+            {!isArtist &&
+              (review ? (
+                <Card padding="lg" className="gap-3">
+                  <ReviewCard review={review} reviewerName="You" reviewerAvatarUrl={clientQ.data?.avatar_url} />
+                  {isReviewEditable(review) && (
+                    <Button size="sm" variant="ghost" className="self-start" onPress={() => setReviewModalOpen(true)}>
+                      Edit review
+                    </Button>
+                  )}
+                </Card>
+              ) : (
+                <Card padding="lg" className="flex-row flex-wrap items-center justify-between gap-3">
+                  <View className="flex-1 gap-0.5">
+                    <Text className="text-sm font-semibold text-content-primary">How was your session?</Text>
+                    <Text className="text-sm text-content-muted">
+                      Leave a rating and a few words for other clients.
+                    </Text>
+                  </View>
+                  <Button
+                    size="sm"
+                    onPress={() => setReviewModalOpen(true)}
+                    leadingIcon={<Icon name="star" size={15} color="#FAFAFA" />}
+                  >
+                    Leave a review
+                  </Button>
+                </Card>
+              ))}
+            {isArtist &&
+              (review ? (
+                <Card padding="lg" className="gap-3">
+                  <ReviewCard review={review} reviewerName={clientName} reviewerAvatarUrl={clientQ.data?.avatar_url} />
+                  <ArtistResponseForm
+                    initialResponse={review.artist_response}
+                    submitting={setResponse.isPending}
+                    onSubmit={submitResponse}
+                  />
+                </Card>
+              ) : (
+                <Text className="text-sm text-content-muted">{clientName} hasn&apos;t left a review yet.</Text>
+              ))}
+          </DetailSection>
+        </>
+      )}
+
       {/* Booking-level actions (artist) */}
       {isArtist && isBookingCancellable(booking.status) && (
         <>
@@ -338,6 +445,16 @@ export function BookingDetail({ bookingId }: { bookingId: string }) {
           />
         </FormField>
       </Modal>
+
+      {/* Leave / edit review modal */}
+      <ReviewFormModal
+        open={reviewModalOpen}
+        onClose={() => setReviewModalOpen(false)}
+        mode={review ? "edit" : "create"}
+        initial={review ? { rating: review.rating, title: review.title ?? "", body: review.body ?? "" } : undefined}
+        onSubmit={submitReview}
+        submitting={createReview.isPending || updateReviewMut.isPending}
+      />
     </View>
   );
 }

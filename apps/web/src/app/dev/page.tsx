@@ -43,6 +43,12 @@ const DEV_ROUTES: { href: string; title: string; description: string }[] = [
     description:
       "Messaging thread with image attachments (Composer, ChatThread, MessageBubble) against a mock chat client.",
   },
+  {
+    href: "/dev/reviews-preview",
+    title: "Reviews — form & response",
+    description:
+      "The leave-a-review / edit-review modal and the artist response field in isolation. Reviews tab + hero rating live at /dev/profile-preview/public.",
+  },
 ];
 
 export default function DevIndexPage() {
