@@ -43,6 +43,12 @@ const DEV_ROUTES: { href: string; title: string; description: string }[] = [
     description:
       "Messaging thread with image attachments (Composer, ChatThread, MessageBubble) against a mock chat client.",
   },
+  {
+    href: "/dev/notifications-preview",
+    title: "Notifications",
+    description:
+      "Bell + unread badge, dropdown panel, and the full /notifications page (NotificationBell, NotificationsHub) against seeded fixture data.",
+  },
 ];
 
 export default function DevIndexPage() {
