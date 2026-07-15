@@ -207,28 +207,41 @@ export interface ApproveAgentActionInput {
 /**
  * Approve (and execute) a proposed action.
  *
- * The agent runtime ships the authoritative executor — an RPC / edge function
- * that runs the tier/policy checks and performs the side effects atomically
- * server-side. Until that lands, this falls back to a direct, RLS-scoped
- * update that reproduces the executor's observable result: for a reply, it
- * inserts the agent-authored message and stamps `executed` +
- * `executed_message_id`; other action types just transition to `executed`.
+ * The authoritative executor is the `approve-agent-action` edge function: it
+ * re-verifies the caller owns the action, posts the client-facing message when
+ * applicable, and stamps `executed` + `executed_message_id` atomically with the
+ * service role. We invoke it here and re-read the row for the returned view.
  *
- * Swapping to the real endpoint is a one-line change at the WIRE marker below.
+ * The direct, RLS-scoped fallback (`approveAgentActionDirect`) runs ONLY when
+ * the functions API is unavailable — e.g. the offline `/dev/ai-staff-preview`
+ * harness, whose mock client has no `.functions` and throws on access. A
+ * structured error FROM the endpoint (409 already-executed, 403 not-owner) is
+ * surfaced, never silently retried through the direct path.
  */
 export async function approveAgentAction(
   client: InkdSupabaseClient,
   input: ApproveAgentActionInput,
 ): Promise<AgentActionView> {
-  // WIRE(agent-runtime): approve endpoint.
-  // When the runtime ships its executor, call it here and return its row:
-  //   const { data, error } = await client.rpc("approve_agent_action", {
-  //     p_action_id: input.action.id,
-  //     p_edited_draft: input.editedDraftText ?? null,
-  //   });
-  //   if (!error && data) return toAgentActionView(data as AgentAction);
-  // (Falls through to the direct path below until then.)
-  return approveAgentActionDirect(client, input);
+  let invoked: { data: unknown; error: unknown } | undefined;
+  try {
+    invoked = await client.functions.invoke("approve-agent-action", {
+      body: {
+        action_id: input.action.id,
+        decision: "approve",
+        edited_draft: input.editedDraftText,
+      },
+    });
+  } catch {
+    // Functions API absent (offline dev harness) — reproduce the executor's
+    // observable result with a direct RLS-scoped write so previews still work.
+    return approveAgentActionDirect(client, input);
+  }
+  if (invoked.error) throw invoked.error;
+  // Endpoint executed server-side; re-read the authoritative row for the view.
+  const updated = unwrap(
+    await client.from("agent_actions").select("*").eq("id", input.action.id).single(),
+  );
+  return toAgentActionView(updated);
 }
 
 async function approveAgentActionDirect(
