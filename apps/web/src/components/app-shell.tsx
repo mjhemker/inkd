@@ -10,6 +10,7 @@ import {
   primaryNav,
   type NavItem,
 } from "@/lib/nav";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 /**
  * INKD authenticated app shell.
@@ -167,17 +168,7 @@ function TopBar({ title, action }: { title?: string; action?: ReactNode }) {
         >
           <Icon name="search" size={20} />
         </button>
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="relative grid h-10 w-10 place-items-center rounded-lg text-content-muted outline-none transition-colors hover:bg-surface-raised hover:text-content-primary focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base"
-        >
-          <Icon name="bell" size={20} />
-          <span
-            aria-hidden
-            className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-brand"
-          />
-        </button>
+        <NotificationBell />
         {action ?? (
           <Link
             href="/bookings"

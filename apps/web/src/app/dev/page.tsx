@@ -61,6 +61,12 @@ const DEV_ROUTES: { href: string; title: string; description: string }[] = [
     description:
       "The leave-a-review / edit-review modal and the artist response field in isolation. Reviews tab + hero rating live at /dev/profile-preview/public.",
   },
+  {
+    href: "/dev/notifications-preview",
+    title: "Notifications",
+    description:
+      "Bell + unread badge, dropdown panel, and the full /notifications page (NotificationBell, NotificationsHub) against seeded fixture data.",
+  },
 ];
 
 export default function DevIndexPage() {

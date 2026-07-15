@@ -17,6 +17,7 @@ import {
 import { useCurrentArtistProfile, useCurrentProfile } from "@inkd/core";
 
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { NotificationBellButton } from "@/components/notifications/NotificationBellButton";
 import { EditProfileSheet } from "@/components/profile/EditProfileSheet";
 import { PostsPanel } from "@/components/profile/PostsPanel";
 import { PortfolioPanel } from "@/components/profile/PortfolioPanel";
@@ -84,6 +85,7 @@ function ProfileScreenContent() {
           eyebrow="PROFILE"
           title="Your profile"
           subtitle={isArtist ? "Manage your portfolio, posts, and flash." : "Your public presence on INKD."}
+          action={<NotificationBellButton />}
         />
 
         <Card className="gap-4">
