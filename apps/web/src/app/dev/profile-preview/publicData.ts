@@ -22,6 +22,13 @@ const flashSheetsWithItems = (t.flash_sheets as Row[]).map((sheet) => ({
   items: (t.flash_items as Row[]).filter((item) => item.flash_sheet_id === sheet.id),
 })) as unknown as PublicArtistData["flashSheets"];
 
+const reviews = (t.reviews ?? []) as unknown as PublicArtistData["reviews"];
+const reviewerProfiles = Object.fromEntries(
+  (t.profiles as Row[])
+    .filter((p) => reviews.some((r) => r.client_id === p.id))
+    .map((p) => [p.id, p]),
+) as PublicArtistData["reviewerProfiles"];
+
 export const publicDemoData: PublicArtistData = {
   profile,
   artist,
@@ -34,4 +41,6 @@ export const publicDemoData: PublicArtistData = {
   services: t.services as unknown as PublicArtistData["services"],
   availabilityRules: t.availability_rules as unknown as PublicArtistData["availabilityRules"],
   bookingPolicy: (t.booking_policies?.[0] ?? null) as unknown as PublicArtistData["bookingPolicy"],
+  reviews,
+  reviewerProfiles,
 };

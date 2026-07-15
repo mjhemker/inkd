@@ -55,6 +55,12 @@ const DEV_ROUTES: { href: string; title: string; description: string }[] = [
     description:
       "The /discover map + list hybrid (FilterBar, ArtistPlacard, MapLibre map) with seeded cards and offline filter/sort semantics.",
   },
+  {
+    href: "/dev/reviews-preview",
+    title: "Reviews — form & response",
+    description:
+      "The leave-a-review / edit-review modal and the artist response field in isolation. Reviews tab + hero rating live at /dev/profile-preview/public.",
+  },
 ];
 
 export default function DevIndexPage() {

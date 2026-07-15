@@ -11,7 +11,15 @@ import type { MockSeed } from "./mockSupabaseClient";
 export const DEMO_PROFILE_ID = "65d33373-7004-4862-9540-c069add46a5e";
 export const DEMO_ARTIST_ID = "d0f30963-0bcd-4564-afe7-7284313a5a75";
 
+// Reviewer client ids for the seeded reviews below (dev-harness only — the
+// live equivalents are the demo-review-* rows seeded via MCP, see
+// supabase/migrations comment in ../../../../.. reviews API).
+const DEMO_REVIEWER_1_ID = "b1a1c001-0000-4000-8000-000000000001";
+const DEMO_REVIEWER_2_ID = "b1a1c001-0000-4000-8000-000000000002";
+const DEMO_REVIEWER_3_ID = "b1a1c001-0000-4000-8000-000000000003";
+
 const now = new Date().toISOString();
+const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString();
 
 export const demoSeed: MockSeed = {
   userId: DEMO_PROFILE_ID,
@@ -28,6 +36,52 @@ export const demoSeed: MockSeed = {
         bio: "Baltimore-based tattoo artist working in fine line and botanical illustration.",
         is_artist: true,
         is_public: true,
+        city: "Baltimore",
+        state: "MD",
+        created_at: now,
+        updated_at: now,
+      },
+      // Reviewer client profiles (not artists) — for the Reviews tab byline.
+      {
+        id: DEMO_REVIEWER_1_ID,
+        handle: null,
+        display_name: "Priya Manning",
+        email: "demo-reviewer-1@inkd.test",
+        phone: null,
+        avatar_url: abstract_4,
+        bio: null,
+        is_artist: false,
+        is_public: false,
+        city: "Baltimore",
+        state: "MD",
+        created_at: now,
+        updated_at: now,
+      },
+      {
+        id: DEMO_REVIEWER_2_ID,
+        handle: null,
+        display_name: "Jordan Teague",
+        email: "demo-reviewer-2@inkd.test",
+        phone: null,
+        avatar_url: null,
+        bio: null,
+        is_artist: false,
+        is_public: false,
+        city: "Towson",
+        state: "MD",
+        created_at: now,
+        updated_at: now,
+      },
+      {
+        id: DEMO_REVIEWER_3_ID,
+        handle: null,
+        display_name: "Sam Ocasio",
+        email: "demo-reviewer-3@inkd.test",
+        phone: null,
+        avatar_url: abstract_5,
+        bio: null,
+        is_artist: false,
+        is_public: false,
         city: "Baltimore",
         state: "MD",
         created_at: now,
@@ -199,5 +253,47 @@ export const demoSeed: MockSeed = {
       },
     ],
     post_styles: [],
+    reviews: [
+      {
+        id: "rv-demo-1",
+        artist_id: DEMO_ARTIST_ID,
+        client_id: DEMO_REVIEWER_1_ID,
+        booking_id: null,
+        rating: 5,
+        title: "Exactly what I pictured",
+        body: "Nova took my half-formed idea for a botanical piece and made it better than I imagined. The line work healed perfectly and the studio felt calm the whole session.",
+        artist_response:
+          "Thank you, Priya! Loved building this one with you — see you for the next piece.",
+        is_public: true,
+        created_at: daysAgo(18),
+        updated_at: daysAgo(17),
+      },
+      {
+        id: "rv-demo-2",
+        artist_id: DEMO_ARTIST_ID,
+        client_id: DEMO_REVIEWER_2_ID,
+        booking_id: null,
+        rating: 4,
+        title: null,
+        body: "Great consultation and clean linework. Booking took a couple weeks to lock in, but worth the wait.",
+        artist_response: null,
+        is_public: true,
+        created_at: daysAgo(42),
+        updated_at: daysAgo(42),
+      },
+      {
+        id: "rv-demo-3",
+        artist_id: DEMO_ARTIST_ID,
+        client_id: DEMO_REVIEWER_3_ID,
+        booking_id: null,
+        rating: 5,
+        title: "Second piece with Nova",
+        body: "Came back for a wrist piece after the forearm florals healed so well. Same care, same precision.",
+        artist_response: "Always a pleasure, Sam — that wrist band healed beautifully.",
+        is_public: true,
+        created_at: daysAgo(4),
+        updated_at: daysAgo(3),
+      },
+    ],
   },
 };

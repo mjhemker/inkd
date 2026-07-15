@@ -12,6 +12,7 @@ import {
   type IconName,
   type TabItem,
 } from "@inkd/ui/web";
+import { formatRatingAvg, summarizeReviews } from "@inkd/core";
 import { LinkButton } from "@/components/link-button";
 import {
   bookingWindowLabel,
@@ -23,11 +24,13 @@ import {
 } from "@/lib/format";
 import type { PublicArtistData } from "../data";
 import { Lightbox, type LightboxImage } from "./Lightbox";
+import { ReviewsTab } from "@/components/reviews/reviews-tab";
 
 const TABS: TabItem[] = [
   { value: "portfolio", label: "Portfolio" },
   { value: "posts", label: "Posts" },
   { value: "flash", label: "Flash" },
+  { value: "reviews", label: "Reviews" },
   { value: "info", label: "Info" },
 ];
 
@@ -55,6 +58,10 @@ export function ArtistProfileView({ data }: { data: PublicArtistData }) {
 
   const displayName = profile.display_name || profile.handle || "Artist";
   const primaryLocation = data.studioLocations.find((l) => l.is_primary) ?? data.studioLocations[0];
+  const reviewSummary = useMemo(
+    () => summarizeReviews(data.reviews.filter((r) => r.is_public)),
+    [data.reviews],
+  );
 
   const portfolioImages: LightboxImage[] = useMemo(
     () =>
@@ -112,6 +119,13 @@ export function ArtistProfileView({ data }: { data: PublicArtistData }) {
                 <Badge variant="outline" size="sm">
                   {classificationLabel(artist.classification)}
                 </Badge>
+                {reviewSummary.count > 0 && (
+                  <Badge variant="ember" size="sm">
+                    <Icon name="star" size={12} />
+                    {formatRatingAvg(reviewSummary.avg)} · {reviewSummary.count} review
+                    {reviewSummary.count === 1 ? "" : "s"}
+                  </Badge>
+                )}
                 {travelBadges(artist).map((label) => (
                   <Badge key={label} variant="outline" size="sm">
                     {label}
@@ -165,6 +179,13 @@ export function ArtistProfileView({ data }: { data: PublicArtistData }) {
         )}
         {tab === "posts" && <PostsGrid posts={data.posts} />}
         {tab === "flash" && <FlashSection sheets={data.flashSheets} />}
+        {tab === "reviews" && (
+          <ReviewsTab
+            reviews={data.reviews}
+            reviewerProfiles={data.reviewerProfiles}
+            artistName={profile.display_name || profile.handle}
+          />
+        )}
         {tab === "info" && <InfoTab data={data} />}
       </main>
 

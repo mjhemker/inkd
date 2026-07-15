@@ -14,7 +14,12 @@ import {
   type IconName,
   type TabItem,
 } from "@inkd/ui/native";
-import { usePublicArtistProfile, type PublicArtistProfileData } from "@inkd/core";
+import {
+  formatRatingAvg,
+  summarizeReviews,
+  usePublicArtistProfile,
+  type PublicArtistProfileData,
+} from "@inkd/core";
 
 import {
   bookingWindowLabel,
@@ -24,11 +29,13 @@ import {
   servicePriceLabel,
   travelBadges,
 } from "@/lib/format";
+import { ReviewsTab } from "@/components/reviews/reviews-tab";
 
 const TABS: TabItem[] = [
   { value: "portfolio", label: "Portfolio" },
   { value: "posts", label: "Posts" },
   { value: "flash", label: "Flash" },
+  { value: "reviews", label: "Reviews" },
   { value: "info", label: "Info" },
 ];
 
@@ -77,6 +84,13 @@ export default function ArtistProfileScreen() {
           {tab === "portfolio" && <PortfolioGrid data={data} />}
           {tab === "posts" && <PostsGrid data={data} />}
           {tab === "flash" && <FlashList data={data} />}
+          {tab === "reviews" && (
+            <ReviewsTab
+              reviews={data.reviews}
+              reviewerProfiles={data.reviewerProfiles}
+              artistName={data.profile.display_name || data.profile.handle}
+            />
+          )}
           {tab === "info" && <InfoTab data={data} />}
         </ScrollView>
       )}
@@ -88,6 +102,7 @@ function Hero({ data }: { data: PublicArtistProfileData }) {
   const { profile, artist, isOwnProfile } = data;
   const displayName = profile.display_name || profile.handle || "Artist";
   const primaryLocation = data.studioLocations.find((l) => l.is_primary) ?? data.studioLocations[0];
+  const reviewSummary = summarizeReviews(data.reviews.filter((r) => r.is_public));
 
   return (
     <View className="gap-4">
@@ -110,6 +125,11 @@ function Hero({ data }: { data: PublicArtistProfileData }) {
         <Badge variant="outline" size="sm">
           {classificationLabel(artist.classification)}
         </Badge>
+        {reviewSummary.count > 0 && (
+          <Badge variant="ember" size="sm">
+            {`${formatRatingAvg(reviewSummary.avg)} · ${reviewSummary.count} review${reviewSummary.count === 1 ? "" : "s"}`}
+          </Badge>
+        )}
         {travelBadges(artist).map((label) => (
           <Badge key={label} variant="outline" size="sm">
             {label}

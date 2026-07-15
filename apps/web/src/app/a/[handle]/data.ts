@@ -5,11 +5,13 @@ import {
   getBookingPolicy,
   getProfileByHandle,
   listArtistPosts,
+  listArtistReviews,
   listArtistStyles,
   listAvailabilityRules,
   listFlashItems,
   listFlashSheets,
   listPortfolioPieces,
+  listProfilesByIds,
   listPublicServices,
   listStudioLocations,
 } from "@inkd/core/api";
@@ -22,6 +24,7 @@ import type {
   PortfolioPiece,
   Post,
   Profile,
+  Review,
   Service,
   StudioLocation,
   Style,
@@ -40,6 +43,8 @@ export interface PublicArtistData {
   services: Service[];
   availabilityRules: AvailabilityRule[];
   bookingPolicy: BookingPolicy | null;
+  reviews: Review[];
+  reviewerProfiles: Record<string, Profile>;
 }
 
 /**
@@ -63,7 +68,7 @@ export async function getPublicArtistData(handle: string): Promise<PublicArtistD
 
   if (!artist.is_published && !isOwnProfile) return null;
 
-  const [studioLocations, styles, portfolioPieces, posts, flashSheets, services, availabilityRules, bookingPolicy] =
+  const [studioLocations, styles, portfolioPieces, posts, flashSheets, services, availabilityRules, bookingPolicy, reviews] =
     await Promise.all([
       listStudioLocations(client, artist.id),
       listArtistStyles(client, artist.id),
@@ -73,6 +78,7 @@ export async function getPublicArtistData(handle: string): Promise<PublicArtistD
       listPublicServices(client, artist.id),
       listAvailabilityRules(client, artist.id),
       getBookingPolicy(client, artist.id),
+      listArtistReviews(client, artist.id),
     ]);
 
   const flashSheetsWithItems = await Promise.all(
@@ -81,6 +87,13 @@ export async function getPublicArtistData(handle: string): Promise<PublicArtistD
       items: await listFlashItems(client, sheet.id),
     })),
   );
+
+  const visibleReviews = reviews.filter((r) => r.is_public || isOwnProfile);
+  const reviewerProfileList = await listProfilesByIds(
+    client,
+    visibleReviews.map((r) => r.client_id),
+  );
+  const reviewerProfiles = Object.fromEntries(reviewerProfileList.map((p) => [p.id, p]));
 
   return {
     profile,
@@ -94,5 +107,7 @@ export async function getPublicArtistData(handle: string): Promise<PublicArtistD
     services,
     availabilityRules,
     bookingPolicy,
+    reviews: visibleReviews,
+    reviewerProfiles,
   };
 }
