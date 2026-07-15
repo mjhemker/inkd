@@ -69,8 +69,9 @@ export interface AgentActionPayload {
  * etc., and adds:
  *   - `contract`: the typed `payload` (with `thread_id` / `booking_request_id`
  *     resolved from the column when the payload omits them).
- *   - `executedMessageId`: the contract's `executed_message_id`, persisted in
- *     the `result` jsonb by the approval wrapper (no dedicated column exists).
+ *   - `executedMessageId`: the row's `executed_message_id` column — the message
+ *     an executed action produced. Written by the runtime's approve endpoint
+ *     (and the direct-update fallback here).
  */
 export interface AgentActionView extends AgentAction {
   contract: AgentActionPayload;
@@ -111,7 +112,6 @@ function contextFromDataConsulted(raw: unknown): AgentContextEntry[] {
 /** Normalize a raw row into the contract-shaped view the UI consumes. */
 export function toAgentActionView(row: AgentAction): AgentActionView {
   const payload = (row.payload ?? {}) as Partial<AgentActionPayload>;
-  const result = (row.result ?? {}) as { executed_message_id?: string | null };
   const trigger: AgentActionPayload["trigger"] =
     payload.trigger ??
     (row.booking_request_id
@@ -130,7 +130,7 @@ export function toAgentActionView(row: AgentAction): AgentActionView {
         payload.context_used ?? contextFromDataConsulted(row.data_consulted),
       trigger,
     },
-    executedMessageId: result.executed_message_id ?? null,
+    executedMessageId: row.executed_message_id ?? null,
   };
 }
 
@@ -272,9 +272,9 @@ async function approveAgentActionDirect(
     approved_at: now,
     executed_at: now,
     approved_by: approverProfileId ?? null,
+    executed_message_id: executedMessageId,
     result: {
       ...priorResult,
-      executed_message_id: executedMessageId,
       edited: Boolean(editedDraftText),
     },
     payload: editedDraftText

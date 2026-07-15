@@ -175,7 +175,7 @@ const agentActions = [
       context_used: [{ source: "availability", detail: "Hours: Tue–Sat 11:00–19:00" }],
       trigger: { kind: "message", id: "msg-auto-1" },
     },
-    result: { executed_message_id: "sent-1" },
+    executed_message_id: "sent-1",
     created_at: hoursAgo(20),
   },
   {
@@ -195,7 +195,7 @@ const agentActions = [
       context_used: [{ source: "profile", detail: "Studio: Ironline, 214 Read St, Baltimore MD" }],
       trigger: { kind: "message", id: "msg-auto-2" },
     },
-    result: { executed_message_id: "sent-2" },
+    executed_message_id: "sent-2",
     created_at: hoursAgo(27),
   },
   {
@@ -215,7 +215,7 @@ const agentActions = [
       context_used: [{ source: "playbook", detail: "Aftercare: standard healing instructions" }],
       trigger: { kind: "message", id: "msg-auto-3" },
     },
-    result: { executed_message_id: "sent-3" },
+    executed_message_id: "sent-3",
     created_at: hoursAgo(40),
   },
   // ── Rejected ───────────────────────────────────────────────────────────────
