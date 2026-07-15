@@ -29,6 +29,7 @@ const TABS = [
   { value: "locations", label: "Locations" },
   { value: "booking", label: "Hours & booking" },
   { value: "services", label: "Services" },
+  { value: "waivers", label: "Waivers" },
   { value: "ai", label: "AI staff" },
   { value: "account", label: "Account" },
 ];
@@ -104,10 +105,36 @@ export function SettingsView() {
         {tab === "services" && (
           <ServicesEditor artistId={artist.id} variant="settings" />
         )}
+        {tab === "waivers" && <WaiversPanel />}
         {tab === "ai" && <AgentAutonomyEditor artist={artist} variant="settings" />}
         {tab === "account" && <AccountPanel profileName={profile.display_name} avatarUrl={profile.avatar_url} handle={profile.handle} published={artist.is_published} />}
       </div>
     </div>
+  );
+}
+
+function WaiversPanel() {
+  return (
+    <Card padding="lg" className="flex flex-col items-start gap-4">
+      <span className="grid h-12 w-12 place-items-center rounded-xl bg-surface-overlay text-content-accent">
+        <Icon name="shield" size={22} />
+      </span>
+      <div className="flex flex-col gap-1.5">
+        <h2 className="font-display text-xl font-bold tracking-tight">
+          Consent &amp; waivers
+        </h2>
+        <p className="max-w-md text-content-secondary">
+          Manage your MD/PA consent forms, edit template content, and review
+          signed waivers from clients.
+        </p>
+      </div>
+      <Link href="/settings/waivers">
+        <Button>
+          Manage waivers
+          <Icon name="arrow-right" size={16} />
+        </Button>
+      </Link>
+    </Card>
   );
 }
 

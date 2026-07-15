@@ -250,6 +250,20 @@ export function BookingDetail({ bookingId }: { bookingId: string }) {
               />
             ))
           )}
+          {sessions.length > 0 && (
+            <Link
+              href={`/waivers/sign/${booking.id}`}
+              className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-base px-3.5 py-3 text-sm transition-colors hover:border-border-strong"
+            >
+              <span className="flex items-center gap-2.5 text-content-primary">
+                <Icon name="shield" size={16} />
+                {isArtist
+                  ? "Consent form — review or send for signing"
+                  : "Sign your consent form"}
+              </span>
+              <Icon name="chevron-right" size={16} />
+            </Link>
+          )}
         </div>
       </DetailSection>
 
