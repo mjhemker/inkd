@@ -58,6 +58,11 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
     const [handle, setHandle] = useState(profile.handle ?? "");
     const [bio, setBio] = useState(artist.bio ?? profile.bio ?? "");
     const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url ?? "");
+    // The picker's local file URI — shown immediately so the avatar never
+    // regresses to the (enlarged, at this size) initials fallback while the
+    // upload is in flight. Cleared once the real `avatarUrl` (the uploaded
+    // public URL) takes over.
+    const [previewUri, setPreviewUri] = useState<string | null>(null);
     const [selectedStyles, setSelectedStyles] = useState<string[]>(
       artist.styles ?? [],
     );
@@ -122,6 +127,9 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
       const asset = result.assets[0];
       if (!asset) return;
 
+      // Show the picked photo immediately from its local file URI — the
+      // actual upload + public-URL round trip happens in the background.
+      setPreviewUri(asset.uri);
       setUploadingAvatar(true);
       try {
         const response = await fetch(asset.uri);
@@ -145,6 +153,7 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
         });
       } finally {
         setUploadingAvatar(false);
+        setPreviewUri(null);
       }
     }
 
@@ -241,7 +250,11 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
         {/* Avatar + name */}
         <View className="flex-row items-center gap-4">
           <View>
-            <Avatar src={avatarUrl || undefined} name={displayName || "You"} size="xl" />
+            <Avatar
+              src={previewUri ?? (avatarUrl || undefined)}
+              name={displayName || "You"}
+              size="xl"
+            />
             <Pressable
               onPress={() => void pickAvatar()}
               disabled={uploadingAvatar}
