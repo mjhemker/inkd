@@ -1,22 +1,26 @@
 "use client";
 
 /**
- * The discovery map (web). MapLibre GL JS with a KEYLESS tile source.
+ * The discovery map (web). MapLibre GL JS with a resilient basemap chain.
  *
- * TILE SOURCE — OpenFreeMap (https://openfreemap.org), the "positron" vector
- * style at https://tiles.openfreemap.org/styles/positron. Chosen because it is
- * genuinely keyless (no token, no sign-up, self-hostable) and the pilot needs
- * zero external account setup. Positron is a light, low-chroma basemap; we lay
- * a subtle dark treatment over the GL canvas (CSS filter) so it reads on the
- * near-black INKD canvas without shipping a custom style JSON. OpenFreeMap has
- * no usage limits for reasonable use.
- * LICENSING: map data © OpenStreetMap contributors (ODbL 1.0); the OpenFreeMap
- * styles/tiles are free to use. Attribution is rendered in the map corner.
+ * TILE SOURCE — resolved by `resolveMapStyles` (see ./mapStyle):
+ *   1. NEXT_PUBLIC_MAP_STYLE_URL  — operator override (MapTiler / Mapbox /
+ *      self-hosted). A mapbox:// URL + NEXT_PUBLIC_MAPBOX_TOKEN "just works"
+ *      via a maplibre transformRequest that rewrites mapbox:// → api.mapbox.com.
+ *   2. mapbox://styles/mapbox/dark-v11 — when only a token is set.
+ *   3. OpenFreeMap "liberty" → "positron" — keyless, no signup, the default.
+ * Each candidate is tried in order; the first that ACTUALLY PAINTS TILES wins.
+ * If a style loads but its tiles never arrive (the failure that shipped a blank
+ * gray canvas with no warning), or a tile-error storm hits, or nothing paints
+ * within a timeout, we fall through to the next candidate and finally to an
+ * honest "map unavailable" placard — the list still carries every result.
+ * LICENSING: OSM data © OpenStreetMap contributors (ODbL); OpenFreeMap styles
+ * are free. Attribution renders in the map corner.
  *
- * Pins are square violet placards; artists with active flash burn ember.
- * Points cluster at low zoom; clicking a cluster zooms in, clicking a pin opens
- * a placard popover linking to /a/[handle]. On every move we report which pins
- * are in view so the list stays synced to the viewport.
+ * Pins are square violet placards; artists with active flash burn ember. Points
+ * cluster at low zoom; clicking a pin opens a placard popover linking to
+ * /a/[handle]. On every move we report which pins are in view so the list stays
+ * synced to the viewport.
  */
 import { useEffect, useRef, useState } from "react";
 import maplibregl, {
@@ -28,12 +32,36 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 import { Icon } from "@inkd/ui/web";
 import { formatMinPrice, formatDistanceMiles, type ArtistCard } from "@inkd/core/api";
+import { resolveMapStyles } from "./mapStyle";
 
-const STYLE_URL = "https://tiles.openfreemap.org/styles/positron";
 const SOURCE_ID = "artists";
 const VIOLET = "#7C3AED";
 const EMBER = "#E8A15C";
 const INK = "#0A0A0B";
+
+// A style is given this long to load AND paint real tiles before we treat it as
+// dead and move to the next candidate. Covers the "style loaded, tiles never
+// arrived" case where MapLibre's `load` fires but nothing is ever drawn.
+const PAINT_TIMEOUT_MS = 7000;
+// If this many tile/source errors arrive before we confirm a paint, the basemap
+// is systematically failing (blocked tile host, bad key) → move on.
+const TILE_ERROR_STORM = 6;
+
+/**
+ * CSS treatment per basemap so the map reads on INKD's near-black canvas. The
+ * light "positron" style is inverted into a dark map; richer/darker styles get
+ * a gentler darkening (inverting them would wreck their colors).
+ */
+function filterForStyle(id: string): string {
+  if (id === "openfreemap-positron") {
+    return "brightness(0.82) invert(0.92) hue-rotate(185deg) saturate(0.85) contrast(0.95)";
+  }
+  if (id === "openfreemap-liberty") {
+    return "brightness(0.9) saturate(0.85) contrast(1.02)";
+  }
+  // Operator override / mapbox dark: trust the style, no color surgery.
+  return "none";
+}
 
 export interface DiscoverMapProps {
   cards: ArtistCard[];
@@ -94,154 +122,172 @@ export function DiscoverMap({
   const mapRef = useRef<maplibregl.Map | null>(null);
   const readyRef = useRef(false);
   const popupRef = useRef<maplibregl.Popup | null>(null);
+  // Latest props (read by map callbacks without re-subscribing).
+  const cardsRef = useRef(cards);
+  const centerRef = useRef(center);
   const onVisibleRef = useRef(onVisibleChange);
   const onHoverRef = useRef(onHoverPin);
+  cardsRef.current = cards;
+  centerRef.current = center;
   onVisibleRef.current = onVisibleChange;
   onHoverRef.current = onHoverPin;
-  // "loading" until the basemap style loads; "error" if tiles never arrive
-  // (keyless OpenFreeMap down / offline) so we can show an honest placard
-  // instead of a blank gray canvas; "ready" once the map paints.
+
+  // "loading" until a basemap actually paints; "error" once every candidate in
+  // the chain has failed (honest placard — the list still covers results).
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [activeStyleId, setActiveStyleId] = useState<string>("openfreemap-positron");
 
-  // Init once.
+  // Build + fallback state machine. Runs once; rebuilds the map internally as it
+  // walks the candidate chain, so React only ever sees loading → ready | error.
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: STYLE_URL,
-      center: center ? [center.lng, center.lat] : [-76.2, 39.6],
-      zoom: center ? 10 : 7,
-      attributionControl: { compact: true },
+    if (!containerRef.current) return;
+    const candidates = resolveMapStyles({
+      styleUrl: process.env.NEXT_PUBLIC_MAP_STYLE_URL,
+      mapboxToken: process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
     });
-    mapRef.current = map;
 
-    // If the basemap style hasn't loaded within a reasonable window, treat the
-    // tiles as unavailable and fall back to the placard (the list still works).
-    const loadTimeout = setTimeout(() => {
-      if (!readyRef.current) setStatus("error");
-    }, 8000);
-    // A hard style-load failure (not a single dropped tile) → error immediately.
-    map.on("error", (e) => {
-      if (!readyRef.current && !map.isStyleLoaded()) {
-        setStatus("error");
-      }
-      // Surface the underlying reason for debugging without blanking on
-      // transient per-tile fetch errors once the map is already up.
-      if (e?.error) console.warn("DiscoverMap tile/source error:", e.error.message);
-    });
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+    let disposed = false;
+    let map: maplibregl.Map | null = null;
+    let paintTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const reportVisible = () => {
-      if (!onVisibleRef.current) return;
-      const src = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
-      if (!src) return;
-      const bounds = map.getBounds();
-      const feats = map.querySourceFeatures(SOURCE_ID);
-      const ids = new Set<string>();
-      for (const f of feats) {
-        const [lng, lat] = (f.geometry as GeoJSON.Point).coordinates as [number, number];
-        if (!f.properties?.cluster && bounds.contains([lng, lat])) {
-          ids.add(String(f.properties?.id));
-        }
-      }
-      onVisibleRef.current([...ids]);
+    const clearTimer = () => {
+      if (paintTimer) clearTimeout(paintTimer);
+      paintTimer = null;
     };
 
-    map.on("load", () => {
-      const violet = makePin(VIOLET);
-      const ember = makePin(EMBER);
-      if (violet && !map.hasImage("pin-violet")) map.addImage("pin-violet", violet);
-      if (ember && !map.hasImage("pin-ember")) map.addImage("pin-ember", ember);
+    const tryCandidate = (index: number) => {
+      if (disposed) return;
+      const candidate = candidates[index];
+      if (!candidate) {
+        // Chain exhausted — every basemap failed.
+        console.warn("DiscoverMap: all basemap candidates failed; showing placard.");
+        readyRef.current = false;
+        mapRef.current = null;
+        setStatus("error");
+        return;
+      }
 
-      map.addSource(SOURCE_ID, {
-        type: "geojson",
-        data: toFeatureCollection(cards),
-        cluster: true,
-        clusterRadius: 44,
-        clusterMaxZoom: 12,
+      // Tear down a prior (failed) attempt before the next.
+      if (map) {
+        try {
+          map.remove();
+        } catch {
+          /* ignore */
+        }
+        map = null;
+      }
+
+      let painted = false;
+      let styleLoaded = false;
+      let tileErrors = 0;
+
+      const advance = (reason: string) => {
+        if (disposed || painted) return;
+        console.warn(
+          `DiscoverMap: basemap "${candidate.id}" failed (${reason}) — trying ${
+            candidates[index + 1]?.id ?? "none (placard)"
+          }.`,
+        );
+        clearTimer();
+        tryCandidate(index + 1);
+      };
+
+      const m = new maplibregl.Map({
+        container: containerRef.current!,
+        style: candidate.url,
+        center: centerRef.current
+          ? [centerRef.current.lng, centerRef.current.lat]
+          : [-76.2, 39.6],
+        zoom: centerRef.current ? 10 : 7,
+        attributionControl: { compact: true },
+        ...(candidate.transformRequest
+          ? { transformRequest: candidate.transformRequest as maplibregl.RequestTransformFunction }
+          : {}),
+      });
+      map = m;
+      mapRef.current = m;
+
+      // Nothing painted within the window → this basemap is dead (style loaded
+      // but tiles never arrived, or a silent hang). Fall through.
+      paintTimer = setTimeout(() => advance("no tiles painted within timeout"), PAINT_TIMEOUT_MS);
+
+      m.on("error", (e) => {
+        const reason = e?.error?.message ?? "unknown map error";
+        // Distinguish a broken style/sprite/glyph (fatal for this candidate)
+        // from transient per-tile fetch errors.
+        if (!styleLoaded && !m.isStyleLoaded()) {
+          console.warn(`DiscoverMap tile/style error [${candidate.id}]:`, reason);
+          advance(`style did not load: ${reason}`);
+          return;
+        }
+        tileErrors += 1;
+        if (tileErrors <= TILE_ERROR_STORM) {
+          console.warn(`DiscoverMap tile error [${candidate.id}] (${tileErrors}):`, reason);
+        }
+        if (tileErrors >= TILE_ERROR_STORM && !painted) {
+          advance(`tile-error storm (${tileErrors})`);
+        }
       });
 
-      map.addLayer({
-        id: "clusters",
-        type: "circle",
-        source: SOURCE_ID,
-        filter: ["has", "point_count"],
-        paint: {
-          "circle-color": VIOLET,
-          "circle-radius": ["step", ["get", "point_count"], 16, 5, 22, 15, 28],
-          "circle-stroke-width": 2,
-          "circle-stroke-color": INK,
-        },
-      });
-      map.addLayer({
-        id: "cluster-count",
-        type: "symbol",
-        source: SOURCE_ID,
-        filter: ["has", "point_count"],
-        layout: {
-          "text-field": ["get", "point_count_abbreviated"],
-          "text-font": ["Noto Sans Bold"],
-          "text-size": 13,
-        },
-        paint: { "text-color": "#FFFFFF" },
-      });
-      map.addLayer({
-        id: "unclustered",
-        type: "symbol",
-        source: SOURCE_ID,
-        filter: ["!", ["has", "point_count"]],
-        layout: {
-          "icon-image": ["case", ["get", "flash"], "pin-ember", "pin-violet"],
-          "icon-size": 0.6,
-          "icon-allow-overlap": true,
-        },
-      });
+      // Real tiles finished rendering. This — not `load` — is our readiness
+      // signal, so a style that loads without ever painting can't fake "ready".
+      const confirmPainted = () => {
+        if (disposed || painted) return;
+        if (!styleLoaded) return;
+        if (tileErrors >= TILE_ERROR_STORM) return;
+        painted = true;
+        readyRef.current = true;
+        clearTimer();
+        setActiveStyleId(candidate.id);
+        setStatus("ready");
+        reportVisible(m);
+        fitToCards(m, cardsRef.current, centerRef.current);
+      };
 
-      map.on("click", "clusters", (e) => {
-        const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
-        const clusterId = features[0]?.properties?.cluster_id;
-        const src = map.getSource(SOURCE_ID) as GeoJSONSource;
-        if (clusterId == null) return;
-        const feat = features[0];
-        if (!feat) return;
-        void src.getClusterExpansionZoom(clusterId).then((zoom) => {
-          const [lng, lat] = (feat.geometry as GeoJSON.Point).coordinates as [number, number];
-          map.easeTo({ center: [lng, lat], zoom });
-        });
+      m.on("load", () => {
+        if (disposed) return;
+        styleLoaded = true;
+        setupLayers(m, cardsRef.current, popupRef, onHoverRef);
+        // If the map is already idle with tiles (fast/cached), confirm now;
+        // otherwise wait for the first idle frame.
+        if (m.areTilesLoaded()) confirmPainted();
       });
+      m.on("idle", confirmPainted);
+      m.on("moveend", () => reportVisible(m));
+    };
 
-      map.on("click", "unclustered", (e) => {
-        const f = e.features?.[0];
-        if (!f) return;
-        openPopup(map, f, popupRef);
-      });
-      map.on("mouseenter", "unclustered", (e) => {
-        map.getCanvas().style.cursor = "pointer";
-        onHoverRef.current?.(String(e.features?.[0]?.properties?.id));
-      });
-      map.on("mouseleave", "unclustered", () => {
-        map.getCanvas().style.cursor = "";
-        onHoverRef.current?.(null);
-      });
-      map.on("mouseenter", "clusters", () => (map.getCanvas().style.cursor = "pointer"));
-      map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
-
-      readyRef.current = true;
-      clearTimeout(loadTimeout);
-      setStatus("ready");
-      reportVisible();
-      fitToCards(map, cards, center);
-    });
-
-    map.on("moveend", reportVisible);
+    tryCandidate(0);
 
     return () => {
-      clearTimeout(loadTimeout);
-      map.remove();
+      disposed = true;
+      clearTimer();
+      if (map) {
+        try {
+          map.remove();
+        } catch {
+          /* ignore */
+        }
+      }
       mapRef.current = null;
       readyRef.current = false;
     };
   }, []);
+
+  const reportVisible = (map: maplibregl.Map) => {
+    if (!onVisibleRef.current) return;
+    const src = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
+    if (!src) return;
+    const bounds = map.getBounds();
+    const feats = map.querySourceFeatures(SOURCE_ID);
+    const ids = new Set<string>();
+    for (const f of feats) {
+      const [lng, lat] = (f.geometry as GeoJSON.Point).coordinates as [number, number];
+      if (!f.properties?.cluster && bounds.contains([lng, lat])) {
+        ids.add(String(f.properties?.id));
+      }
+    }
+    onVisibleRef.current([...ids]);
+  };
 
   // Push new results into the source when cards change.
   useEffect(() => {
@@ -265,13 +311,9 @@ export function DiscoverMap({
 
   return (
     <div className={`relative ${className ?? ""}`}>
-      <div
-        ref={containerRef}
-        className="h-full w-full"
-        style={{ filter: "brightness(0.82) invert(0.92) hue-rotate(185deg) saturate(0.85) contrast(0.95)" }}
-      />
+      <div ref={containerRef} className="h-full w-full" style={{ filter: filterForStyle(activeStyleId) }} />
 
-      {/* Loading — skeleton pins over a tinted plate until the basemap paints. */}
+      {/* Loading — skeleton pins over a tinted plate until a basemap paints. */}
       {status === "loading" && (
         <div className="pointer-events-none absolute inset-0 grid place-items-center bg-surface-base/80">
           <div className="flex flex-col items-center gap-3">
@@ -318,6 +360,96 @@ export function DiscoverMap({
       )}
     </div>
   );
+}
+
+/** Add pin images, the clustered source, layers, and interaction handlers. */
+function setupLayers(
+  map: maplibregl.Map,
+  cards: ArtistCard[],
+  popupRef: React.MutableRefObject<maplibregl.Popup | null>,
+  onHoverRef: React.MutableRefObject<((artistId: string | null) => void) | undefined>,
+) {
+  const violet = makePin(VIOLET);
+  const ember = makePin(EMBER);
+  if (violet && !map.hasImage("pin-violet")) map.addImage("pin-violet", violet);
+  if (ember && !map.hasImage("pin-ember")) map.addImage("pin-ember", ember);
+
+  if (map.getSource(SOURCE_ID)) return; // already wired (idempotent guard)
+
+  map.addSource(SOURCE_ID, {
+    type: "geojson",
+    data: toFeatureCollection(cards),
+    cluster: true,
+    clusterRadius: 44,
+    clusterMaxZoom: 12,
+  });
+
+  map.addLayer({
+    id: "clusters",
+    type: "circle",
+    source: SOURCE_ID,
+    filter: ["has", "point_count"],
+    paint: {
+      "circle-color": VIOLET,
+      "circle-radius": ["step", ["get", "point_count"], 16, 5, 22, 15, 28],
+      "circle-stroke-width": 2,
+      "circle-stroke-color": INK,
+    },
+  });
+  map.addLayer({
+    id: "cluster-count",
+    type: "symbol",
+    source: SOURCE_ID,
+    filter: ["has", "point_count"],
+    layout: {
+      "text-field": ["get", "point_count_abbreviated"],
+      "text-font": ["Noto Sans Bold"],
+      "text-size": 13,
+    },
+    paint: { "text-color": "#FFFFFF" },
+  });
+  map.addLayer({
+    id: "unclustered",
+    type: "symbol",
+    source: SOURCE_ID,
+    filter: ["!", ["has", "point_count"]],
+    layout: {
+      "icon-image": ["case", ["get", "flash"], "pin-ember", "pin-violet"],
+      "icon-size": 0.6,
+      "icon-allow-overlap": true,
+    },
+  });
+
+  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+
+  map.on("click", "clusters", (e) => {
+    const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
+    const clusterId = features[0]?.properties?.cluster_id;
+    const src = map.getSource(SOURCE_ID) as GeoJSONSource;
+    if (clusterId == null) return;
+    const feat = features[0];
+    if (!feat) return;
+    void src.getClusterExpansionZoom(clusterId).then((zoom) => {
+      const [lng, lat] = (feat.geometry as GeoJSON.Point).coordinates as [number, number];
+      map.easeTo({ center: [lng, lat], zoom });
+    });
+  });
+
+  map.on("click", "unclustered", (e) => {
+    const f = e.features?.[0];
+    if (!f) return;
+    openPopup(map, f, popupRef);
+  });
+  map.on("mouseenter", "unclustered", (e) => {
+    map.getCanvas().style.cursor = "pointer";
+    onHoverRef.current?.(String(e.features?.[0]?.properties?.id));
+  });
+  map.on("mouseleave", "unclustered", () => {
+    map.getCanvas().style.cursor = "";
+    onHoverRef.current?.(null);
+  });
+  map.on("mouseenter", "clusters", () => (map.getCanvas().style.cursor = "pointer"));
+  map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
 }
 
 function fitToCards(

@@ -3,7 +3,10 @@
   "compilerOptions": {
     "noEmit": true,
     "lib": ["ES2023", "DOM"],
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    // Colocated *.test.ts run under `node --test` (type-stripping), which needs
+    // explicit .ts import specifiers. Safe here because noEmit is on.
+    "allowImportingTsExtensions": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules", "dist"]
