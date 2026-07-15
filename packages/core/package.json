@@ -42,6 +42,10 @@
     "./utils": {
       "types": "./src/utils/index.ts",
       "default": "./src/utils/index.ts"
+    },
+    "./waivers": {
+      "types": "./src/waivers/index.ts",
+      "default": "./src/waivers/index.ts"
     }
   },
   "scripts": {

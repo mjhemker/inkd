@@ -20,3 +20,4 @@ export * from "./useThreads";
 export * from "./queryKeysExtras";
 export * from "./useArtistContent";
 export * from "./usePublicArtistProfile";
+export * from "./useWaivers";
