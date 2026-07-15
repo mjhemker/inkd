@@ -19,6 +19,8 @@ export * from "./content";
 export * from "./waivers";
 export * from "./waiverTemplateManagement";
 export * from "./agentSettings";
+export * from "./agentActions";
+export * from "./playbooks";
 export * from "./notifications";
 export * from "./threadDirectory";
 export * from "./threadStarter";

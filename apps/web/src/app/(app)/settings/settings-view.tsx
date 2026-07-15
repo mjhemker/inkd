@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Avatar,
   Badge,
@@ -37,7 +38,11 @@ const TABS = [
 export function SettingsView() {
   const { data: profile, isLoading: pLoading } = useCurrentProfile();
   const { data: artist, isLoading: aLoading } = useCurrentArtistProfile();
-  const [tab, setTab] = useState("profile");
+  const searchParams = useSearchParams();
+  const initialTab = TABS.some((t) => t.value === searchParams.get("tab"))
+    ? (searchParams.get("tab") as string)
+    : "profile";
+  const [tab, setTab] = useState(initialTab);
 
   if (pLoading || aLoading) {
     return (
@@ -106,7 +111,30 @@ export function SettingsView() {
           <ServicesEditor artistId={artist.id} variant="settings" />
         )}
         {tab === "waivers" && <WaiversPanel />}
-        {tab === "ai" && <AgentAutonomyEditor artist={artist} variant="settings" />}
+        {tab === "ai" && (
+          <div className="flex flex-col gap-5">
+            <Link
+              href="/studio/ai"
+              className="flex items-center justify-between gap-3 rounded-sm border border-border-subtle bg-surface-raised px-4 py-3 transition-colors hover:border-border-accent"
+            >
+              <span className="flex items-center gap-3">
+                <span className="grid h-9 w-9 place-items-center rounded-sm bg-surface-ember text-brand-on-ember">
+                  <Icon name="sparkles" size={17} />
+                </span>
+                <span className="flex flex-col">
+                  <span className="text-sm font-semibold text-content-primary">
+                    Your AI staff area
+                  </span>
+                  <span className="text-xs text-content-muted">
+                    Approvals, activity ledger, and playbook
+                  </span>
+                </span>
+              </span>
+              <Icon name="arrow-right" size={16} className="text-content-muted" />
+            </Link>
+            <AgentAutonomyEditor artist={artist} variant="settings" />
+          </div>
+        )}
         {tab === "account" && <AccountPanel profileName={profile.display_name} avatarUrl={profile.avatar_url} handle={profile.handle} published={artist.is_published} />}
       </div>
     </div>

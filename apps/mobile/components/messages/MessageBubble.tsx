@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ActivityIndicator, Image, Pressable, Text, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
+import { router } from "expo-router";
 import { Icon, Modal, cx } from "@inkd/ui/native";
 import { formatMessageTime } from "@inkd/core/utils";
 import { getChatAttachmentUrls, toChatAttachments, useInkdClient } from "@inkd/core";
@@ -36,11 +37,29 @@ export function MessageBubble({ message, isMine }: { message: Message; isMine: b
   return (
     <View className={cx("mb-3 flex-col", isMine ? "items-end" : "items-start")}>
       {isAgent && (
-        <View className="mb-1 flex-row items-center gap-1 pl-0.5">
-          <Icon name="sparkles" size={11} color="#A78BFA" />
-          <Text className="font-mono text-[10px] uppercase tracking-widest text-content-accent">
-            Drafted by AI staff
-          </Text>
+        <View className="mb-1 flex-row items-center gap-2 pl-0.5">
+          <View className="flex-row items-center gap-1">
+            <Icon name="sparkles" size={11} color="#A78BFA" />
+            <Text className="font-mono text-[10px] uppercase tracking-widest text-content-accent">
+              Drafted by AI staff
+            </Text>
+          </View>
+          {message.agent_action_id ? (
+            <Pressable
+              accessibilityRole="link"
+              onPress={() =>
+                router.push(
+                  `/studio/ai?tab=activity&action=${message.agent_action_id}` as never,
+                )
+              }
+              className="flex-row items-center gap-0.5"
+            >
+              <Text className="font-mono text-[10px] uppercase tracking-widest text-content-muted underline">
+                view in log
+              </Text>
+              <Icon name="arrow-right" size={10} color="#71717A" />
+            </Pressable>
+          ) : null}
         </View>
       )}
 

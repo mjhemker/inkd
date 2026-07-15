@@ -7,6 +7,7 @@ import {
   type IconName,
 } from "@inkd/ui/web";
 import { LinkButton } from "@/components/link-button";
+import { AiStaffDashboardCard } from "@/components/ai-staff/AiStaffDashboardCard";
 
 interface Stat {
   label: string;
@@ -25,8 +26,16 @@ const stats: Stat[] = [
 /**
  * Artist dashboard body. Shared by /dashboard and the /dev/shell preview so the
  * shell chrome can be reviewed with realistic content in place.
+ *
+ * `liveAiStaff` wires the AI staff card to real agent_actions data (the real
+ * /dashboard). The offline /dev/shell preview passes `false` to keep a static,
+ * provider-free card so the chrome renders deterministically without a DB.
  */
-export function DashboardPreview() {
+export function DashboardPreview({
+  liveAiStaff = true,
+}: {
+  liveAiStaff?: boolean;
+}) {
   return (
     <div className="flex flex-col gap-8">
       <header className="flex flex-col gap-2">
@@ -84,20 +93,24 @@ export function DashboardPreview() {
           />
         </Card>
 
-        <Card padding="none" className="overflow-hidden">
-          <div className="flex items-center gap-2 border-b border-border-subtle px-5 py-4">
-            <Icon name="sparkles" size={18} className="text-content-accent" />
-            <h2 className="font-sans text-base font-semibold text-content-primary">
-              AI staff activity
-            </h2>
-          </div>
-          <EmptyState
-            className="py-12"
-            icon={<Icon name="shield" size={24} />}
-            title="Nothing to review"
-            description="Your Front Desk drafts replies for your approval. Everything it does shows up here, with the data it used."
-          />
-        </Card>
+        {liveAiStaff ? (
+          <AiStaffDashboardCard />
+        ) : (
+          <Card padding="none" className="overflow-hidden">
+            <div className="flex items-center gap-2 border-b border-border-subtle px-5 py-4">
+              <Icon name="sparkles" size={18} className="text-content-accent" />
+              <h2 className="font-sans text-base font-semibold text-content-primary">
+                AI staff activity
+              </h2>
+            </div>
+            <EmptyState
+              className="py-12"
+              icon={<Icon name="shield" size={24} />}
+              title="Nothing to review"
+              description="Your Front Desk drafts replies for your approval. Everything it does shows up here, with the data it used."
+            />
+          </Card>
+        )}
       </div>
     </div>
   );

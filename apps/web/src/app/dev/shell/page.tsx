@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Shell preview", robots: { index: fal
 export default function ShellPreviewPage() {
   return (
     <AppShell currentPath="/dashboard" title="Dashboard">
-      <DashboardPreview />
+      <DashboardPreview liveAiStaff={false} />
     </AppShell>
   );
 }

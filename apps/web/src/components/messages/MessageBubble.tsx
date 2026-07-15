@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Icon, Modal, Spinner, cx } from "@inkd/ui/web";
 import { formatMessageTime } from "@inkd/core/utils";
@@ -45,9 +46,20 @@ export function MessageBubble({
   return (
     <div className={cx("flex flex-col gap-1", isMine ? "items-end" : "items-start")}>
       {isAgent && (
-        <span className="flex items-center gap-1 pl-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-content-accent">
-          <Icon name="sparkles" size={11} />
-          Drafted by AI staff
+        <span className="flex items-center gap-2 pl-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-content-accent">
+          <span className="flex items-center gap-1">
+            <Icon name="sparkles" size={11} />
+            Drafted by AI staff
+          </span>
+          {message.agent_action_id && (
+            <Link
+              href={`/studio/ai?tab=activity&action=${message.agent_action_id}`}
+              className="inline-flex items-center gap-0.5 text-content-muted underline decoration-dotted underline-offset-2 hover:text-content-accent"
+            >
+              view in log
+              <Icon name="arrow-right" size={10} />
+            </Link>
+          )}
         </span>
       )}
 
