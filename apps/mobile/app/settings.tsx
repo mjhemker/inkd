@@ -35,6 +35,7 @@ const TABS = [
   { value: "locations", label: "Locations" },
   { value: "booking", label: "Hours & booking" },
   { value: "services", label: "Services" },
+  { value: "waivers", label: "Waivers" },
   { value: "ai", label: "AI staff" },
   { value: "account", label: "Account" },
 ];
@@ -104,6 +105,24 @@ function SettingsView() {
               {tab === "booking" && <BookingEditor artist={artist} variant="settings" />}
               {tab === "services" && (
                 <ServicesEditor artistId={artist.id} variant="settings" />
+              )}
+              {tab === "waivers" && (
+                <View className="gap-4 rounded-xl border border-border-subtle p-5">
+                  <Text className="text-base font-sans-semibold text-content-primary">
+                    Consent &amp; waivers
+                  </Text>
+                  <Text className="text-sm text-content-secondary">
+                    Manage your MD/PA consent forms, edit template content, and
+                    review signed waivers from clients.
+                  </Text>
+                  <Button
+                    onPress={() => router.push("/waivers")}
+                    className="self-start"
+                  >
+                    Manage waivers
+                    <Icon name="arrow-right" size={16} color="#FAFAFA" />
+                  </Button>
+                </View>
               )}
               {tab === "ai" && <AgentAutonomyEditor artist={artist} variant="settings" />}
               {tab === "account" && (

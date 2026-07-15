@@ -5,8 +5,9 @@
  * reschedule/cancel/complete, and booking-level status transitions.
  */
 import { useMemo, useState } from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import * as Linking from "expo-linking";
+import { Link } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   useInkdClient,
@@ -270,6 +271,21 @@ export function BookingDetail({ bookingId }: { bookingId: string }) {
                 onCancel={() => updateSession.mutate({ id: s.id, patch: { status: "cancelled" } })}
               />
             ))
+          )}
+          {sessions.length > 0 && (
+            <Link href={`/waivers/sign/${booking.id}`} asChild>
+              <Pressable className="flex-row items-center justify-between rounded-lg border border-border-subtle px-3.5 py-3">
+                <View className="flex-row items-center gap-2.5">
+                  <Icon name="shield" size={16} color="#D4D4D8" />
+                  <Text className="text-sm text-content-primary">
+                    {isArtist
+                      ? "Consent form — review or send"
+                      : "Sign your consent form"}
+                  </Text>
+                </View>
+                <Icon name="chevron-right" size={16} color="#71717A" />
+              </Pressable>
+            </Link>
           )}
         </View>
       </DetailSection>
