@@ -24,3 +24,5 @@ export * from "./useArtistContent";
 export * from "./usePublicArtistProfile";
 export * from "./useWaivers";
 export * from "./usePayments";
+export * from "./queryKeysFeed";
+export * from "./useFeed";

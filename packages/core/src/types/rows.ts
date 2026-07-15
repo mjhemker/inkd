@@ -57,6 +57,7 @@ export type FlashItem = Tables<"flash_items">;
 export type Review = Tables<"reviews">;
 export type Follow = Tables<"follows">;
 export type PostLike = Tables<"post_likes">;
+export type SavedPost = Tables<"saved_posts">;
 export type AgentSettings = Tables<"agent_settings">;
 export type AgentAction = Tables<"agent_actions">;
 export type AgentPlaybook = Tables<"agent_playbooks">;
