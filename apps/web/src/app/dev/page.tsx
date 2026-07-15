@@ -37,6 +37,12 @@ const DEV_ROUTES: { href: string; title: string; description: string }[] = [
     title: "Public artist profile",
     description: "The consumer-facing /a/[handle] profile with seeded demo content.",
   },
+  {
+    href: "/dev/messages-preview",
+    title: "Chat + attachments",
+    description:
+      "Messaging thread with image attachments (Composer, ChatThread, MessageBubble) against a mock chat client.",
+  },
 ];
 
 export default function DevIndexPage() {

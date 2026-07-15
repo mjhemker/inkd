@@ -83,7 +83,7 @@ export function MessageBubble({
           className={cx(
             "max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed sm:max-w-[65%]",
             isAgent
-              ? "rounded-br-sm border border-dashed border-brand/45 bg-brand/[0.08] text-content-primary"
+              ? "rounded-br-sm border border-dashed border-border-accent bg-surface-plate-ink text-content-primary"
               : isMine
                 ? "rounded-br-sm bg-brand text-brand-on"
                 : "rounded-bl-sm bg-surface-overlay text-content-primary",

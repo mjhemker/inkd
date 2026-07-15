@@ -478,7 +478,7 @@ function ServiceCard({
     <Card
       onPress={onPress}
       padding="md"
-      className={selected ? "gap-1.5 border-2 border-brand bg-brand/10" : "gap-1.5"}
+      className={selected ? "gap-1.5 border-2 border-brand bg-surface-plate-ink" : "gap-1.5"}
     >
       <View className="flex-row items-center justify-between">
         <Text className="font-display text-base text-content-primary">{title}</Text>
@@ -782,7 +782,7 @@ function StepDates({
                       padding="sm"
                       className={
                         isSel
-                          ? "min-w-[4.5rem] items-center gap-0.5 border-2 border-brand bg-brand/10"
+                          ? "min-w-[4.5rem] items-center gap-0.5 border-2 border-brand bg-surface-plate-ink"
                           : "min-w-[4.5rem] items-center gap-0.5"
                       }
                     >

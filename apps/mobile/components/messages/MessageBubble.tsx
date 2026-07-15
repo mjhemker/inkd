@@ -81,7 +81,7 @@ export function MessageBubble({ message, isMine }: { message: Message; isMine: b
           className={cx(
             "max-w-[80%] rounded-2xl px-3.5 py-2.5",
             isAgent
-              ? "rounded-br-sm border border-dashed border-brand/45 bg-brand/10"
+              ? "rounded-br-sm border border-dashed border-border-accent bg-surface-plate-ink"
               : isMine
                 ? "rounded-br-sm bg-brand"
                 : "rounded-bl-sm bg-surface-overlay",
