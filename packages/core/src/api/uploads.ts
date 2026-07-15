@@ -37,7 +37,7 @@ export function newUploadBatchId(): string {
 
 /** Strip a filename to a storage-safe token, preserving the extension. */
 function safeName(name: string): string {
-  const cleaned = name.replace(/[^\w.\-]+/g, "_").replace(/_+/g, "_");
+  const cleaned = name.replace(/[^\w.-]+/g, "_").replace(/_+/g, "_");
   return cleaned.slice(-120) || "file";
 }
 
