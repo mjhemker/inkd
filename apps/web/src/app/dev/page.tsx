@@ -79,6 +79,18 @@ const DEV_ROUTES: { href: string; title: string; description: string }[] = [
     description:
       "The /studio/ai area (AiStaffView): approvals inbox with placard cards, provenance + tier stamps, the activity ledger, and the playbook editor — against a seeded mock of the agent_actions contract.",
   },
+  {
+    href: "/dev/instagram-preview",
+    title: "Instagram import + share kit",
+    description:
+      "The settings 'Share & connect' tab: the key-gated Instagram import scaffold and the working booking-link share kit, against an in-memory fake client. Try ?scenario=not-configured|not-connected|connected.",
+  },
+  {
+    href: "/dev/plan-preview",
+    title: "INKD Pro — premium tier",
+    description:
+      "The premium tier scaffold: the 'INKD Pro — coming soon' placard and the autonomy slider's pilot note + PRO stamp, rendered against a mock Supabase client.",
+  },
 ];
 
 export default function DevIndexPage() {
