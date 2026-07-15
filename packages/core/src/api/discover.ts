@@ -109,6 +109,45 @@ export function radiusMatchesMiles(radiusKm: number | undefined, mi: number): bo
 }
 
 // ---------------------------------------------------------------------------
+// Slider ranges — the filter bar uses a dual-thumb price slider and a
+// single-thumb distance slider instead of discrete chips. The UI speaks whole
+// dollars + miles; the RPC speaks cents + km. Both extremes are "open":
+//   · price top thumb at PRICE_SLIDER_MAX_USD  → no upper bound (uncapped)
+//   · distance thumb at DISTANCE_SLIDER_MAX_MI → any distance (no radius)
+// ---------------------------------------------------------------------------
+export const PRICE_SLIDER_MIN_USD = 0;
+export const PRICE_SLIDER_MAX_USD = 10000;
+export const PRICE_SLIDER_STEP_USD = 50;
+
+export const DISTANCE_SLIDER_MIN_MI = 1;
+export const DISTANCE_SLIDER_MAX_MI = 50;
+export const DISTANCE_SLIDER_STEP_MI = 1;
+
+export function usdToCents(usd: number): number {
+  return Math.round(usd * 100);
+}
+export function centsToUsd(cents: number): number {
+  return Math.round(cents / 100);
+}
+
+/** Format a whole-dollar price-slider value, e.g. "$0", "$1,250", "$10,000+". */
+export function formatPriceUsd(usd: number): string {
+  if (usd >= PRICE_SLIDER_MAX_USD) return `$${PRICE_SLIDER_MAX_USD.toLocaleString("en-US")}+`;
+  return `$${Math.max(0, Math.round(usd)).toLocaleString("en-US")}`;
+}
+
+/** Format a distance-slider value in miles, e.g. "5 mi", "50+ mi". */
+export function formatDistanceSliderMi(mi: number): string {
+  return mi >= DISTANCE_SLIDER_MAX_MI ? `${DISTANCE_SLIDER_MAX_MI}+ mi` : `${Math.round(mi)} mi`;
+}
+
+/** Is the price selection narrowed from the full open range? */
+export function isPriceNarrowed(minUsd?: number, maxUsd?: number): boolean {
+  return (minUsd != null && minUsd > PRICE_SLIDER_MIN_USD) ||
+    (maxUsd != null && maxUsd < PRICE_SLIDER_MAX_USD);
+}
+
+// ---------------------------------------------------------------------------
 // Query
 // ---------------------------------------------------------------------------
 /** Run a discovery search. Undefined filters are omitted (sent as SQL NULL). */
@@ -210,9 +249,13 @@ export interface DiscoverFilterState {
   city?: DiscoverCitySlug;
   lat?: number;
   lng?: number;
+  /** Search radius (km). `undefined` with a center = uncapped (any distance). */
   radiusKm?: number;
   styles: string[];
-  priceBand?: PriceBandSlug;
+  /** Dual-thumb price slider, whole dollars. undefined/0 = no lower bound. */
+  priceMinUsd?: number;
+  /** Dual-thumb price slider, whole dollars. undefined/>=MAX = uncapped. */
+  priceMaxUsd?: number;
   booksOpen: boolean;
   state?: UsState;
   query: string;
@@ -236,7 +279,12 @@ export function discoverFilterToQuery(f: DiscoverFilterState): string {
     sp.set("radius", String(f.radiusKm));
   }
   if (f.styles.length) sp.set("styles", f.styles.join(","));
-  if (f.priceBand) sp.set("price", f.priceBand);
+  if (f.priceMinUsd != null && f.priceMinUsd > PRICE_SLIDER_MIN_USD) {
+    sp.set("priceMin", String(Math.round(f.priceMinUsd)));
+  }
+  if (f.priceMaxUsd != null && f.priceMaxUsd < PRICE_SLIDER_MAX_USD) {
+    sp.set("priceMax", String(Math.round(f.priceMaxUsd)));
+  }
   if (f.booksOpen) sp.set("open", "1");
   if (f.state && !f.city) sp.set("state", f.state);
   if (f.query.trim()) sp.set("q", f.query.trim());
@@ -246,19 +294,30 @@ export function discoverFilterToQuery(f: DiscoverFilterState): string {
 /** Rehydrate the filter selection from a query string. */
 export function queryToDiscoverFilter(get: (key: string) => string | null): DiscoverFilterState {
   const city = cityBySlug(get("city"));
-  const band = priceBandBySlug(get("price"));
   const stylesRaw = get("styles");
   const stateParsed = usStateSchema.safeParse(get("state") ?? undefined);
   const radius = numParam(get("radius"));
   const latRaw = numParam(get("lat"));
   const lngRaw = numParam(get("lng"));
+
+  // Price: read the dual-thumb dollar params, but still honor a legacy
+  // `price=budget|mid|premium` band link so old shared URLs keep working.
+  const legacyBand = priceBandBySlug(get("price"));
+  const priceMinUsd = legacyBand
+    ? legacyBand.min != null ? centsToUsd(legacyBand.min) : undefined
+    : numParam(get("priceMin"));
+  const priceMaxUsd = legacyBand
+    ? legacyBand.max != null ? centsToUsd(legacyBand.max) : undefined
+    : numParam(get("priceMax"));
+
   return {
     city: city?.slug,
     lat: city ? city.lat : latRaw,
     lng: city ? city.lng : lngRaw,
     radiusKm: radius != null && radius > 0 ? radius : undefined,
     styles: stylesRaw ? stylesRaw.split(",").map((s) => s.trim()).filter(Boolean) : [],
-    priceBand: band?.slug,
+    priceMinUsd,
+    priceMaxUsd,
     booksOpen: get("open") === "1",
     state: !city && stateParsed.success ? stateParsed.data : undefined,
     query: get("q")?.trim() ?? "",
@@ -267,15 +326,20 @@ export function queryToDiscoverFilter(get: (key: string) => string | null): Disc
 
 /** Collapse a filter selection into the RPC params the query hook consumes. */
 export function discoverFilterToParams(f: DiscoverFilterState): DiscoverParams {
-  const band = f.priceBand ? priceBandBySlug(f.priceBand) : undefined;
   const hasCenter = f.lat != null && f.lng != null;
+  // Dollars -> cents at the RPC boundary. Only send a bound when the slider is
+  // actually narrowed from the open range, so untouched price never excludes
+  // artists that have no priced service.
+  const minUsd = f.priceMinUsd ?? PRICE_SLIDER_MIN_USD;
+  const maxUsd = f.priceMaxUsd ?? PRICE_SLIDER_MAX_USD;
   return discoverParamsSchema.parse({
     lat: hasCenter ? f.lat : undefined,
     lng: hasCenter ? f.lng : undefined,
-    radiusKm: hasCenter ? f.radiusKm ?? DEFAULT_RADIUS_KM : undefined,
+    // undefined radius with a center = uncapped (any distance), sorted nearest.
+    radiusKm: hasCenter ? f.radiusKm : undefined,
     styles: f.styles.length ? f.styles : undefined,
-    priceMin: band?.min,
-    priceMax: band?.max,
+    priceMin: minUsd > PRICE_SLIDER_MIN_USD ? usdToCents(minUsd) : undefined,
+    priceMax: maxUsd < PRICE_SLIDER_MAX_USD ? usdToCents(maxUsd) : undefined,
     booksOpen: f.booksOpen ? true : undefined,
     state: f.state,
     query: f.query.trim() || undefined,

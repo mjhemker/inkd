@@ -3,22 +3,33 @@
  * work"). Every control maps 1:1 to a `search_artists` argument and to a URL
  * param (via DiscoverView), so any filter combination is shareable.
  *
- * City quick-picks (Baltimore / Philadelphia) set the search center + state;
- * style chips, price band, books-open, distance radius and free text stack on
- * top. Reads like flipping through a city's catalog.
+ * City quick-picks (Baltimore / Philadelphia) set the search center + state; a
+ * dual-thumb price slider ($0–$10,000+) and a single-thumb distance slider
+ * (1–50 mi) replace the old chip bands; style chips, books-open and free text
+ * stack on top. Slider drags update the thumbs instantly but the RPC/URL commit
+ * is debounced so a drag doesn't fire a query per pixel.
  */
-import { useState } from "react";
-import { Icon, Input, Toggle, cx } from "@inkd/ui/web";
+import { useEffect, useRef, useState } from "react";
+import { Icon, Input, RangeSlider, Slider, Toggle, cx } from "@inkd/ui/web";
 import {
   DISCOVER_CITIES,
-  PRICE_BANDS,
-  RADIUS_OPTIONS_MI,
   DEFAULT_RADIUS_MI,
   milesToKm,
-  radiusMatchesMiles,
+  kmToMiles,
+  formatPriceUsd,
+  formatDistanceSliderMi,
+  isPriceNarrowed,
+  PRICE_SLIDER_MIN_USD,
+  PRICE_SLIDER_MAX_USD,
+  PRICE_SLIDER_STEP_USD,
+  DISTANCE_SLIDER_MIN_MI,
+  DISTANCE_SLIDER_MAX_MI,
+  DISTANCE_SLIDER_STEP_MI,
   type DiscoverFilterState,
 } from "@inkd/core/api";
 import type { Style } from "@inkd/core/types";
+
+const COMMIT_DEBOUNCE_MS = 280;
 
 function Chip({
   selected,
@@ -54,12 +65,59 @@ export interface FilterBarProps {
   onReset: () => void;
 }
 
+/** Clamp + round a km radius into a whole-mile slider value. */
+function radiusToMi(radiusKm: number | undefined): number {
+  if (radiusKm == null) return DISTANCE_SLIDER_MAX_MI; // uncapped => full right
+  const mi = Math.round(kmToMiles(radiusKm));
+  return Math.min(Math.max(mi, DISTANCE_SLIDER_MIN_MI), DISTANCE_SLIDER_MAX_MI);
+}
+
 export function FilterBar({ filter, styles, resultCount, onChange, onReset }: FilterBarProps) {
   const [stylesOpen, setStylesOpen] = useState(false);
   const patch = (p: Partial<DiscoverFilterState>) => onChange({ ...filter, ...p });
 
   const hasCenter = filter.lat != null && filter.lng != null;
   const activeStyles = new Set(filter.styles);
+
+  // --- Debounced slider commits ------------------------------------------
+  // Thumbs move against local state for instant feedback; the URL/RPC commit
+  // (via `patch`) is debounced so dragging doesn't fire a request per frame.
+  const priceFromFilter: [number, number] = [
+    filter.priceMinUsd ?? PRICE_SLIDER_MIN_USD,
+    filter.priceMaxUsd ?? PRICE_SLIDER_MAX_USD,
+  ];
+  const [priceLocal, setPriceLocal] = useState<[number, number]>(priceFromFilter);
+  const [distLocal, setDistLocal] = useState<number>(radiusToMi(filter.radiusKm));
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Keep local slider values in sync when the filter changes externally
+  // (reset, shared URL, city pick). Compare by value to avoid clobbering a
+  // live drag with an identical commit.
+  useEffect(() => {
+    setPriceLocal([filter.priceMinUsd ?? PRICE_SLIDER_MIN_USD, filter.priceMaxUsd ?? PRICE_SLIDER_MAX_USD]);
+  }, [filter.priceMinUsd, filter.priceMaxUsd]);
+  useEffect(() => {
+    setDistLocal(radiusToMi(filter.radiusKm));
+  }, [filter.radiusKm]);
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+
+  const debouncedPatch = (p: Partial<DiscoverFilterState>) => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => onChange({ ...filter, ...p }), COMMIT_DEBOUNCE_MS);
+  };
+
+  const onPriceChange = ([lo, hi]: [number, number]) => {
+    setPriceLocal([lo, hi]);
+    debouncedPatch({
+      priceMinUsd: lo > PRICE_SLIDER_MIN_USD ? lo : undefined,
+      priceMaxUsd: hi < PRICE_SLIDER_MAX_USD ? hi : undefined,
+    });
+  };
+
+  const onDistanceChange = (mi: number) => {
+    setDistLocal(mi);
+    debouncedPatch({ radiusKm: mi >= DISTANCE_SLIDER_MAX_MI ? undefined : milesToKm(mi) });
+  };
 
   const toggleStyle = (slug: string) => {
     const next = new Set(activeStyles);
@@ -74,13 +132,19 @@ export function FilterBar({ filter, styles, resultCount, onChange, onReset }: Fi
     if (filter.city === slug) {
       patch({ city: undefined, lat: undefined, lng: undefined, state: undefined, radiusKm: undefined });
     } else {
-      patch({ city: city.slug, lat: city.lat, lng: city.lng, state: city.state, radiusKm: filter.radiusKm ?? milesToKm(DEFAULT_RADIUS_MI) });
+      patch({
+        city: city.slug,
+        lat: city.lat,
+        lng: city.lng,
+        state: city.state,
+        radiusKm: filter.radiusKm ?? milesToKm(DEFAULT_RADIUS_MI),
+      });
     }
   };
 
   const filtersActive =
     filter.styles.length > 0 ||
-    filter.priceBand != null ||
+    isPriceNarrowed(filter.priceMinUsd, filter.priceMaxUsd) ||
     filter.booksOpen ||
     filter.city != null ||
     filter.state != null ||
@@ -110,41 +174,50 @@ export function FilterBar({ filter, styles, resultCount, onChange, onReset }: Fi
         </div>
       </div>
 
-      {/* Price band · books open · radius */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="font-mono text-[10px] uppercase tracking-widest text-content-muted">Price</span>
-        {PRICE_BANDS.map((b) => (
-          <Chip
-            key={b.slug}
-            selected={filter.priceBand === b.slug}
-            onClick={() => patch({ priceBand: filter.priceBand === b.slug ? undefined : b.slug })}
-          >
-            {b.label}
-          </Chip>
-        ))}
-
-        <span className="ml-2 inline-flex items-center gap-2">
-          <Toggle
-            checked={filter.booksOpen}
-            onCheckedChange={(v) => patch({ booksOpen: v })}
-            label="Open books only"
+      {/* Price + distance sliders */}
+      <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-content-muted">Price</span>
+            <span className="font-mono text-xs tabular-nums text-content-secondary">
+              {formatPriceUsd(priceLocal[0])} – {formatPriceUsd(priceLocal[1])}
+            </span>
+          </div>
+          <RangeSlider
+            value={priceLocal}
+            onValueChange={onPriceChange}
+            min={PRICE_SLIDER_MIN_USD}
+            max={PRICE_SLIDER_MAX_USD}
+            step={PRICE_SLIDER_STEP_USD}
+            formatValue={formatPriceUsd}
           />
-        </span>
+        </div>
 
-        {hasCenter && (
-          <span className="ml-auto inline-flex items-center gap-1">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-content-muted">Within</span>
-            {RADIUS_OPTIONS_MI.map((mi) => (
-              <Chip
-                key={mi}
-                selected={radiusMatchesMiles(filter.radiusKm, mi)}
-                onClick={() => patch({ radiusKm: milesToKm(mi) })}
-              >
-                {mi} mi
-              </Chip>
-            ))}
-          </span>
-        )}
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-content-muted">Distance</span>
+            <span className="font-mono text-xs tabular-nums text-content-secondary">
+              {hasCenter ? formatDistanceSliderMi(distLocal) : "Pick a city"}
+            </span>
+          </div>
+          <Slider
+            value={distLocal}
+            onValueChange={onDistanceChange}
+            min={DISTANCE_SLIDER_MIN_MI}
+            max={DISTANCE_SLIDER_MAX_MI}
+            step={DISTANCE_SLIDER_STEP_MI}
+            disabled={!hasCenter}
+          />
+        </div>
+      </div>
+
+      {/* Books open */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Toggle
+          checked={filter.booksOpen}
+          onCheckedChange={(v) => patch({ booksOpen: v })}
+          label="Open books only"
+        />
       </div>
 
       {/* Styles */}

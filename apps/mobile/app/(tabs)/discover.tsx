@@ -12,23 +12,29 @@
  * style, in my budget, with open books". Distance is shown per card so the
  * ranked list carries the local signal without a canvas.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import * as Location from "expo-location";
-import { Avatar, Chip, Icon, Input, Spinner, Toggle } from "@inkd/ui/native";
+import { Avatar, Chip, Icon, Input, RangeSlider, Slider, Spinner, Toggle } from "@inkd/ui/native";
 import { useDiscover, useStyles } from "@inkd/core/hooks";
 import {
   DISCOVER_CITIES,
-  PRICE_BANDS,
-  RADIUS_OPTIONS_MI,
   DEFAULT_RADIUS_MI,
   milesToKm,
-  radiusMatchesMiles,
+  kmToMiles,
   formatDistanceMiles,
+  formatPriceUsd,
+  formatDistanceSliderMi,
   discoverFilterToParams,
   formatMinPrice,
+  PRICE_SLIDER_MIN_USD,
+  PRICE_SLIDER_MAX_USD,
+  PRICE_SLIDER_STEP_USD,
+  DISTANCE_SLIDER_MIN_MI,
+  DISTANCE_SLIDER_MAX_MI,
+  DISTANCE_SLIDER_STEP_MI,
   EMPTY_FILTER_STATE,
   type ArtistCard,
   type DiscoverFilterState,
@@ -38,8 +44,17 @@ const MUTED = "#71717A";
 const BRAND = "#7C3AED";
 const INK = "#0A0A0B";
 
+const COMMIT_DEBOUNCE_MS = 280;
+
 function styleLabel(slug: string): string {
   return slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+}
+
+/** Clamp + round a km radius into a whole-mile slider value (max = uncapped). */
+function radiusToMi(radiusKm: number | undefined): number {
+  if (radiusKm == null) return DISTANCE_SLIDER_MAX_MI;
+  const mi = Math.round(kmToMiles(radiusKm));
+  return Math.min(Math.max(mi, DISTANCE_SLIDER_MIN_MI), DISTANCE_SLIDER_MAX_MI);
 }
 
 function ArtistPlacardCard({ card }: { card: ArtistCard }) {
@@ -132,6 +147,41 @@ export default function DiscoverScreen() {
   const nearMeActive = hasCenter && !filter.city;
   const activeStyles = new Set(filter.styles);
 
+  // Debounced slider commits: thumbs move against local state for instant
+  // feedback; the params/RPC commit is debounced so a drag isn't a query storm.
+  const [priceLocal, setPriceLocal] = useState<[number, number]>([
+    filter.priceMinUsd ?? PRICE_SLIDER_MIN_USD,
+    filter.priceMaxUsd ?? PRICE_SLIDER_MAX_USD,
+  ]);
+  const [distLocal, setDistLocal] = useState<number>(radiusToMi(filter.radiusKm));
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setPriceLocal([filter.priceMinUsd ?? PRICE_SLIDER_MIN_USD, filter.priceMaxUsd ?? PRICE_SLIDER_MAX_USD]);
+  }, [filter.priceMinUsd, filter.priceMaxUsd]);
+  useEffect(() => {
+    setDistLocal(radiusToMi(filter.radiusKm));
+  }, [filter.radiusKm]);
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+
+  const debouncedPatch = (p: Partial<DiscoverFilterState>) => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setFilter((f) => ({ ...f, ...p })), COMMIT_DEBOUNCE_MS);
+  };
+
+  const onPriceChange = ([lo, hi]: [number, number]) => {
+    setPriceLocal([lo, hi]);
+    debouncedPatch({
+      priceMinUsd: lo > PRICE_SLIDER_MIN_USD ? lo : undefined,
+      priceMaxUsd: hi < PRICE_SLIDER_MAX_USD ? hi : undefined,
+    });
+  };
+
+  const onDistanceChange = (mi: number) => {
+    setDistLocal(mi);
+    debouncedPatch({ radiusKm: mi >= DISTANCE_SLIDER_MAX_MI ? undefined : milesToKm(mi) });
+  };
+
   const toggleStyle = (slug: string) => {
     const next = new Set(activeStyles);
     if (next.has(slug)) next.delete(slug);
@@ -208,34 +258,39 @@ export default function DiscoverScreen() {
       </View>
       {locError ? <Text className="text-xs text-content-ember">{locError}</Text> : null}
 
-      {/* Radius (only when a center is set) */}
-      {hasCenter ? (
-        <View className="flex-row flex-wrap items-center gap-2">
-          <Text className="font-mono text-[10px] uppercase tracking-widest text-content-muted">Within</Text>
-          {RADIUS_OPTIONS_MI.map((mi) => (
-            <Chip
-              key={mi}
-              selected={radiusMatchesMiles(filter.radiusKm, mi)}
-              onPress={() => patch({ radiusKm: milesToKm(mi) })}
-            >
-              {mi} mi
-            </Chip>
-          ))}
+      {/* Price (dual-thumb slider) */}
+      <View className="gap-1">
+        <View className="flex-row items-center justify-between">
+          <Text className="font-mono text-[10px] uppercase tracking-widest text-content-muted">Price</Text>
+          <Text className="font-mono text-xs text-content-secondary">
+            {formatPriceUsd(priceLocal[0])} – {formatPriceUsd(priceLocal[1])}
+          </Text>
         </View>
-      ) : null}
+        <RangeSlider
+          value={priceLocal}
+          onValueChange={onPriceChange}
+          min={PRICE_SLIDER_MIN_USD}
+          max={PRICE_SLIDER_MAX_USD}
+          step={PRICE_SLIDER_STEP_USD}
+        />
+      </View>
 
-      {/* Price bands */}
-      <View className="flex-row flex-wrap items-center gap-2">
-        <Text className="font-mono text-[10px] uppercase tracking-widest text-content-muted">Price</Text>
-        {PRICE_BANDS.map((b) => (
-          <Chip
-            key={b.slug}
-            selected={filter.priceBand === b.slug}
-            onPress={() => patch({ priceBand: filter.priceBand === b.slug ? undefined : b.slug })}
-          >
-            {b.label}
-          </Chip>
-        ))}
+      {/* Distance (single-thumb slider; needs a center) */}
+      <View className="gap-1">
+        <View className="flex-row items-center justify-between">
+          <Text className="font-mono text-[10px] uppercase tracking-widest text-content-muted">Distance</Text>
+          <Text className="font-mono text-xs text-content-secondary">
+            {hasCenter ? formatDistanceSliderMi(distLocal) : "Pick a city or Near me"}
+          </Text>
+        </View>
+        <Slider
+          value={distLocal}
+          onValueChange={onDistanceChange}
+          min={DISTANCE_SLIDER_MIN_MI}
+          max={DISTANCE_SLIDER_MAX_MI}
+          step={DISTANCE_SLIDER_STEP_MI}
+          disabled={!hasCenter}
+        />
       </View>
 
       {/* Books open */}
