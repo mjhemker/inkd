@@ -1,0 +1,18 @@
+# Supabase project config. Currently scoped to Edge Function settings; extend
+# with [db]/[auth]/[storage] blocks as other lanes need them.
+project_id = "khlpidflnvkqafkvkpfy"
+
+# --- Edge Functions ---------------------------------------------------------
+# Authenticated functions verify the Supabase JWT at the gateway (default true),
+# then re-verify + resolve the user in code via _shared/auth.ts.
+[functions.connect-onboarding-link]
+verify_jwt = true
+
+[functions.create-deposit-checkout]
+verify_jwt = true
+
+# Stripe calls the webhook with a Stripe signature, NOT a Supabase JWT — the
+# gateway must let it through unauthenticated so our code can verify the
+# signature itself.
+[functions.stripe-webhook]
+verify_jwt = false
