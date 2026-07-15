@@ -30,6 +30,17 @@ export const TimeField = forwardRef<HTMLInputElement, TimeFieldProps>(
             sizes[size],
             "pl-3 pr-9",
             invalid ? "border-danger-500" : "border-border",
+            // The native WebKit/Chromium picker indicator would double up with
+            // our custom clock glyph. Make it invisible but stretch it over the
+            // right edge (on top of the custom icon) so clicking the clock still
+            // opens the native picker — exactly one visible affordance.
+            "[&::-webkit-calendar-picker-indicator]:absolute",
+            "[&::-webkit-calendar-picker-indicator]:right-0",
+            "[&::-webkit-calendar-picker-indicator]:top-0",
+            "[&::-webkit-calendar-picker-indicator]:h-full",
+            "[&::-webkit-calendar-picker-indicator]:w-9",
+            "[&::-webkit-calendar-picker-indicator]:cursor-pointer",
+            "[&::-webkit-calendar-picker-indicator]:opacity-0",
           )}
           {...props}
         />
