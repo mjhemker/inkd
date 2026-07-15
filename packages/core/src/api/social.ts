@@ -3,9 +3,12 @@
  * save / unsave a post (SPEC §4). Each is idempotent and RLS-scoped to the
  * acting profile (`profile_id` / `follower_id` = auth.uid()).
  *
- * `post_likes.like_count` on `posts` is denormalized for cheap card reads; the
- * like/unlike helpers keep it in step best-effort (an RPC/trigger can replace
- * this later without changing the call sites).
+ * `posts.like_count` is denormalized for cheap card reads and kept authoritative
+ * by the `sync_post_like_count` trigger on `post_likes`
+ * (20260716060100_post_like_count_trigger.sql). These helpers therefore only
+ * insert/delete the `post_likes` row — they never write `like_count` — and the
+ * feed hooks apply an optimistic +/-1 to the cached card, reconciled against the
+ * trigger-maintained value on the next feed refetch.
  */
 import type { InkdSupabaseClient } from "../supabase/client";
 
