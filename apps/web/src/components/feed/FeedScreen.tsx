@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Eyebrow, Skeleton, cx } from "@inkd/ui/web";
+import { Eyebrow, Icon, Skeleton, cx } from "@inkd/ui/web";
 import {
   useCurrentProfile,
   useFeedItems,
@@ -217,6 +217,22 @@ function FeedEmptyState({
           </button>
         )}
       </div>
+
+      {/* Tools: photo-based fit check — a client-facing utility, no account needed. */}
+      <a
+        href="/try-on"
+        className="mt-2 flex w-full max-w-sm items-center gap-3 rounded-sm border border-border-subtle bg-surface-overlay px-4 py-3 text-left outline-none transition-colors hover:border-border-strong focus-visible:ring-2 focus-visible:ring-brand"
+      >
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-sm border border-border-subtle bg-surface-base text-content-accent">
+          <Icon name="sparkles" size={16} />
+        </span>
+        <span className="flex flex-col">
+          <span className="text-sm font-semibold text-content-primary">Try a design on</span>
+          <span className="text-xs text-content-muted">
+            Photo-based fit check — size &amp; place it on your own photo. Not AR, not a prediction.
+          </span>
+        </span>
+      </a>
     </div>
   );
 }
