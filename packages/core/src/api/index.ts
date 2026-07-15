@@ -20,3 +20,5 @@ export * from "./notifications";
 export * from "./storage";
 export * from "./threadDirectory";
 export * from "./threadStarter";
+export * from "./contentExtras";
+export * from "./media";

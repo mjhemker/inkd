@@ -17,3 +17,6 @@ export * from "./useAgentSettings";
 export * from "./usePortfolio";
 export * from "./useCurrentArtistProfile";
 export * from "./useThreads";
+export * from "./queryKeysExtras";
+export * from "./useArtistContent";
+export * from "./usePublicArtistProfile";
