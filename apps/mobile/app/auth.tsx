@@ -9,6 +9,7 @@ import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   View,
@@ -50,6 +51,7 @@ function AuthForm() {
   const [mode, setMode] = useState<Mode>("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -173,13 +175,25 @@ function AuthForm() {
                 />
               </FormField>
 
-              <FormField label="Password" required>
+              <FormField label="Password" required description="At least 8 characters">
                 <Input
-                  placeholder="At least 8 characters"
-                  secureTextEntry
+                  placeholder="Your password"
+                  secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
                   leadingIcon={<Icon name="shield" size={16} color="#71717A" />}
+                  trailingIcon={
+                    <Pressable
+                      onPress={() => setShowPassword((v) => !v)}
+                      accessibilityRole="button"
+                      accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                      hitSlop={8}
+                    >
+                      <Text className="font-mono text-[11px] uppercase tracking-wide text-content-muted">
+                        {showPassword ? "Hide" : "Show"}
+                      </Text>
+                    </Pressable>
+                  }
                 />
               </FormField>
 

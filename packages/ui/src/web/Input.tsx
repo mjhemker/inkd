@@ -24,6 +24,10 @@ export interface InputProps
   invalid?: boolean;
   leadingIcon?: ReactNode;
   trailingIcon?: ReactNode;
+  /** Allow the trailing slot to receive pointer events (e.g. a clickable
+   * show/hide toggle). Defaults to false so decorative icons pass clicks
+   * through to the input. */
+  trailingInteractive?: boolean;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
@@ -32,6 +36,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     invalid = false,
     leadingIcon,
     trailingIcon,
+    trailingInteractive = false,
     className,
     ...props
   },
@@ -68,7 +73,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       )}
       {inputEl}
       {trailingIcon && (
-        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-content-muted">
+        <span
+          className={cx(
+            "absolute right-3 top-1/2 -translate-y-1/2 text-content-muted",
+            trailingInteractive ? "pointer-events-auto" : "pointer-events-none",
+          )}
+        >
           {trailingIcon}
         </span>
       )}

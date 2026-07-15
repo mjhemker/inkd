@@ -99,6 +99,7 @@ function AuthForm() {
   const [mode, setMode] = useState<Mode>("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(
@@ -209,10 +210,15 @@ function AuthForm() {
             />
           </FormField>
 
-          <FormField label="Password" htmlFor="auth-password" required>
+          <FormField
+            label="Password"
+            htmlFor="auth-password"
+            required
+            description="At least 8 characters"
+          >
             <Input
               id="auth-password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               required
               minLength={8}
               value={password}
@@ -220,8 +226,20 @@ function AuthForm() {
               autoComplete={
                 mode === "sign-in" ? "current-password" : "new-password"
               }
-              placeholder="At least 8 characters"
+              placeholder="Your password"
               leadingIcon={<Icon name="shield" size={16} />}
+              trailingInteractive
+              trailingIcon={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                  className="font-mono text-[11px] uppercase tracking-wide text-content-muted outline-none hover:text-content-primary focus-visible:text-content-primary"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              }
             />
           </FormField>
 
