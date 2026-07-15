@@ -147,15 +147,27 @@ export function cityBySlug(slug: string | null | undefined) {
   return DISCOVER_CITIES.find((c) => c.slug === slug);
 }
 
+/**
+ * Parse a URL param into a finite number, or `undefined` when absent/blank/bad.
+ *
+ * Critically NOT `Number(get(k))`: `Number(null)` is `0` and `Number("")` is
+ * `0`, both of which `Number.isFinite` accepts — so a missing `lat`/`lng` would
+ * silently become the coordinate 0. That shipped once as the "null island" bug:
+ * first load (empty URL) built a (0, 0) search center with the default radius,
+ * and `search_artists` returned zero artists off the coast of Africa. Treat an
+ * absent value as absent.
+ */
+function numParam(v: string | null | undefined): number | undefined {
+  if (v == null || v.trim() === "") return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 /** Parse a `URLSearchParams`-like getter into validated `DiscoverParams`. */
 export function parseDiscoverSearchParams(
   get: (key: string) => string | null,
 ): DiscoverParams {
-  const num = (v: string | null) => {
-    if (v == null || v.trim() === "") return undefined;
-    const n = Number(v);
-    return Number.isFinite(n) ? n : undefined;
-  };
+  const num = numParam;
 
   const city = cityBySlug(get("city"));
   const lat = city ? city.lat : num(get("lat"));
@@ -237,14 +249,14 @@ export function queryToDiscoverFilter(get: (key: string) => string | null): Disc
   const band = priceBandBySlug(get("price"));
   const stylesRaw = get("styles");
   const stateParsed = usStateSchema.safeParse(get("state") ?? undefined);
-  const radius = Number(get("radius"));
-  const latRaw = Number(get("lat"));
-  const lngRaw = Number(get("lng"));
+  const radius = numParam(get("radius"));
+  const latRaw = numParam(get("lat"));
+  const lngRaw = numParam(get("lng"));
   return {
     city: city?.slug,
-    lat: city ? city.lat : Number.isFinite(latRaw) ? latRaw : undefined,
-    lng: city ? city.lng : Number.isFinite(lngRaw) ? lngRaw : undefined,
-    radiusKm: Number.isFinite(radius) && radius > 0 ? radius : undefined,
+    lat: city ? city.lat : latRaw,
+    lng: city ? city.lng : lngRaw,
+    radiusKm: radius != null && radius > 0 ? radius : undefined,
     styles: stylesRaw ? stylesRaw.split(",").map((s) => s.trim()).filter(Boolean) : [],
     priceBand: band?.slug,
     booksOpen: get("open") === "1",
