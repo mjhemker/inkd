@@ -64,6 +64,7 @@ export function OnboardingFlow() {
   const [done, setDone] = useState(false);
   const [advancing, setAdvancing] = useState(false);
   const editorRef = useRef<EditorHandle>(null);
+  const autonomyRef = useRef<EditorHandle>(null);
   const ensuredRef = useRef(false);
 
   const setOnboardingStep = useSetOnboardingStep(artist?.id ?? "");
@@ -93,6 +94,11 @@ export function OnboardingFlow() {
     try {
       const ok = editorRef.current ? await editorRef.current.save() : true;
       if (!ok) return;
+      // Step 3 also carries the AI autonomy intro — persist it too.
+      if (step === 2 && autonomyRef.current) {
+        const autonomyOk = await autonomyRef.current.save();
+        if (!autonomyOk) return;
+      }
       if (artist) {
         const next = Math.min(step + 1, 5);
         await setOnboardingStep.mutateAsync({
@@ -247,7 +253,7 @@ export function OnboardingFlow() {
                       Optional, and always under your control.
                     </p>
                   </div>
-                  <AgentAutonomyEditor artist={artist} />
+                  <AgentAutonomyEditor ref={autonomyRef} artist={artist} />
                 </div>
               </div>
             )}
