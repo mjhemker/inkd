@@ -18,4 +18,9 @@ export const queryKeys = {
   currentArtistProfile: () => ["currentArtistProfile"] as const,
   threadSummaries: (profileId: string, artistProfileId?: string | null) =>
     ["threadSummaries", profileId, artistProfileId ?? null] as const,
+  artistPayments: (artistId: string) => ["payments", "artist", artistId] as const,
+  artistEarnings: (artistId: string) => ["earnings", artistId] as const,
+  sessionPayments: (sessionId: string) =>
+    ["payments", "session", sessionId] as const,
+  connectStatus: (artistId: string) => ["connectStatus", artistId] as const,
 } as const;

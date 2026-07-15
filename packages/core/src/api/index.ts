@@ -12,6 +12,7 @@ export * from "./availability";
 export * from "./booking";
 export * from "./bookingFlow";
 export * from "./uploads";
+export * from "./payments";
 export * from "./messaging";
 export * from "./content";
 export * from "./waivers";
