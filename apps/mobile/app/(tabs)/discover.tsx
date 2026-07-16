@@ -230,6 +230,18 @@ export default function DiscoverScreen() {
         <Text className="font-display text-3xl text-content-primary">Find your artist</Text>
       </View>
 
+      <Pressable
+        onPress={() => router.push("/match-inspiration")}
+        className="flex-row items-center gap-3 rounded-sm bg-surface-ember px-4 py-3 active:opacity-90"
+      >
+        <Icon name="sparkles" size={18} color={INK} />
+        <View className="min-w-0 flex-1">
+          <Text className="font-display text-sm text-brand-on-ember">Match my inspiration</Text>
+          <Text className="text-xs text-brand-on-ember/80">Search by image — upload a tattoo you love</Text>
+        </View>
+        <Icon name="arrow-right" size={16} color={INK} />
+      </Pressable>
+
       <Input
         placeholder="Search name, style or city…"
         value={filter.query}
