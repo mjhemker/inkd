@@ -33,6 +33,13 @@ import {
   type CompletedSessionRow,
   type ScheduledJobKind,
 } from "../_shared/agent-scheduled.ts";
+import {
+  selectDueAftercareCheckins,
+  buildTouchUpNudge,
+  firstName,
+  type AftercareKind,
+  type DueAftercareRowLike,
+} from "../_shared/aftercare-scheduled.ts";
 
 interface LeasedJob {
   id: string;
@@ -65,7 +72,8 @@ Deno.serve(async (req) => {
     const admin = getAdminClient();
     const batchSize = await readBatchSize(req);
     const summary = await processScheduledBatch(admin, batchSize);
-    return jsonResponse({ ok: true, ...summary });
+    const aftercare = await processDueAftercareCheckins(admin, new Date(), batchSize);
+    return jsonResponse({ ok: true, ...summary, aftercare });
   } catch (err) {
     console.error("agent-scheduled:", err);
     return errorResponse(err);
@@ -438,4 +446,186 @@ function serviceNameFromEmbed(bookings: unknown): string | null {
   const s = Array.isArray(svc) ? svc[0] : svc;
   const name = s && typeof s === "object" ? (s as Record<string, unknown>).name : null;
   return typeof name === "string" ? name : null;
+}
+
+/** Normalize a PostgREST embedded relation (single object or 1-element array). */
+function firstOf(v: unknown): Record<string, unknown> | null {
+  const x = Array.isArray(v) ? v[0] : v;
+  return x && typeof x === "object" ? (x as Record<string, unknown>) : null;
+}
+
+// ---------------------------------------------------------------------------
+// Aftercare check-in delivery — runs every tick (independent of the agent_jobs
+// queue). Finds due `aftercare_checkins` (status=pending, scheduled_for<=now),
+// and for each: sends the client a warm 'aftercare_check_in' notification (which
+// fans out to push/in-app via the Wave 1 'aftercare' category) + marks the row
+// sent; at week_3 also nudges the artist toward a touch-up/rebook. Rows for an
+// artist who has since turned aftercare OFF are marked skipped (never sent).
+// Selection/copy logic lives in _shared/aftercare-scheduled.ts and is unit-tested.
+// ---------------------------------------------------------------------------
+interface AftercareSummary {
+  processed: number;
+  sent: number;
+  skipped: number;
+  failed: number;
+  review_nudges: number;
+  touchup_nudges: number;
+}
+
+async function processDueAftercareCheckins(
+  db: SupabaseClient,
+  now: Date,
+  limit: number,
+): Promise<AftercareSummary> {
+  const summary: AftercareSummary = {
+    processed: 0,
+    sent: 0,
+    skipped: 0,
+    failed: 0,
+    review_nudges: 0,
+    touchup_nudges: 0,
+  };
+
+  const { data, error } = await db
+    .from("aftercare_checkins")
+    .select(
+      "id, kind, status, scheduled_for, session_id, booking_id, client_id, artist_id, " +
+        "artist_profiles(profile_id, aftercare_enabled, profiles(display_name)), " +
+        "bookings(title, services(name))",
+    )
+    .eq("status", "pending")
+    .lte("scheduled_for", now.toISOString())
+    .order("scheduled_for", { ascending: true })
+    .limit(limit);
+  if (error) throw new Error(`read due aftercare_checkins failed: ${error.message}`);
+
+  const raw = (data ?? []) as Record<string, unknown>[];
+  if (raw.length === 0) return summary;
+
+  // has_review per booking (week_3 review-nudge gate) — one batched query.
+  const bookingIds = [
+    ...new Set(raw.map((r) => r.booking_id).filter((b): b is string => typeof b === "string")),
+  ];
+  const reviewedBookings = new Set<string>();
+  if (bookingIds.length > 0) {
+    const { data: reviews } = await db
+      .from("reviews")
+      .select("booking_id")
+      .in("booking_id", bookingIds);
+    for (const rv of (reviews ?? []) as { booking_id: string | null }[]) {
+      if (rv.booking_id) reviewedBookings.add(rv.booking_id);
+    }
+  }
+
+  // Client display names (for the artist touch-up nudge copy).
+  const clientIds = [
+    ...new Set(raw.map((r) => r.client_id).filter((c): c is string => typeof c === "string")),
+  ];
+  const clientNames = new Map<string, string | null>();
+  if (clientIds.length > 0) {
+    const { data: profs } = await db.from("profiles").select("id, display_name").in("id", clientIds);
+    for (const p of (profs ?? []) as { id: string; display_name: string | null }[]) {
+      clientNames.set(p.id, p.display_name);
+    }
+  }
+
+  const rows: DueAftercareRowLike[] = raw.map((r) => {
+    const ap = firstOf(r.artist_profiles);
+    const artistProfile = ap ? firstOf(ap.profiles) : null;
+    const bookingId = (r.booking_id as string | null) ?? null;
+    return {
+      id: r.id as string,
+      kind: r.kind as AftercareKind,
+      status: r.status as string,
+      scheduled_for: r.scheduled_for as string,
+      session_id: r.session_id as string,
+      booking_id: bookingId,
+      client_id: r.client_id as string,
+      artist_id: r.artist_id as string,
+      aftercare_enabled: ap ? ap.aftercare_enabled === true : false,
+      artist_display_name:
+        artistProfile && typeof artistProfile.display_name === "string"
+          ? (artistProfile.display_name as string)
+          : null,
+      booking_title: firstOf(r.bookings)?.title as string | null ?? null,
+      service_name: serviceNameFromEmbed(r.bookings),
+      has_review: bookingId ? reviewedBookings.has(bookingId) : false,
+    };
+  });
+
+  // Keep the artist's profile_id for the touch-up notification recipient.
+  const artistProfileIdByCheckin = new Map<string, string | null>();
+  for (const r of raw) {
+    const ap = firstOf(r.artist_profiles);
+    artistProfileIdByCheckin.set(
+      r.id as string,
+      ap && typeof ap.profile_id === "string" ? (ap.profile_id as string) : null,
+    );
+  }
+
+  const plans = selectDueAftercareCheckins(rows, now);
+  for (const plan of plans) {
+    summary.processed++;
+    try {
+      // Artist disabled aftercare after this was scheduled -> skip, send nothing.
+      if (plan.disabled) {
+        await db
+          .from("aftercare_checkins")
+          .update({ status: "skipped" })
+          .eq("id", plan.checkinId);
+        summary.skipped++;
+        continue;
+      }
+
+      // Client-facing check-in notification (fans out via the 'aftercare' category).
+      const { error: notifErr } = await db.from("notifications").insert({
+        profile_id: plan.clientId,
+        type: "aftercare_check_in",
+        title: plan.message.title,
+        body: plan.message.body,
+        action_url: plan.actionUrl,
+        data: {
+          aftercare_checkin_id: plan.checkinId,
+          kind: plan.kind,
+          session_id: plan.sessionId,
+          booking_id: plan.bookingId,
+          artist_id: plan.artistId,
+          nudge_review: plan.nudgeReview,
+        },
+      });
+      if (notifErr) throw new Error(`insert aftercare notification failed: ${notifErr.message}`);
+
+      await db
+        .from("aftercare_checkins")
+        .update({ status: "sent", sent_at: now.toISOString() })
+        .eq("id", plan.checkinId);
+      summary.sent++;
+      if (plan.nudgeReview) summary.review_nudges++;
+
+      // week_3: nudge the artist toward a touch-up / rebook (in-app only).
+      if (plan.kind === "week_3") {
+        const artistProfileId = artistProfileIdByCheckin.get(plan.checkinId) ?? null;
+        if (artistProfileId) {
+          const nudge = buildTouchUpNudge(plan.tattooLabel, firstName(clientNames.get(plan.clientId) ?? null));
+          const { error: tuErr } = await db.from("notifications").insert({
+            profile_id: artistProfileId,
+            type: "aftercare_touchup_nudge",
+            title: nudge.title,
+            body: nudge.body,
+            action_url: plan.bookingId ? `/bookings/${plan.bookingId}` : null,
+            data: {
+              aftercare_checkin_id: plan.checkinId,
+              booking_id: plan.bookingId,
+              client_id: plan.clientId,
+            },
+          });
+          if (!tuErr) summary.touchup_nudges++;
+        }
+      }
+    } catch (_err) {
+      summary.failed++;
+    }
+  }
+
+  return summary;
 }
