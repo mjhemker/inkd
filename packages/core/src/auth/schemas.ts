@@ -15,10 +15,18 @@ export const passwordSchema = z
   .string()
   .min(8, "Password must be at least 8 characters");
 
+/** How the account presents at sign-up. Persisted into auth user metadata so it
+ * survives the email-confirmation round-trip and is applied to
+ * `profiles.is_artist` by the `handle_new_user` trigger. */
+export const accountTypeSchema = z.enum(["client", "artist"]);
+export type AccountType = z.infer<typeof accountTypeSchema>;
+
 export const signUpSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
   displayName: z.string().trim().min(1).max(80).optional(),
+  /** "artist" → onboarding after confirm; "client" (default) → feed. */
+  accountType: accountTypeSchema.optional(),
 });
 export type SignUpInput = z.infer<typeof signUpSchema>;
 

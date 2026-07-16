@@ -37,6 +37,34 @@ export function isProtectedRoute(pathname: string): boolean {
   );
 }
 
+/** Artist-only surfaces — the "Studio" group. A signed-in client hitting any of
+ * these is redirected to the shared feed (see middleware). */
+export const ARTIST_ROUTE_PREFIXES = [
+  "/dashboard",
+  "/studio",
+  "/settings",
+] as const;
+
+/** True when `pathname` is an artist-only surface. */
+export function isArtistRoute(pathname: string): boolean {
+  return ARTIST_ROUTE_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+}
+
+/** Artist surfaces that additionally require onboarding to be finished — an
+ * artist with incomplete onboarding hitting these is nudged to /onboarding.
+ * `/settings` is intentionally excluded so an artist can still reach their
+ * account controls (it shows its own "finish setup" state). */
+export const ONBOARDING_REQUIRED_PREFIXES = ["/dashboard", "/studio"] as const;
+
+/** True when `pathname` requires completed artist onboarding. */
+export function requiresCompletedOnboarding(pathname: string): boolean {
+  return ONBOARDING_REQUIRED_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+}
+
 /**
  * Browser client for Client Components. Persists the session in cookies so it
  * stays in sync with the server. Reads NEXT_PUBLIC_* env by default.
