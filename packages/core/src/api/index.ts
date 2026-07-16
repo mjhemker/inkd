@@ -33,3 +33,4 @@ export * from "./reviews";
 export * from "./instagram";
 export * from "./plan";
 export * from "./dashboardStats";
+export * from "./similarWorks";
