@@ -18,10 +18,12 @@ const ICON_ACTIVE = "#7C3AED";
 export interface FeedCardProps {
   item: FeedItem;
   onOpen: (item: FeedItem) => void;
+  /** Like/save require an account; web disables these when signed out. */
+  signedIn?: boolean;
 }
 
 /** A single feed card — post or flash variant, artwork-forward with a museum placard. */
-export function FeedCard({ item, onOpen }: FeedCardProps) {
+export function FeedCard({ item, onOpen, signedIn = true }: FeedCardProps) {
   const router = useRouter();
   const toggleLike = useToggleLike();
   const toggleSave = useToggleSave();
@@ -107,11 +109,12 @@ export function FeedCard({ item, onOpen }: FeedCardProps) {
           <View className="flex-row items-center gap-4 pt-0.5">
             <Pressable
               onPress={() => toggleLike.mutate({ postId: item.id, liked: !item.likedByViewer })}
+              disabled={!signedIn}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={item.likedByViewer ? "Unlike this post" : "Like this post"}
-              accessibilityState={{ selected: item.likedByViewer }}
-              className="flex-row items-center gap-1.5"
+              accessibilityState={{ selected: item.likedByViewer, disabled: !signedIn }}
+              className={cx("flex-row items-center gap-1.5", !signedIn && "opacity-40")}
             >
               <Feather
                 name="heart"
@@ -122,10 +125,12 @@ export function FeedCard({ item, onOpen }: FeedCardProps) {
             </Pressable>
             <Pressable
               onPress={() => toggleSave.mutate({ postId: item.id, saved: !item.savedByViewer })}
+              disabled={!signedIn}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={item.savedByViewer ? "Remove from saved" : "Save this post"}
-              accessibilityState={{ selected: item.savedByViewer }}
+              accessibilityState={{ selected: item.savedByViewer, disabled: !signedIn }}
+              className={cx(!signedIn && "opacity-40")}
             >
               <Feather
                 name="bookmark"

@@ -26,6 +26,8 @@ export default function ShopProfileScreen() {
   const { data: locations } = useStudioLocations(shop?.owner_artist_id);
 
   const roster = (members ?? []).filter((m) => m.role !== "owner");
+  const owner = (members ?? []).find((m) => m.role === "owner");
+  const ownerProfile = owner?.artist?.profile;
   const publicLocations = (locations ?? []).filter((l) => l.is_public);
   const primaryLocation =
     publicLocations.find((l) => l.id === shop?.primary_location_id) ??
@@ -93,9 +95,25 @@ export default function ShopProfileScreen() {
           </View>
 
           <View className="gap-3">
-            <Text className="font-display text-lg text-content-primary">
-              The {shop.name} roster
-            </Text>
+            <View className="gap-1">
+              <Text className="font-display text-lg text-content-primary">
+                The {shop.name} roster
+              </Text>
+              {ownerProfile && (
+                <Text className="text-sm text-content-secondary">
+                  Hosted by{" "}
+                  <Text
+                    onPress={() =>
+                      ownerProfile.handle &&
+                      router.push(`/artist/${ownerProfile.handle}` as never)
+                    }
+                    className="font-sans-semibold text-content-accent"
+                  >
+                    {ownerProfile.display_name || `@${ownerProfile.handle}`}
+                  </Text>
+                </Text>
+              )}
+            </View>
             {roster.length === 0 ? (
               <Card padding="lg" className="items-center gap-2">
                 <Icon name="user" size={22} color="#71717A" />

@@ -1,17 +1,20 @@
 import { useState } from "react";
 import { useRouter } from "expo-router";
-import { FlatList, Text, View } from "react-native";
+import { FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Button,
+  Card,
   EmptyState,
   Icon,
   Skeleton,
   Spinner,
   Tabs,
+  type IconName,
   type TabItem,
 } from "@inkd/ui/native";
 import {
+  useCurrentProfile,
   useFeedItems,
   useStyleFilters,
   useTodayDrop,
@@ -36,6 +39,8 @@ export default function HomeScreen() {
   const [styleSlug, setStyleSlug] = useState<string | null>(null);
   const [selected, setSelected] = useState<FeedItem | null>(null);
 
+  const { data: profile } = useCurrentProfile();
+  const signedIn = Boolean(profile);
   const { data: styleData } = useStyleFilters();
   const styles = styleData ?? [];
   const { data: drop } = useTodayDrop();
@@ -71,8 +76,23 @@ export default function HomeScreen() {
       </View>
       <StyleFilterRow styles={styles} selectedSlug={styleSlug} onSelect={setStyleSlug} />
       {scope === "discover" && drop && (
-        <View className="px-6">
-          <DailyDropCard card={drop} variant="feed" />
+        <View className="gap-2 px-6">
+          <View className="flex-row items-center justify-between">
+            <Text className="font-mono text-[11px] font-semibold uppercase tracking-widest text-content-ember">
+              Today&apos;s drop
+            </Text>
+            <Pressable
+              onPress={() => router.push("/daily-drop" as never)}
+              hitSlop={8}
+              accessibilityRole="link"
+              accessibilityLabel="See all daily drops"
+            >
+              <Text className="font-mono text-[11px] uppercase tracking-widest text-content-muted">
+                See all
+              </Text>
+            </Pressable>
+          </View>
+          <DailyDropCard card={drop} variant="feed" signedIn={signedIn} />
         </View>
       )}
     </View>
@@ -120,7 +140,7 @@ export default function HomeScreen() {
         keyExtractor={(item) => item.key}
         renderItem={({ item }) => (
           <View className="px-6">
-            <FeedCard item={item} onOpen={setSelected} />
+            <FeedCard item={item} onOpen={setSelected} signedIn={signedIn} />
           </View>
         )}
         ItemSeparatorComponent={() => <View className="h-4" />}
@@ -133,38 +153,55 @@ export default function HomeScreen() {
           ) : null
         }
         ListEmptyComponent={
-          scope === "following" ? (
-            <EmptyState
-              className="px-6"
-              icon={<Icon name="compass" size={32} color="#71717A" />}
-              note="nothing here yet — go follow some artists"
-              title="Nothing here yet"
-              description="Follow a few artists you like and their new work will land here."
-              action={
-                <Button size="md" onPress={() => router.push("/(tabs)/discover")}>
-                  Discover artists
-                </Button>
-              }
-            />
-          ) : (
-            <EmptyState
-              className="px-6"
-              icon={<Icon name="image" size={32} color="#71717A" />}
-              title="The wall's still being hung"
-              description={
-                styleSlug
-                  ? "Nothing matches that style yet — try another filter."
-                  : "New work from INKD artists drops often — check back soon."
-              }
-              action={
-                styleSlug ? (
-                  <Button size="md" variant="secondary" onPress={() => setStyleSlug(null)}>
-                    Clear filter
+          <View>
+            {scope === "following" ? (
+              <EmptyState
+                className="px-6"
+                icon={<Icon name="compass" size={32} color="#71717A" />}
+                note="nothing here yet — go follow some artists"
+                title="Nothing here yet"
+                description="Follow a few artists you like and their new work will land here."
+                action={
+                  <Button size="md" onPress={() => router.push("/(tabs)/discover")}>
+                    Discover artists
                   </Button>
-                ) : undefined
-              }
-            />
-          )
+                }
+              />
+            ) : (
+              <EmptyState
+                className="px-6"
+                icon={<Icon name="image" size={32} color="#71717A" />}
+                title="The wall's still being hung"
+                description={
+                  styleSlug
+                    ? "Nothing matches that style yet — try another filter."
+                    : "New work from INKD artists drops often — check back soon."
+                }
+                action={
+                  styleSlug ? (
+                    <Button size="md" variant="secondary" onPress={() => setStyleSlug(null)}>
+                      Clear filter
+                    </Button>
+                  ) : undefined
+                }
+              />
+            )}
+            {/* Client-facing discovery tools, mirroring the web feed empty state. */}
+            <View className="gap-3 px-6 pt-6">
+              <ToolCard
+                icon="image"
+                title="Match my inspiration"
+                description="Upload a tattoo you love — find artists whose work matches that vibe."
+                onPress={() => router.push("/match-inspiration" as never)}
+              />
+              <ToolCard
+                icon="sparkles"
+                title="Try a design on"
+                description="Photo-based fit check — size & place it on your own photo. Not AR."
+                onPress={() => router.push("/try-on" as never)}
+              />
+            </View>
+          </View>
         }
         onEndReached={() => {
           if (hasNextPage && !isFetchingNextPage) fetchNextPage();
@@ -173,7 +210,33 @@ export default function HomeScreen() {
         contentContainerClassName="pb-10 pt-2"
       />
 
-      <PostDetailSheet item={selected} onClose={() => setSelected(null)} />
+      <PostDetailSheet item={selected} onClose={() => setSelected(null)} signedIn={signedIn} />
     </SafeAreaView>
+  );
+}
+
+function ToolCard({
+  icon,
+  title,
+  description,
+  onPress,
+}: {
+  icon: IconName;
+  title: string;
+  description: string;
+  onPress: () => void;
+}) {
+  return (
+    <Card variant="interactive" padding="md" onPress={onPress} accessibilityLabel={title}>
+      <View className="flex-row items-center gap-3">
+        <View className="h-9 w-9 items-center justify-center rounded-sm border border-border-subtle bg-surface-base">
+          <Icon name={icon} size={16} color="#A78BFA" />
+        </View>
+        <View className="flex-1 gap-0.5">
+          <Text className="font-sans-semibold text-sm text-content-primary">{title}</Text>
+          <Text className="text-xs text-content-muted">{description}</Text>
+        </View>
+      </View>
+    </Card>
   );
 }

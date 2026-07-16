@@ -9,7 +9,12 @@ import { router, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, EmptyState, Icon, Skeleton } from "@inkd/ui/native";
-import { useDropHistory, useTodayDrop, type DailyDropCard as DailyDropCardData } from "@inkd/core";
+import {
+  useCurrentProfile,
+  useDropHistory,
+  useTodayDrop,
+  type DailyDropCard as DailyDropCardData,
+} from "@inkd/core";
 
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { DailyDropCard } from "@/components/daily-drop/DailyDropCard";
@@ -19,6 +24,8 @@ import { placardLine } from "@/components/feed/format";
 const HISTORY_LIMIT = 14;
 
 export default function DailyDropScreen() {
+  const { data: profile } = useCurrentProfile();
+  const signedIn = Boolean(profile);
   const todayQ = useTodayDrop();
   const historyQ = useDropHistory({ limit: HISTORY_LIMIT });
 
@@ -41,7 +48,7 @@ export default function DailyDropScreen() {
         {todayQ.isLoading ? (
           <Skeleton className="aspect-[4/5] w-full rounded-sm" />
         ) : drop ? (
-          <DailyDropCard card={drop} variant="full" />
+          <DailyDropCard card={drop} variant="full" signedIn={signedIn} />
         ) : (
           <EmptyState
             icon={<Icon name="sparkles" size={28} color="#71717A" />}

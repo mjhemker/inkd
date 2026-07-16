@@ -15,7 +15,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import {
   signInWithPassword,
   signUpWithPassword,
@@ -52,6 +52,10 @@ export default function AuthScreen() {
 function AuthForm() {
   const { supabase } = useSession();
   const { toast } = useToast();
+  // Return-to destination after sign-in (e.g. a waiver deep link). Only honour
+  // safe internal paths, mirroring the web auth callback's `next` handling.
+  const params = useLocalSearchParams<{ next?: string }>();
+  const nextPath = typeof params.next === "string" && params.next.startsWith("/") ? params.next : null;
   const [mode, setMode] = useState<Mode>("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -80,6 +84,12 @@ function AuthForm() {
       } else {
         const { error } = await signInWithPassword(supabase, { email, password });
         if (error) throw error;
+        // A `next` deep link (e.g. a waiver to sign) takes priority over the
+        // default role-based routing below.
+        if (nextPath) {
+          router.replace(nextPath as never);
+          return;
+        }
         // Route by role + onboarding state, mirroring the web auth callback:
         // artist mid-onboarding → onboarding; everyone else → the shared feed.
         try {
