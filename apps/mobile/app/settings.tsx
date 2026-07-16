@@ -14,11 +14,18 @@ import {
   Button,
   Card,
   Icon,
+  Input,
+  Modal,
   Spinner,
   Tabs,
   ToastProvider,
+  useToast,
 } from "@inkd/ui/native";
-import { useCurrentProfile, useCurrentArtistProfile } from "@inkd/core/hooks";
+import {
+  useCurrentProfile,
+  useCurrentArtistProfile,
+  useDowngradeToClient,
+} from "@inkd/core/hooks";
 import {
   AgentAutonomyEditor,
   BookingEditor,
@@ -31,6 +38,7 @@ import {
 } from "@/components/artist";
 
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { ArtistOnly } from "@/components/ArtistOnly";
 import { useSession } from "@/providers/session";
 
 const TABS = [
@@ -46,9 +54,11 @@ const TABS = [
 
 export default function SettingsScreen() {
   return (
-    <ToastProvider>
-      <SettingsView />
-    </ToastProvider>
+    <ArtistOnly>
+      <ToastProvider>
+        <SettingsView />
+      </ToastProvider>
+    </ArtistOnly>
   );
 }
 
@@ -233,6 +243,168 @@ function AccountPanel({
           Sign out
         </Button>
       </View>
+
+      <SwitchToClientCard />
+
+      <DangerZoneCard />
+    </View>
+  );
+}
+
+/** Artist → client downgrade (no self-serve client → artist path). */
+function SwitchToClientCard() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const downgrade = useDowngradeToClient();
+  const [open, setOpen] = useState(false);
+
+  async function handleDowngrade() {
+    try {
+      await downgrade.mutateAsync();
+      setOpen(false);
+      toast({ title: "Switched to a client account", variant: "success" });
+      router.replace("/(tabs)");
+    } catch (err) {
+      toast({
+        title: "Couldn't switch account",
+        description: err instanceof Error ? err.message : "Try again.",
+        variant: "danger",
+      });
+    }
+  }
+
+  return (
+    <View className="gap-3 rounded-xl border border-border-subtle p-5">
+      <Text className="text-sm font-sans-medium text-content-primary">
+        Switch to a client account
+      </Text>
+      <Text className="text-sm text-content-secondary">
+        Step back from being an artist and use INKD to get tattooed. Your studio
+        stays intact — nothing is deleted.
+      </Text>
+      <Button variant="outline" className="self-start" onPress={() => setOpen(true)}>
+        Switch to client account
+      </Button>
+
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Switch to a client account?"
+        description="Here's exactly what happens:"
+        footer={
+          <View className="flex-row justify-end gap-2">
+            <Button variant="ghost" onPress={() => setOpen(false)} disabled={downgrade.isPending}>
+              Cancel
+            </Button>
+            <Button variant="outline" onPress={() => void handleDowngrade()} loading={downgrade.isPending}>
+              Switch to client
+            </Button>
+          </View>
+        }
+      >
+        <View className="gap-2">
+          <Text className="text-sm text-content-secondary">
+            • Your public profile is unpublished and no longer discoverable.
+          </Text>
+          <Text className="text-sm text-content-secondary">
+            • Your bookings, portfolio and signed waivers are kept but frozen —
+            never deleted.
+          </Text>
+          <Text className="text-sm text-content-secondary">
+            • Your navigation switches to the client experience.
+          </Text>
+          <Text className="text-sm text-content-muted">
+            Becoming an artist again is invite/setup-based during the pilot —
+            reach out and we&apos;ll switch you back.
+          </Text>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+/** Danger zone: permanent account deletion behind a typed confirmation. */
+function DangerZoneCard() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const { supabase, signOut } = useSession();
+  const [open, setOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      const { error } = await supabase.functions.invoke("delete-account", {
+        method: "POST",
+      });
+      if (error) throw error;
+      await signOut();
+      router.replace("/auth");
+    } catch (err) {
+      setDeleting(false);
+      toast({
+        title: "Couldn't delete account",
+        description: err instanceof Error ? err.message : "Try again.",
+        variant: "danger",
+      });
+    }
+  }
+
+  return (
+    <View className="gap-3 rounded-xl border border-danger-500/40 bg-danger-500/5 p-5">
+      <Text className="text-sm font-sans-medium text-danger-500">Danger zone</Text>
+      <Text className="text-sm text-content-secondary">
+        Permanently delete your INKD account and all of your data. This cannot be
+        undone.
+      </Text>
+      <Button
+        variant="outline"
+        className="self-start border-danger-500/50"
+        onPress={() => {
+          setConfirmText("");
+          setOpen(true);
+        }}
+      >
+        <Icon name="alert-triangle" size={16} color="#F87171" />
+        Delete account
+      </Button>
+
+      <Modal
+        open={open}
+        onClose={() => (deleting ? undefined : setOpen(false))}
+        title="Delete your account?"
+        description="This permanently removes your account, profile, and studio data. This cannot be undone."
+        footer={
+          <View className="flex-row justify-end gap-2">
+            <Button variant="ghost" onPress={() => setOpen(false)} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button
+              variant="outline"
+              className="border-danger-500/50"
+              disabled={confirmText !== "DELETE"}
+              loading={deleting}
+              onPress={() => void handleDelete()}
+            >
+              Delete account
+            </Button>
+          </View>
+        }
+      >
+        <View className="gap-2">
+          <Text className="text-sm text-content-secondary">
+            Type DELETE to confirm.
+          </Text>
+          <Input
+            value={confirmText}
+            onChangeText={setConfirmText}
+            placeholder="DELETE"
+            autoCapitalize="characters"
+            autoCorrect={false}
+          />
+        </View>
+      </Modal>
     </View>
   );
 }
