@@ -7,8 +7,20 @@ import {
 } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Button, Icon, RadioGroup, Toggle, useToast } from "@inkd/ui/native";
-import type { ArtistProfile, AvailabilityRule, BookingWindow } from "@inkd/core";
-import { BOOKING_WINDOWS, WEEKDAYS } from "@inkd/core";
+import type {
+  ArtistProfile,
+  AvailabilityRule,
+  BookingWindow,
+  WeeklyBlock,
+} from "@inkd/core";
+import {
+  BOOKING_WINDOWS,
+  DAY_MINUTES,
+  WEEKDAYS,
+  minutesToTime,
+  rulesToBlocks,
+  timeToMinutes,
+} from "@inkd/core";
 import {
   useAvailabilityRules,
   useAvailabilityBlocks,
@@ -19,19 +31,13 @@ import {
 import { PickerDateField, PickerTimeField } from "./pickers";
 import type { EditorHandle } from "./types";
 
-interface DayState {
-  open: boolean;
-  start: string;
-  end: string;
-}
-
-function defaultDay(weekday: number): DayState {
-  const openByDefault = weekday >= 2 && weekday <= 6; // Tue–Sat
-  return { open: openByDefault, start: "11:00", end: "19:00" };
-}
-
-function normalizeTime(t: string): string {
-  return t.length >= 5 ? t.slice(0, 5) : t;
+/** Default starter week for a brand-new artist: Tue–Sat, 11:00–19:00. */
+function defaultBlocks(): WeeklyBlock[] {
+  return [2, 3, 4, 5, 6].map((weekday) => ({
+    weekday,
+    start: "11:00",
+    end: "19:00",
+  }));
 }
 
 export interface BookingEditorProps {
@@ -45,12 +51,10 @@ export const BookingEditor = forwardRef<EditorHandle, BookingEditorProps>(
     const { data: rules } = useAvailabilityRules(artist.id);
     const { data: blocks } = useAvailabilityBlocks(artist.id);
     const { data: policy } = useBookingPolicy(artist.id);
-    const { createRule, deleteRule, createBlock, deleteBlock, upsertPolicy } =
+    const { reconcileRules, createBlock, deleteBlock, upsertPolicy } =
       useAvailabilityMutations(artist.id);
 
-    const [days, setDays] = useState<Record<number, DayState>>(() =>
-      Object.fromEntries(WEEKDAYS.map((d) => [d.value, defaultDay(d.value)])),
-    );
+    const [weekBlocks, setWeekBlocks] = useState<WeeklyBlock[]>(() => defaultBlocks());
     const seededRules = useRef(false);
 
     const [bookingWindow, setBookingWindow] = useState<BookingWindow>("2_3mo");
@@ -61,22 +65,12 @@ export const BookingEditor = forwardRef<EditorHandle, BookingEditorProps>(
     const [vacFrom, setVacFrom] = useState("");
     const [vacTo, setVacTo] = useState("");
 
-    // Seed weekly hours from existing rules once.
+    // Seed weekly hours from existing rules once (empty = keep the starter week).
     useEffect(() => {
       if (seededRules.current || !rules) return;
       seededRules.current = true;
       if (rules.length === 0) return;
-      const next: Record<number, DayState> = Object.fromEntries(
-        WEEKDAYS.map((d) => [d.value, { ...defaultDay(d.value), open: false }]),
-      );
-      for (const r of rules as AvailabilityRule[]) {
-        next[r.weekday] = {
-          open: r.is_open,
-          start: normalizeTime(r.start_time),
-          end: normalizeTime(r.end_time),
-        };
-      }
-      setDays(next);
+      setWeekBlocks(rulesToBlocks(rules as AvailabilityRule[]));
     }, [rules]);
 
     // Seed booking policy once.
@@ -90,10 +84,37 @@ export const BookingEditor = forwardRef<EditorHandle, BookingEditorProps>(
       }
     }, [policy]);
 
-    function setDay(weekday: number, patch: Partial<DayState>) {
-      setDays((prev) => {
-        const cur = prev[weekday] ?? defaultDay(weekday);
-        return { ...prev, [weekday]: { ...cur, ...patch } };
+    function updateBlock(index: number, patch: Partial<WeeklyBlock>) {
+      setWeekBlocks((prev) => {
+        const next = [...prev];
+        const cur = next[index];
+        if (!cur) return prev;
+        const merged = { ...cur, ...patch };
+        // Keep end > start; ignore edits that would produce an invalid window.
+        if (timeToMinutes(merged.end) <= timeToMinutes(merged.start)) return prev;
+        next[index] = merged;
+        return next;
+      });
+    }
+
+    function removeBlock(index: number) {
+      setWeekBlocks((prev) => prev.filter((_, i) => i !== index));
+    }
+
+    function addBlock(weekday: number) {
+      setWeekBlocks((prev) => {
+        const dayBlocks = prev.filter((b) => b.weekday === weekday);
+        let start = 11 * 60;
+        let end = 15 * 60;
+        if (dayBlocks.length > 0) {
+          const lastEnd = Math.max(...dayBlocks.map((b) => timeToMinutes(b.end)));
+          start = Math.min(lastEnd, DAY_MINUTES - 60);
+          end = Math.min(start + 240, DAY_MINUTES);
+        }
+        return [
+          ...prev,
+          { weekday, start: minutesToTime(start), end: minutesToTime(end) },
+        ];
       });
     }
 
@@ -128,23 +149,12 @@ export const BookingEditor = forwardRef<EditorHandle, BookingEditorProps>(
           allow_image_uploads: allowImages,
           allow_document_uploads: allowDocuments,
         });
-        // Rebuild weekly rules from local state.
-        if (rules) {
-          for (const r of rules as AvailabilityRule[]) {
-            await deleteRule.mutateAsync(r.id);
-          }
-        }
-        for (const d of WEEKDAYS) {
-          const day = days[d.value];
-          if (day?.open) {
-            await createRule.mutateAsync({
-              weekday: d.value,
-              start_time: day.start,
-              end_time: day.end,
-              is_open: true,
-            });
-          }
-        }
+        // Set-reconcile weekly rules: diff desired blocks against persisted rows
+        // (insert new, update moved/resized, delete removed) — no blind rebuild.
+        await reconcileRules.mutateAsync({
+          existing: (rules ?? []) as AvailabilityRule[],
+          desired: weekBlocks,
+        });
         return true;
       } catch (err) {
         toast({
@@ -162,36 +172,59 @@ export const BookingEditor = forwardRef<EditorHandle, BookingEditorProps>(
       <View className="gap-8">
         {/* Weekly hours */}
         <View className="gap-3">
-          <Text className="text-sm font-sans-medium text-content-primary">Business hours</Text>
+          <View className="gap-0.5">
+            <Text className="text-sm font-sans-medium text-content-primary">Business hours</Text>
+            <Text className="text-xs text-content-muted">
+              Add one or more blocks per day for split shifts. An empty day is closed.
+            </Text>
+          </View>
           <View className="divide-y divide-border-subtle rounded-xl border border-border-subtle">
             {WEEKDAYS.map((d) => {
-              const day = days[d.value];
+              const dayBlocks = weekBlocks
+                .map((b, index) => ({ b, index }))
+                .filter(({ b }) => b.weekday === d.value)
+                .sort((a, z) => timeToMinutes(a.b.start) - timeToMinutes(z.b.start));
               return (
                 <View key={d.value} className="gap-2.5 px-4 py-3">
-                  <Toggle
-                    checked={day?.open ?? false}
-                    onCheckedChange={(v) => setDay(d.value, { open: v })}
-                    label={d.short}
-                  />
-                  {day?.open ? (
-                    <View className="flex-row items-center gap-2">
-                      <View className="flex-1">
-                        <PickerTimeField
-                          value={day.start}
-                          onValueChange={(v) => setDay(d.value, { start: v })}
-                        />
-                      </View>
-                      <Text className="text-content-muted">–</Text>
-                      <View className="flex-1">
-                        <PickerTimeField
-                          value={day.end}
-                          onValueChange={(v) => setDay(d.value, { end: v })}
-                        />
-                      </View>
+                  <Text className="text-sm font-sans-medium text-content-primary">
+                    {d.short ?? d.label}
+                  </Text>
+                  {dayBlocks.length > 0 ? (
+                    <View className="gap-2">
+                      {dayBlocks.map(({ b, index }) => (
+                        <View key={index} className="flex-row items-center gap-2">
+                          <View className="flex-1">
+                            <PickerTimeField
+                              value={b.start}
+                              onValueChange={(v) => updateBlock(index, { start: v })}
+                            />
+                          </View>
+                          <Text className="text-content-muted">–</Text>
+                          <View className="flex-1">
+                            <PickerTimeField
+                              value={b.end}
+                              onValueChange={(v) => updateBlock(index, { end: v })}
+                            />
+                          </View>
+                          <Pressable
+                            onPress={() => removeBlock(index)}
+                            accessibilityRole="button"
+                            accessibilityLabel="Remove block"
+                            className="h-7 w-7 items-center justify-center rounded-md"
+                          >
+                            <Icon name="x" size={15} color="#71717A" />
+                          </Pressable>
+                        </View>
+                      ))}
                     </View>
                   ) : (
                     <Text className="text-sm text-content-muted">Closed</Text>
                   )}
+                  <View className="items-start">
+                    <Button variant="outline" size="sm" onPress={() => addBlock(d.value)}>
+                      + Add block
+                    </Button>
+                  </View>
                 </View>
               );
             })}
@@ -200,7 +233,13 @@ export const BookingEditor = forwardRef<EditorHandle, BookingEditorProps>(
 
         {/* Vacation blocks */}
         <View className="gap-3">
-          <Text className="text-sm font-sans-medium text-content-primary">Planned time off</Text>
+          <View className="gap-0.5">
+            <Text className="text-sm font-sans-medium text-content-primary">Planned time off</Text>
+            <Text className="text-xs text-content-muted">
+              Optional — with flexible weekly hours you only need this for vacations or one-off
+              closures.
+            </Text>
+          </View>
           {blocks && blocks.length > 0 && (
             <View className="gap-2">
               {blocks.map((b) => (
