@@ -68,3 +68,10 @@ verify_jwt = false
 # gracefully with no RESEND_API_KEY.
 [functions.send-email]
 verify_jwt = false
+
+# AI image auto-tagging (image_tags + embeddings for discovery / match-
+# inspiration / daily drop). Invoked by pg_cron (image-tag-drain, 20260717070000)
+# with the AI-runtime bearer, same pattern as agent-run; the function enforces
+# the bearer itself (see _shared/agent-auth.ts). Needs ANTHROPIC_API_KEY.
+[functions.tag-image]
+verify_jwt = false
