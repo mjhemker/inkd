@@ -6,6 +6,8 @@
  * the three screenshot surfaces (client join, client offer w/ countdown, artist
  * view) render standalone. Never linked from product nav.
  */
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Eyebrow } from "@inkd/ui/web";
 import {
   WaitlistOfferCard,
@@ -62,11 +64,23 @@ const artistEntries: EntryRowData[] = [
 
 export default function WaitlistPreviewPage() {
   return (
-    <div className="mx-auto max-w-6xl p-8">
+    <Suspense fallback={null}>
+      <WaitlistPreviewInner />
+    </Suspense>
+  );
+}
+
+function WaitlistPreviewInner() {
+  const only = useSearchParams().get("only") ?? undefined;
+  const show = (id: string) => !only || only === id;
+  const single = Boolean(only);
+  return (
+    <div className={single ? "mx-auto max-w-md p-8" : "mx-auto max-w-6xl p-8"}>
       <Eyebrow>Dev preview</Eyebrow>
       <h1 className="mb-8 text-2xl font-semibold text-content">Waitlist — Wave 2</h1>
 
-      <div className="grid gap-8 lg:grid-cols-3">
+      <div className={single ? "grid gap-8" : "grid gap-8 lg:grid-cols-3"}>
+        {show("join") ? (
         <section id="join" className="flex flex-col gap-3">
           <p className="text-sm font-semibold text-content-muted">1 · Client joins</p>
           <WaitlistJoinForm
@@ -80,7 +94,9 @@ export default function WaitlistPreviewPage() {
             onSubmit={() => {}}
           />
         </section>
+        ) : null}
 
+        {show("offer") ? (
         <section id="offer" className="flex flex-col gap-3">
           <p className="text-sm font-semibold text-content-muted">2 · Client&apos;s waitlist + a live offer</p>
           <WaitlistOfferCard
@@ -96,13 +112,16 @@ export default function WaitlistPreviewPage() {
           />
           <WaitlistEntryRow entry={clientEntry} onCancel={() => {}} />
         </section>
+        ) : null}
 
+        {show("artist") ? (
         <section id="artist" className="flex flex-col gap-3">
           <p className="text-sm font-semibold text-content-muted">3 · Artist view</p>
           {artistEntries.map((e) => (
             <WaitlistEntryRow key={e.id} entry={e} showClient />
           ))}
         </section>
+        ) : null}
       </div>
     </div>
   );
