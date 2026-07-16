@@ -62,6 +62,9 @@ export type AgentSettings = Tables<"agent_settings">;
 export type AgentAction = Tables<"agent_actions">;
 export type AgentPlaybook = Tables<"agent_playbooks">;
 export type Notification = Tables<"notifications">;
+export type NotificationPreference = Tables<"notification_preferences">;
+export type NotificationDelivery = Tables<"notification_deliveries">;
+export type DevicePushToken = Tables<"device_push_tokens">;
 export type InstagramImportRun = Tables<"instagram_import_runs">;
 
 // --- Insert aliases (only the ones the api layer mutates through) -----------
@@ -87,6 +90,7 @@ export type ReviewInsert = TablesInsert<"reviews">;
 export type AgentSettingsInsert = TablesInsert<"agent_settings">;
 export type AgentPlaybookInsert = TablesInsert<"agent_playbooks">;
 export type NotificationInsert = TablesInsert<"notifications">;
+export type NotificationPreferenceInsert = TablesInsert<"notification_preferences">;
 
 // --- Update aliases ---------------------------------------------------------
 export type ProfileUpdate = TablesUpdate<"profiles">;
@@ -104,4 +108,5 @@ export type AgentSettingsUpdate = TablesUpdate<"agent_settings">;
 export type AgentActionUpdate = TablesUpdate<"agent_actions">;
 export type AgentPlaybookUpdate = TablesUpdate<"agent_playbooks">;
 export type NotificationUpdate = TablesUpdate<"notifications">;
+export type NotificationPreferenceUpdate = TablesUpdate<"notification_preferences">;
 export type ReviewUpdate = TablesUpdate<"reviews">;

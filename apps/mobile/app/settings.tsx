@@ -40,6 +40,7 @@ import {
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { ArtistOnly } from "@/components/ArtistOnly";
 import { AppearanceControl } from "@/components/AppearanceControl";
+import { NotificationPreferencesEditor } from "@/components/notifications/NotificationPreferencesEditor";
 import { useSession } from "@/providers/session";
 
 const TABS = [
@@ -50,6 +51,7 @@ const TABS = [
   { value: "ai", label: "AI staff" },
   { value: "waivers", label: "Waivers" },
   { value: "grow", label: "Share & connect" },
+  { value: "notifications", label: "Notifications" },
   { value: "appearance", label: "Appearance" },
   { value: "account", label: "Account" },
 ];
@@ -172,6 +174,7 @@ function SettingsView() {
                   <ConnectedAccountsEditor artist={artist} />
                 </View>
               )}
+              {tab === "notifications" && <NotificationPreferencesEditor />}
               {tab === "appearance" && (
                 <View className="gap-4 rounded-xl border border-border-subtle p-5">
                   <Text className="text-base font-sans-semibold text-content-primary">

@@ -22,6 +22,7 @@ export * from "./agentSettings";
 export * from "./agentActions";
 export * from "./playbooks";
 export * from "./notifications";
+export * from "./notificationPreferences";
 export * from "./threadDirectory";
 export * from "./threadStarter";
 export * from "./contentExtras";

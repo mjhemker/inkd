@@ -30,5 +30,6 @@ export * from "./queryKeysFeed";
 export * from "./useFeed";
 export * from "./useReviews";
 export * from "./useNotifications";
+export * from "./useNotificationPreferences";
 export * from "./useInstagram";
 export * from "./useDashboardStats";
