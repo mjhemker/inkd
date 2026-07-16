@@ -21,6 +21,7 @@ import {
 
 import { FilterBar } from "./FilterBar";
 import { ArtistPlacard } from "./ArtistPlacard";
+import { ShopStrip } from "./ShopStrip";
 
 const DiscoverMap = dynamic(
   () => import("./DiscoverMap").then((m) => m.DiscoverMap),
@@ -121,24 +122,25 @@ export function DiscoverView() {
             "lg:flex",
           )}
         >
-          {isLoading ? (
-            <div className="flex flex-1 items-center justify-center py-16">
-              <Spinner />
-            </div>
-          ) : listCards.length === 0 ? (
-            <EmptyResults hasFilters={cards.length === 0} />
-          ) : (
-            <div className="flex flex-col gap-3">
-              {listCards.map((c) => (
+          <div className="flex flex-col gap-3">
+            <ShopStrip state={filter.state} query={filter.query} />
+            {isLoading ? (
+              <div className="flex flex-1 items-center justify-center py-16">
+                <Spinner />
+              </div>
+            ) : listCards.length === 0 ? (
+              <EmptyResults hasFilters={cards.length === 0} />
+            ) : (
+              listCards.map((c) => (
                 <ArtistPlacard
                   key={c.artist_id}
                   card={c}
                   active={activeId === c.artist_id}
                   onHover={setActiveId}
                 />
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
         </section>
 
         {/* Map */}

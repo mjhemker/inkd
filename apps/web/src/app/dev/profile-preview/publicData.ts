@@ -43,4 +43,5 @@ export const publicDemoData: PublicArtistData = {
   bookingPolicy: (t.booking_policies?.[0] ?? null) as unknown as PublicArtistData["bookingPolicy"],
   reviews,
   reviewerProfiles,
+  shopBadges: [],
 };

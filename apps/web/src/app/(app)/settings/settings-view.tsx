@@ -34,12 +34,14 @@ import {
 } from "@/components/artist";
 import { AppearanceControl } from "@/components/appearance-control";
 import { NotificationPreferencesPanel } from "@/components/notifications/notification-preferences";
+import { ShopSettingsPanel } from "@/components/shop/ShopSettingsPanel";
 
 const TABS = [
   { value: "profile", label: "Profile" },
   { value: "locations", label: "Locations" },
   { value: "booking", label: "Hours & booking" },
   { value: "services", label: "Services" },
+  { value: "shop", label: "Shop" },
   { value: "ai", label: "AI staff" },
   { value: "waivers", label: "Waivers" },
   { value: "grow", label: "Share & connect" },
@@ -166,6 +168,7 @@ export function SettingsView() {
         {tab === "services" && (
           <ServicesEditor artistId={artist.id} variant="settings" />
         )}
+        {tab === "shop" && <ShopSettingsPanel />}
         {tab === "waivers" && <WaiversPanel />}
         {tab === "ai" && (
           <div className="flex flex-col gap-5">
