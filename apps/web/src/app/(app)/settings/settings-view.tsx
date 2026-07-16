@@ -33,6 +33,7 @@ import {
   ShareKit,
 } from "@/components/artist";
 import { AppearanceControl } from "@/components/appearance-control";
+import { NotificationPreferencesPanel } from "@/components/notifications/notification-preferences";
 
 const TABS = [
   { value: "profile", label: "Profile" },
@@ -42,6 +43,7 @@ const TABS = [
   { value: "ai", label: "AI staff" },
   { value: "waivers", label: "Waivers" },
   { value: "grow", label: "Share & connect" },
+  { value: "notifications", label: "Notifications" },
   { value: "appearance", label: "Appearance" },
   { value: "account", label: "Account" },
 ];
@@ -195,6 +197,7 @@ export function SettingsView() {
             <ConnectedAccountsEditor artist={artist} />
           </div>
         )}
+        {tab === "notifications" && <NotificationPreferencesPanel />}
         {tab === "appearance" && <AppearancePanel />}
         {tab === "account" && <AccountPanel profileName={profile.display_name} avatarUrl={profile.avatar_url} handle={profile.handle} published={artist.is_published} />}
       </div>
