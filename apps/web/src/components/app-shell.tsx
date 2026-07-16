@@ -5,10 +5,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Avatar, Icon, buttonVariants, cx } from "@inkd/ui/web";
 import {
-  artistNav,
+  bottomNavFor,
   isActivePath,
-  primaryNav,
+  primaryNavFor,
+  studioNav,
   type NavItem,
+  type ViewerRole,
 } from "@/lib/nav";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 
@@ -25,19 +27,25 @@ export function AppShell({
   currentPath,
   title,
   action,
+  role = "artist",
 }: {
   children: ReactNode;
   /** Override active-path detection (used by the /dev/shell preview). */
   currentPath?: string;
   title?: string;
   action?: ReactNode;
+  /**
+   * Which nav to render. Artists (default for the pilot) keep Bookings in the
+   * Studio group; clients get Bookings in their main nav and no Studio group.
+   */
+  role?: ViewerRole;
 }) {
   const pathname = usePathname();
   const active = currentPath ?? pathname;
 
   return (
     <div className="min-h-dvh bg-surface-base text-content-primary">
-      <Sidebar active={active} />
+      <Sidebar active={active} role={role} />
 
       <div className="md:pl-64">
         <TopBar title={title} action={action} />
@@ -46,7 +54,7 @@ export function AppShell({
         </main>
       </div>
 
-      <BottomTabs active={active} />
+      <BottomTabs active={active} role={role} />
     </div>
   );
 }
@@ -72,7 +80,8 @@ function BrandMark({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function Sidebar({ active }: { active: string }) {
+function Sidebar({ active, role }: { active: string; role: ViewerRole }) {
+  const isArtist = role === "artist";
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-border-subtle bg-surface-base md:flex">
       <div className="flex h-16 items-center px-5">
@@ -81,19 +90,23 @@ function Sidebar({ active }: { active: string }) {
 
       <nav className="flex-1 overflow-y-auto px-3 py-2">
         <ul className="flex flex-col gap-0.5">
-          {primaryNav.map((item) => (
+          {primaryNavFor(role).map((item) => (
             <SidebarLink key={item.href} item={item} active={active} />
           ))}
         </ul>
 
-        <p className="px-3 pb-2 pt-6 font-mono text-[11px] uppercase tracking-[0.2em] text-content-muted">
-          Studio
-        </p>
-        <ul className="flex flex-col gap-0.5">
-          {artistNav.map((item) => (
-            <SidebarLink key={item.href} item={item} active={active} />
-          ))}
-        </ul>
+        {isArtist && (
+          <>
+            <p className="px-3 pb-2 pt-6 font-mono text-[11px] uppercase tracking-[0.2em] text-content-muted">
+              Studio
+            </p>
+            <ul className="flex flex-col gap-0.5">
+              {studioNav.map((item) => (
+                <SidebarLink key={item.href} item={item} active={active} />
+              ))}
+            </ul>
+          </>
+        )}
       </nav>
 
       <div className="border-t border-border-subtle p-3">
@@ -186,12 +199,12 @@ function TopBar({ title, action }: { title?: string; action?: ReactNode }) {
   );
 }
 
-function BottomTabs({ active }: { active: string }) {
+function BottomTabs({ active, role }: { active: string; role: ViewerRole }) {
   const [pressed, setPressed] = useState<string | null>(null);
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border-subtle bg-surface-base/95 backdrop-blur md:hidden">
       <ul className="mx-auto flex max-w-lg items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)] pt-1.5">
-        {primaryNav.map((item) => {
+        {bottomNavFor(role).map((item) => {
           const isActive = isActivePath(active, item.href);
           return (
             <li key={item.href} className="flex-1">

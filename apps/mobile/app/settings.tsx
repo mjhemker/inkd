@@ -31,6 +31,7 @@ import {
 } from "@/components/artist";
 
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { AppearanceControl } from "@/components/AppearanceControl";
 import { useSession } from "@/providers/session";
 
 const TABS = [
@@ -41,6 +42,7 @@ const TABS = [
   { value: "waivers", label: "Waivers" },
   { value: "ai", label: "AI staff" },
   { value: "grow", label: "Share & connect" },
+  { value: "appearance", label: "Appearance" },
   { value: "account", label: "Account" },
 ];
 
@@ -158,6 +160,22 @@ function SettingsView() {
                 <View className="gap-10">
                   <ShareKit profile={profile} />
                   <ConnectedAccountsEditor artist={artist} />
+                </View>
+              )}
+              {tab === "appearance" && (
+                <View className="gap-4 rounded-xl border border-border-subtle p-5">
+                  <Text className="text-base font-sans-semibold text-content-primary">
+                    Appearance
+                  </Text>
+                  <Text className="text-sm text-content-secondary">
+                    Choose how INKD looks on this device. Dark is the gallery
+                    default; Light is a warm paper wall. System follows your
+                    device.
+                  </Text>
+                  <AppearanceControl />
+                  <Text className="font-mono text-xs uppercase tracking-widest text-content-muted">
+                    Saved on this device
+                  </Text>
                 </View>
               )}
               {tab === "account" && (

@@ -6,6 +6,7 @@ import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { SessionProvider } from "@/providers/session";
+import { ThemeProvider, useTheme } from "@/providers/theme";
 import {
   useFonts,
   BricolageGrotesque_700Bold,
@@ -57,15 +58,30 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <SessionProvider>
-        <StatusBar style="light" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: "#0A0A0B" },
-          }}
-        />
-      </SessionProvider>
+      <ThemeProvider>
+        <SessionProvider>
+          <ThemedRoot />
+        </SessionProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
+  );
+}
+
+/**
+ * Reads the active theme so the StatusBar contrast and the router's default
+ * screen background follow Dark / Light. Kept as a child of ThemeProvider.
+ */
+function ThemedRoot() {
+  const { resolved, colors } = useTheme();
+  return (
+    <>
+      <StatusBar style={resolved === "light" ? "dark" : "light"} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.surface.base },
+        }}
+      />
+    </>
   );
 }
