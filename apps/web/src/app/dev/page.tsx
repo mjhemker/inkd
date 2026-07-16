@@ -28,6 +28,18 @@ const DEV_ROUTES: { href: string; title: string; description: string }[] = [
     description: "Full artist onboarding wizard driven by an offline fake client.",
   },
   {
+    href: "/dev/settings-preview",
+    title: "Settings + dashboard shell",
+    description:
+      "The REAL SettingsView and DashboardPreview inside the REAL AppShell against an in-memory mock Supabase client — tab rail, full-width content, real stats. Try ?screen=dashboard.",
+  },
+  {
+    href: "/dev/account-preview",
+    title: "Account controls",
+    description:
+      "The Settings → Account controls (Switch-to-client + Danger Zone deletion) with their confirmation modals, rendered outside the auth wall.",
+  },
+  {
     href: "/dev/hours-preview",
     title: "Weekly hours grid",
     description:
