@@ -193,3 +193,20 @@ node --test supabase/functions/_shared/notification-categories.test.ts \
 Covers the prefs resolver, the Expo push payload builder + `DeviceNotRegistered`
 reconciliation, the branded email template rendering (+ HTML escaping), and the
 end-to-end fan-out dispatch with faked repo/senders.
+
+---
+
+## Wave-1 founder go-live config (consolidated)
+
+Both Wave-1 backend features (notifications + AI tagging) are deployed and
+inert until the founder sets a small set of secrets. One-stop checklist:
+
+| # | What | Where | Notes |
+| --- | --- | --- | --- |
+| 1 | **Resend API key + verified domain** | `supabase secrets set RESEND_API_KEY=re_xxx` | Verify `getinkd.co` DNS in Resend first (see §"What the founder must configure"). Absent → email deliveries `skipped` (push still fires). |
+| 2 | **Vault secrets for `notify-dispatch`** | Vault: runner bearer + function URL | Drives the `notify-dispatch-drain` pg_cron. Absent → cron no-ops safely. |
+| 3 | **Vault secrets for `tag-image` (image tagger)** | Vault: `agent_runner_service_key` (already set) + `image_tagger_url` | Drives `image-tag-drain` pg_cron. Reuses the agent `ANTHROPIC_API_KEY` — no new key. See `docs/ai-image-tagging.md`. |
+| 4 | **EAS credentials for prod push** | Expo/EAS project (prod push cert / FCM + APNs) | Needed for real device push tokens in a production build; Expo Go dev tokens work without it. |
+
+All four are additive: nothing errors while unset — queues drain to no-ops and
+senders skip gracefully. Flip them on in any order.

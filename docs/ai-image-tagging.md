@@ -181,3 +181,20 @@ node --test supabase/functions/_shared/image-tagging.test.ts
 # deterministic vector builder (dimension, L2-norm, same-style > cross-style
 # similarity, shared-subject ranking), and the vision-response parser.
 ```
+
+---
+
+## Wave-1 founder go-live config (consolidated)
+
+The AI-tagging half needs only items 3 (and the already-set `ANTHROPIC_API_KEY`)
+below. Full cross-feature checklist also lives in `docs/notifications.md`:
+
+| # | What | Notes |
+| --- | --- | --- |
+| 1 | Resend API key + verified `getinkd.co` domain | Notifications email channel only. |
+| 2 | Vault secrets for `notify-dispatch` | Notifications cron drain. |
+| 3 | **Vault secrets for `tag-image`**: `agent_runner_service_key` (set) + `image_tagger_url` | Enables the `image-tag-drain` cron. Vision reuses the shared `ANTHROPIC_API_KEY` — no new key for the founder. |
+| 4 | EAS creds for prod push | Notifications push in a production build. |
+
+Everything is inert-until-configured: the drain no-ops while the URL secret is
+absent, so setting item 3 is all that's required to start backfilling tags.

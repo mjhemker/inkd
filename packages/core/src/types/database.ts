@@ -1008,6 +1008,133 @@ export type Database = {
         }
         Relationships: []
       }
+      image_tag_jobs: {
+        Row: {
+          artist_id: string | null
+          attempts: number
+          created_at: string
+          dedupe_key: string
+          id: string
+          image_url: string | null
+          last_error: string | null
+          leased_at: string | null
+          max_attempts: number
+          scheduled_at: string
+          status: string
+          subject_id: string
+          subject_type: Database["public"]["Enums"]["image_subject_type"]
+          updated_at: string
+        }
+        Insert: {
+          artist_id?: string | null
+          attempts?: number
+          created_at?: string
+          dedupe_key: string
+          id?: string
+          image_url?: string | null
+          last_error?: string | null
+          leased_at?: string | null
+          max_attempts?: number
+          scheduled_at?: string
+          status?: string
+          subject_id: string
+          subject_type: Database["public"]["Enums"]["image_subject_type"]
+          updated_at?: string
+        }
+        Update: {
+          artist_id?: string | null
+          attempts?: number
+          created_at?: string
+          dedupe_key?: string
+          id?: string
+          image_url?: string | null
+          last_error?: string | null
+          leased_at?: string | null
+          max_attempts?: number
+          scheduled_at?: string
+          status?: string
+          subject_id?: string
+          subject_type?: Database["public"]["Enums"]["image_subject_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_tag_jobs_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      image_tags: {
+        Row: {
+          artist_id: string | null
+          color_type: Database["public"]["Enums"]["image_color_type"]
+          created_at: string
+          description: string | null
+          embedding: string | null
+          id: string
+          image_url: string | null
+          model_version: string
+          placement: string[]
+          size_estimate: Database["public"]["Enums"]["image_size_estimate"]
+          style_confidences: number[]
+          styles: string[]
+          subject_id: string
+          subject_matter: string[]
+          subject_type: Database["public"]["Enums"]["image_subject_type"]
+          tagged_at: string
+          updated_at: string
+        }
+        Insert: {
+          artist_id?: string | null
+          color_type?: Database["public"]["Enums"]["image_color_type"]
+          created_at?: string
+          description?: string | null
+          embedding?: string | null
+          id?: string
+          image_url?: string | null
+          model_version: string
+          placement?: string[]
+          size_estimate?: Database["public"]["Enums"]["image_size_estimate"]
+          style_confidences?: number[]
+          styles?: string[]
+          subject_id: string
+          subject_matter?: string[]
+          subject_type: Database["public"]["Enums"]["image_subject_type"]
+          tagged_at?: string
+          updated_at?: string
+        }
+        Update: {
+          artist_id?: string | null
+          color_type?: Database["public"]["Enums"]["image_color_type"]
+          created_at?: string
+          description?: string | null
+          embedding?: string | null
+          id?: string
+          image_url?: string | null
+          model_version?: string
+          placement?: string[]
+          size_estimate?: Database["public"]["Enums"]["image_size_estimate"]
+          style_confidences?: number[]
+          styles?: string[]
+          subject_id?: string
+          subject_matter?: string[]
+          subject_type?: Database["public"]["Enums"]["image_subject_type"]
+          tagged_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_tags_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instagram_connections: {
         Row: {
           access_token: string
@@ -2315,6 +2442,33 @@ export type Database = {
       agent_scheduled_enqueue: { Args: never; Returns: undefined }
       agent_scheduled_tick: { Args: never; Returns: undefined }
       current_artist_id: { Args: never; Returns: string }
+      enqueue_untagged_images: { Args: never; Returns: number }
+      image_tag_jobs_lease: {
+        Args: { p_limit?: number }
+        Returns: {
+          artist_id: string | null
+          attempts: number
+          created_at: string
+          dedupe_key: string
+          id: string
+          image_url: string | null
+          last_error: string | null
+          leased_at: string | null
+          max_attempts: number
+          scheduled_at: string
+          status: string
+          subject_id: string
+          subject_type: Database["public"]["Enums"]["image_subject_type"]
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "image_tag_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      image_tag_run_tick: { Args: never; Returns: undefined }
       notification_category_default_email: {
         Args: { p_category: string }
         Returns: boolean
@@ -2385,6 +2539,23 @@ export type Database = {
           travel_house_calls: boolean
         }[]
       }
+      similar_works: {
+        Args: {
+          p_embedding: string
+          p_exclude_artist?: string
+          p_limit?: number
+          p_style_slugs?: string[]
+        }
+        Returns: {
+          artist_id: string
+          color_type: Database["public"]["Enums"]["image_color_type"]
+          image_url: string
+          similarity: number
+          styles: string[]
+          subject_id: string
+          subject_type: Database["public"]["Enums"]["image_subject_type"]
+        }[]
+      }
     }
     Enums: {
       agent_action_status:
@@ -2428,6 +2599,9 @@ export type Database = {
         | "no_show"
       booking_window: "1mo" | "2_3mo" | "4_6mo" | "1yr" | "closed"
       deposit_type: "none" | "fixed" | "percent"
+      image_color_type: "color" | "black_grey" | "both" | "unknown"
+      image_size_estimate: "small" | "medium" | "large" | "unknown"
+      image_subject_type: "portfolio_piece" | "post" | "flash_item"
       payment_kind: "deposit" | "balance" | "refund" | "adjustment" | "payout"
       payment_status:
         | "pending"
@@ -2632,6 +2806,9 @@ export const Constants = {
       ],
       booking_window: ["1mo", "2_3mo", "4_6mo", "1yr", "closed"],
       deposit_type: ["none", "fixed", "percent"],
+      image_color_type: ["color", "black_grey", "both", "unknown"],
+      image_size_estimate: ["small", "medium", "large", "unknown"],
+      image_subject_type: ["portfolio_piece", "post", "flash_item"],
       payment_kind: ["deposit", "balance", "refund", "adjustment", "payout"],
       payment_status: [
         "pending",
