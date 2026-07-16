@@ -5,3 +5,4 @@
  */
 export * from "./slots";
 export * from "./derive";
+export * from "./weeklyHours";

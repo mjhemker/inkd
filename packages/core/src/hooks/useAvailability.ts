@@ -4,13 +4,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   listAvailabilityRules,
   createAvailabilityRule,
+  updateAvailabilityRule,
   deleteAvailabilityRule,
+  saveAvailabilityRules,
   listAvailabilityBlocks,
   createAvailabilityBlock,
   deleteAvailabilityBlock,
   getBookingPolicy,
   upsertBookingPolicy,
 } from "../api/availability";
+import type { AvailabilityRule } from "../types/rows";
+import type { WeeklyBlock } from "../booking/weeklyHours";
 import { useInkdClient } from "./context";
 import { queryKeys } from "./queryKeys";
 
@@ -58,8 +62,23 @@ export function useAvailabilityMutations(artistId: string) {
         createAvailabilityRule(client, artistId, input),
       onSuccess: invalidateRules,
     }),
+    updateRule: useMutation({
+      mutationFn: (args: {
+        id: string;
+        patch: Parameters<typeof updateAvailabilityRule>[2];
+      }) => updateAvailabilityRule(client, args.id, args.patch),
+      onSuccess: invalidateRules,
+    }),
     deleteRule: useMutation({
       mutationFn: (id: string) => deleteAvailabilityRule(client, id),
+      onSuccess: invalidateRules,
+    }),
+    /** Set-reconcile the whole week from the grid editor's block list. */
+    reconcileRules: useMutation({
+      mutationFn: (args: {
+        existing: AvailabilityRule[];
+        desired: WeeklyBlock[];
+      }) => saveAvailabilityRules(client, artistId, args.existing, args.desired),
       onSuccess: invalidateRules,
     }),
     createBlock: useMutation({
