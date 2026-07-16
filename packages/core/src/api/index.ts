@@ -37,3 +37,4 @@ export * from "./dashboardStats";
 export * from "./similarWorks";
 export * from "./shops";
 export * from "./aftercare";
+export * from "./dailyDrop";

@@ -75,3 +75,10 @@ verify_jwt = false
 # the bearer itself (see _shared/agent-auth.ts). Needs ANTHROPIC_API_KEY.
 [functions.tag-image]
 verify_jwt = false
+
+# Daily personalized drop generator. Invoked once a day by pg_cron
+# (daily-drop-generate, 20260717100000) with the AI-runtime bearer, same pattern
+# as agent-scheduled; the function enforces the bearer itself. No Anthropic
+# dependency — it ranks over already-computed image_tags.
+[functions.daily-drop]
+verify_jwt = false
