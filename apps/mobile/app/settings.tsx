@@ -19,13 +19,16 @@ import {
   Spinner,
   Tabs,
   ToastProvider,
+  Toggle,
   useToast,
 } from "@inkd/ui/native";
 import {
   useCurrentProfile,
   useCurrentArtistProfile,
   useDowngradeToClient,
+  useUpdateArtistProfile,
 } from "@inkd/core/hooks";
+import type { ArtistProfile } from "@inkd/core";
 import {
   AgentAutonomyEditor,
   BookingEditor,
@@ -120,7 +123,12 @@ function SettingsView() {
                 <IdentityEditor profile={profile} artist={artist} variant="settings" />
               )}
               {tab === "locations" && <LocationsEditor artist={artist} variant="settings" />}
-              {tab === "booking" && <BookingEditor artist={artist} variant="settings" />}
+              {tab === "booking" && (
+                <View className="gap-6">
+                  <BookingEditor artist={artist} variant="settings" />
+                  <AftercareSettingsCard artist={artist} />
+                </View>
+              )}
               {tab === "services" && (
                 <ServicesEditor artistId={artist.id} variant="settings" />
               )}
@@ -204,6 +212,42 @@ function SettingsView() {
         )}
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+/** Artist toggle for the aftercare healing timeline. Always-on by default;
+ * flipping it off stops new completed sessions from scheduling check-ins.
+ * Mirrors apps/web/src/components/aftercare/aftercare-settings-card.tsx. */
+function AftercareSettingsCard({ artist }: { artist: ArtistProfile }) {
+  const update = useUpdateArtistProfile(artist.id);
+  const enabled = artist.aftercare_enabled ?? true;
+
+  return (
+    <Card padding="lg" className="flex-row items-start justify-between gap-4">
+      <View className="flex-1 flex-row items-start gap-3">
+        <View className="mt-0.5 h-9 w-9 items-center justify-center rounded-sm bg-surface-ember">
+          <Icon name="sparkles" size={17} color="#0A0A0B" />
+        </View>
+        <View className="flex-1 gap-1">
+          <Text className="text-sm font-sans-semibold text-content-primary">
+            Aftercare check-ins
+          </Text>
+          <Text className="text-sm text-content-secondary">
+            Automatically check in with clients at 3 days, 1 week, and 3 weeks after a completed
+            session — how it&apos;s healing, an optional photo, and (with their consent) a healed
+            photo for your portfolio.
+          </Text>
+        </View>
+      </View>
+      <View className="flex-row items-center gap-2">
+        {update.isPending && <Spinner size="small" />}
+        <Toggle
+          checked={enabled}
+          onCheckedChange={(v) => update.mutate({ aftercare_enabled: v })}
+          disabled={update.isPending}
+        />
+      </View>
+    </Card>
   );
 }
 
