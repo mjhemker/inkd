@@ -208,4 +208,20 @@ values
   ('156856d5-3318-43c7-b44e-18010857817e', 'f22d0000-0000-4000-8000-000000000005', now() - interval '1 days')
 on conflict (profile_id, post_id) do nothing;
 
+-- ---------------------------------------------------------------------------
+-- Split-shift availability for Jayden Cole: show the multi-block weekly grid in
+-- action. Replace his single Tuesday window (11:00–19:00) with two blocks —
+-- 11:00–14:00 and 17:00–21:00 — so the founder sees a real split day render.
+-- Fixed UUIDs + ON CONFLICT keep this idempotent/re-runnable.
+-- ---------------------------------------------------------------------------
+delete from availability_rules
+where artist_id = '0b0b0b0b-0000-4000-8000-000000000001'
+  and weekday = 2 and start_time = '11:00:00' and end_time = '19:00:00';
+
+insert into availability_rules (id, artist_id, weekday, start_time, end_time, is_open)
+values
+  ('a5a11d0e-0000-4000-8000-000000000001', '0b0b0b0b-0000-4000-8000-000000000001', 2, '11:00:00', '14:00:00', true),
+  ('a5a11d0e-0000-4000-8000-000000000002', '0b0b0b0b-0000-4000-8000-000000000001', 2, '17:00:00', '21:00:00', true)
+on conflict (id) do nothing;
+
 commit;
