@@ -61,7 +61,12 @@ export interface InkdColors {
   info: ColorRamp;
   paper: ColorRamp;
   semantic: SemanticColors;
+  /** Both on-screen themes. `semantic` is an alias of `themes.dark`. */
+  themes: { dark: SemanticColors; light: SemanticColors };
 }
+
+/** The two on-screen color schemes. */
+export type ColorScheme = "dark" | "light";
 
 export interface InkdTokens {
   colors: InkdColors;

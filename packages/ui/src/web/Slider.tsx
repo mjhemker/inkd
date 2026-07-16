@@ -47,7 +47,7 @@ export function Slider({
         disabled={disabled}
         onChange={(event) => onValueChange(Number(event.target.value))}
         style={{
-          background: `linear-gradient(to right, rgb(124 58 237) ${pct}%, rgb(26 26 29) ${pct}%)`,
+          background: `linear-gradient(to right, rgb(var(--color-surface-plate)) ${pct}%, rgb(var(--color-border-default)) ${pct}%)`,
         }}
         className={cx(
           "inkd-slider h-1.5 w-full cursor-pointer appearance-none rounded-full outline-none disabled:cursor-not-allowed disabled:opacity-50",
@@ -61,8 +61,8 @@ export function Slider({
           height: 16px;
           width: 16px;
           border-radius: 9999px;
-          background: #7C3AED;
-          border: 2px solid #FAFAFA;
+          background: rgb(var(--color-surface-plate));
+          border: 2px solid rgb(var(--color-surface-base));
           cursor: pointer;
           margin-top: 0;
           transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
@@ -74,8 +74,8 @@ export function Slider({
           height: 16px;
           width: 16px;
           border-radius: 9999px;
-          background: #7C3AED;
-          border: 2px solid #FAFAFA;
+          background: rgb(var(--color-surface-plate));
+          border: 2px solid rgb(var(--color-surface-base));
           cursor: pointer;
           transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
         }

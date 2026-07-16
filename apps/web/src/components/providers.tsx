@@ -14,13 +14,16 @@ import { useState, type ReactNode } from "react";
 import { createBrowserSupabaseClient } from "@inkd/core/auth/web";
 import { InkdProvider } from "@inkd/core/hooks";
 import { ToastProvider } from "@inkd/ui/web";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export function Providers({ children }: { children: ReactNode }) {
   const [supabase] = useState(() => createBrowserSupabaseClient());
 
   return (
-    <InkdProvider client={supabase}>
-      <ToastProvider>{children}</ToastProvider>
-    </InkdProvider>
+    <ThemeProvider>
+      <InkdProvider client={supabase}>
+        <ToastProvider>{children}</ToastProvider>
+      </InkdProvider>
+    </ThemeProvider>
   );
 }

@@ -26,7 +26,10 @@ export type IconName =
   | "clock"
   | "shield"
   | "trending-up"
-  | "alert-triangle";
+  | "alert-triangle"
+  | "sun"
+  | "moon"
+  | "monitor";
 
 export interface IconProps {
   name: IconName;
@@ -114,10 +117,13 @@ const paths: Record<IconName, () => ReactNode> = {
       <path d="m5 18 5-5 3 3 3-4 3.5 6" />
     </>
   ),
+  // A sharp four-point "AI" sparkle with a smaller companion spark. Straight
+  // edges (not the softer curved diamond it was) to sit with the placard
+  // geometry, and it reads clearly as sparkles rather than a lone star.
   sparkles: () => (
     <>
-      <path d="M12 3.5 13.4 8l4.5 1.4-4.5 1.4L12 15.3 10.6 10.8 6.1 9.4l4.5-1.4L12 3.5Z" />
-      <path d="M18.5 15v3.5M17 16.75h3" />
+      <path d="M11 4.5c.6 3.4 1.6 4.4 5 5-3.4.6-4.4 1.6-5 5-.6-3.4-1.6-4.4-5-5 3.4-.6 4.4-1.6 5-5Z" />
+      <path d="M18 13.5c.3 1.7.8 2.2 2.5 2.5-1.7.3-2.2.8-2.5 2.5-.3-1.7-.8-2.2-2.5-2.5 1.7-.3 2.2-.8 2.5-2.5Z" />
     </>
   ),
   menu: () => <path d="M4 7h16M4 12h16M4 17h16" />,
@@ -148,6 +154,20 @@ const paths: Record<IconName, () => ReactNode> = {
       <path d="M12 4 2.5 20.5h19L12 4Z" />
       <path d="M12 10v4.5" />
       <path d="M12 17.5h.01" />
+    </>
+  ),
+  // Appearance / theme controls.
+  sun: () => (
+    <>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2.5v2.5M12 19v2.5M4.5 4.5l1.8 1.8M17.7 17.7l1.8 1.8M2.5 12H5M19 12h2.5M4.5 19.5l1.8-1.8M17.7 6.3l1.8-1.8" />
+    </>
+  ),
+  moon: () => <path d="M20 13.5A8 8 0 1 1 10.5 4a6.5 6.5 0 0 0 9.5 9.5Z" />,
+  monitor: () => (
+    <>
+      <rect x="3" y="4.5" width="18" height="12" rx="2" />
+      <path d="M8.5 20h7M12 16.5V20" />
     </>
   ),
 };

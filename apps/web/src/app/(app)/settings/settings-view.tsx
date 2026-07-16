@@ -28,6 +28,7 @@ import {
   ServicesEditor,
   ShareKit,
 } from "@/components/artist";
+import { AppearanceControl } from "@/components/appearance-control";
 
 const TABS = [
   { value: "profile", label: "Profile" },
@@ -37,6 +38,7 @@ const TABS = [
   { value: "waivers", label: "Waivers" },
   { value: "ai", label: "AI staff" },
   { value: "grow", label: "Share & connect" },
+  { value: "appearance", label: "Appearance" },
   { value: "account", label: "Account" },
 ];
 
@@ -167,6 +169,7 @@ export function SettingsView() {
             <ConnectedAccountsEditor artist={artist} />
           </div>
         )}
+        {tab === "appearance" && <AppearancePanel />}
         {tab === "account" && <AccountPanel profileName={profile.display_name} avatarUrl={profile.avatar_url} handle={profile.handle} published={artist.is_published} />}
       </div>
     </div>
@@ -194,6 +197,27 @@ function WaiversPanel() {
           <Icon name="arrow-right" size={16} />
         </Button>
       </Link>
+    </Card>
+  );
+}
+
+function AppearancePanel() {
+  return (
+    <Card padding="lg" className="flex flex-col items-start gap-5">
+      <div className="flex flex-col gap-1.5">
+        <h2 className="font-display text-xl font-bold tracking-tight">
+          Appearance
+        </h2>
+        <p className="max-w-md text-content-secondary">
+          Choose how INKD looks on this device. Dark is the gallery default;
+          Light is a warm paper wall for daytime studios. System follows your
+          device.
+        </p>
+      </div>
+      <AppearanceControl />
+      <p className="font-mono text-xs uppercase tracking-[0.16em] text-content-muted">
+        Saved on this device
+      </p>
     </Card>
   );
 }

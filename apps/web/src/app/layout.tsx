@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { themeInitScript } from "@/components/theme-provider";
 
 /**
  * INKD type system (see packages/ui/tokens.cjs for the documented rationale):
@@ -72,8 +73,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0A0A0B",
-  colorScheme: "dark",
+  // Address-bar tint follows the active theme (dark default, warm paper light).
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0A0A0B" },
+    { media: "(prefers-color-scheme: light)", color: "#F6F2E9" },
+  ],
+  colorScheme: "dark light",
 };
 
 export default function RootLayout({
@@ -84,8 +89,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      // The inline script below mutates data-theme before hydration; suppress
+      // the expected attribute mismatch warning on <html>.
+      suppressHydrationWarning
       className={`${display.variable} ${sans.variable} ${mono.variable} ${hand.variable}`}
     >
+      <head>
+        {/* No-flash: resolve + apply the stored theme before first paint. */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-dvh bg-surface-base font-sans text-content-primary antialiased">
         <Providers>{children}</Providers>
       </body>

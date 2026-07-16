@@ -38,12 +38,14 @@ import {
   useToast,
   type IconName,
 } from "@inkd/ui/web";
+import { AppearanceControl } from "@/components/appearance-control";
 
 const allIcons: IconName[] = [
   "home", "compass", "calendar", "message-circle", "user", "layout-grid",
   "settings", "search", "bell", "plus", "check", "x", "chevron-down",
   "chevron-right", "chevron-left", "arrow-right", "map-pin", "star", "image",
   "sparkles", "menu", "credit-card", "clock", "shield", "trending-up",
+  "alert-triangle", "sun", "moon", "monitor",
 ];
 
 const styleTags = ["Blackwork", "Fine line", "Traditional", "Japanese", "Lettering"];
@@ -70,8 +72,11 @@ function Gallery() {
   return (
     <div className="min-h-dvh bg-surface-base text-content-primary">
       <header className="border-b border-border-subtle">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-2 px-6 py-10">
-          <Eyebrow>INKD design system</Eyebrow>
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-6 py-10">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <Eyebrow>INKD design system</Eyebrow>
+            <AppearanceControl />
+          </div>
           <h1 className="font-display text-4xl font-extrabold tracking-tight">
             Component gallery
           </h1>
@@ -80,6 +85,7 @@ function Gallery() {
             solid violet plates, hard placard edges, and a warm{" "}
             <span className="text-content-ember">ember</span> accent for flash and
             price marks. Bricolage / Manrope / JetBrains Mono, plus Caveat by hand.
+            Flip the toggle to review both themes.
           </p>
         </div>
       </header>
