@@ -43,4 +43,13 @@ export const publicDemoData: PublicArtistData = {
   bookingPolicy: (t.booking_policies?.[0] ?? null) as unknown as PublicArtistData["bookingPolicy"],
   reviews,
   reviewerProfiles,
+  shopBadges: [
+    {
+      shop_id: "shop-demo",
+      handle: "fells-point-ink",
+      name: "Fells Point Ink",
+      role: "resident",
+      membership_mode: "managed",
+    },
+  ],
 };

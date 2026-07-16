@@ -31,6 +31,9 @@ export type AgentRole = Enums<"agent_role">;
 export type AgentActionStatus = Enums<"agent_action_status">;
 export type PlaybookCategory = Enums<"playbook_category">;
 export type PlaybookSource = Enums<"playbook_source">;
+export type ShopMemberRole = Enums<"shop_member_role">;
+export type ShopMembershipMode = Enums<"shop_membership_mode">;
+export type ShopMemberStatus = Enums<"shop_member_status">;
 
 // --- Row aliases ------------------------------------------------------------
 export type Profile = Tables<"profiles">;
@@ -66,6 +69,8 @@ export type NotificationPreference = Tables<"notification_preferences">;
 export type NotificationDelivery = Tables<"notification_deliveries">;
 export type DevicePushToken = Tables<"device_push_tokens">;
 export type InstagramImportRun = Tables<"instagram_import_runs">;
+export type Shop = Tables<"shops">;
+export type ShopMember = Tables<"shop_members">;
 
 // --- Insert aliases (only the ones the api layer mutates through) -----------
 export type ProfileInsert = TablesInsert<"profiles">;
@@ -89,6 +94,8 @@ export type FlashItemInsert = TablesInsert<"flash_items">;
 export type ReviewInsert = TablesInsert<"reviews">;
 export type AgentSettingsInsert = TablesInsert<"agent_settings">;
 export type AgentPlaybookInsert = TablesInsert<"agent_playbooks">;
+export type ShopInsert = TablesInsert<"shops">;
+export type ShopMemberInsert = TablesInsert<"shop_members">;
 export type NotificationInsert = TablesInsert<"notifications">;
 export type NotificationPreferenceInsert = TablesInsert<"notification_preferences">;
 
@@ -110,3 +117,5 @@ export type AgentPlaybookUpdate = TablesUpdate<"agent_playbooks">;
 export type NotificationUpdate = TablesUpdate<"notifications">;
 export type NotificationPreferenceUpdate = TablesUpdate<"notification_preferences">;
 export type ReviewUpdate = TablesUpdate<"reviews">;
+export type ShopUpdate = TablesUpdate<"shops">;
+export type ShopMemberUpdate = TablesUpdate<"shop_members">;

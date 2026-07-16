@@ -17,6 +17,7 @@ import {
 import {
   formatRatingAvg,
   summarizeReviews,
+  useArtistShopBadges,
   usePublicArtistProfile,
   type PublicArtistProfileData,
 } from "@inkd/core";
@@ -103,6 +104,7 @@ function Hero({ data }: { data: PublicArtistProfileData }) {
   const displayName = profile.display_name || profile.handle || "Artist";
   const primaryLocation = data.studioLocations.find((l) => l.is_primary) ?? data.studioLocations[0];
   const reviewSummary = summarizeReviews(data.reviews.filter((r) => r.is_public));
+  const { data: shopBadges } = useArtistShopBadges(artist.id);
 
   return (
     <View className="gap-4">
@@ -125,6 +127,17 @@ function Hero({ data }: { data: PublicArtistProfileData }) {
         <Badge variant="outline" size="sm">
           {classificationLabel(artist.classification)}
         </Badge>
+        {(shopBadges ?? []).map((badge) => (
+          <Pressable
+            key={badge.shop_id}
+            accessibilityRole="button"
+            onPress={() => router.push(`/shop/${badge.handle}` as never)}
+          >
+            <Badge variant="ember" size="sm">
+              @ {badge.name}
+            </Badge>
+          </Pressable>
+        ))}
         {reviewSummary.count > 0 && (
           <Badge variant="ember" size="sm" className="gap-1.5">
             {/* Stamped pip — same rating-mark family as <RatingStamps>. */}

@@ -119,6 +119,13 @@ export function ArtistProfileView({ data }: { data: PublicArtistData }) {
                 <Badge variant="outline" size="sm">
                   {classificationLabel(artist.classification)}
                 </Badge>
+                {data.shopBadges.map((badge) => (
+                  <Link key={badge.shop_id} href={`/s/${badge.handle}`}>
+                    <Badge variant="ember" size="sm" className="hover:opacity-90">
+                      <Icon name="layout-grid" size={12} />@ {badge.name}
+                    </Badge>
+                  </Link>
+                ))}
                 {reviewSummary.count > 0 && (
                   <Badge variant="ember" size="sm">
                     {/* Stamped pip — same rating-mark family as <RatingStamps>,

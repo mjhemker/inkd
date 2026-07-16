@@ -43,6 +43,23 @@ export const studioNav: NavItem[] = [
   { label: "Settings", href: "/settings", icon: "settings" },
 ];
 
+/** Studio entry shown only to artists who OWN a shop (never leaked to others). */
+export const shopStudioNavItem: NavItem = {
+  label: "Shop",
+  href: "/studio/shop",
+  icon: "layout-grid",
+};
+
+/**
+ * The Studio group for a given artist. Shop owners get a "Shop" item inserted
+ * before Settings; everyone else gets the base group. Keeps shop UI from
+ * leaking to clients or non-owner artists.
+ */
+export function studioNavFor(opts: { ownsShop?: boolean } = {}): NavItem[] {
+  if (!opts.ownsShop) return studioNav;
+  return [studioNav[0]!, studioNav[1]!, studioNav[2]!, shopStudioNavItem, studioNav[3]!];
+}
+
 /** The main-nav set (desktop sidebar / role top level) for a given role. */
 export function primaryNavFor(role: ViewerRole): NavItem[] {
   return role === "artist" ? artistPrimaryNav : clientPrimaryNav;

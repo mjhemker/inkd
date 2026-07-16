@@ -4,12 +4,12 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Avatar, Icon, Logo, LogoMark, buttonVariants, cx } from "@inkd/ui/web";
-import { useCurrentProfile } from "@inkd/core/hooks";
+import { useCurrentProfile, useMyShop } from "@inkd/core/hooks";
 import {
   bottomNavFor,
   isActivePath,
   primaryNavFor,
-  studioNav,
+  studioNavFor,
   type NavItem,
   type ViewerRole,
 } from "@/lib/nav";
@@ -103,6 +103,10 @@ function Sidebar({
   identity: ShellIdentity;
 }) {
   const isArtist = role === "artist";
+  // Shop owners get a "Shop" item in the Studio group; the query is disabled for
+  // clients/non-artists so nothing leaks to them.
+  const { data: shop } = useMyShop();
+  const studioItems = studioNavFor({ ownsShop: isArtist && Boolean(shop) });
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-border-subtle bg-surface-base md:flex">
       <div className="flex h-16 items-center px-5">
@@ -122,7 +126,7 @@ function Sidebar({
               Studio
             </p>
             <ul className="flex flex-col gap-0.5">
-              {studioNav.map((item) => (
+              {studioItems.map((item) => (
                 <SidebarLink key={item.href} item={item} active={active} />
               ))}
             </ul>
