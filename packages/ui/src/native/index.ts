@@ -11,6 +11,29 @@ export {
 
 export { Icon, type IconProps, type IconName } from "./Icon";
 
+export { BodyMap, BodyMapThumbnail, type BodyMapProps } from "./BodyMap";
+export {
+  FIGURES,
+  REGION_DEFS,
+  placementLabel,
+  placementLabelFromColumns,
+  placementSelectOptions,
+  serializePlacement,
+  parsePlacement,
+  encodeOption,
+  decodeOption,
+  samePlacement,
+  isRegionKey,
+  type PlacementValue,
+  type PlacementView,
+  type PlacementSide,
+  type PlacementColumns,
+  type PlacementColumnsWrite,
+  type PlacementOption,
+  type RegionKey,
+  type RegionShape,
+} from "../bodyMap/regions";
+
 export { Eyebrow, type EyebrowProps } from "./Eyebrow";
 
 export {

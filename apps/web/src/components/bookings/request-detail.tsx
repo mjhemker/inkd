@@ -24,6 +24,7 @@ import {
 import {
   Avatar,
   Badge,
+  BodyMapThumbnail,
   Button,
   Card,
   Eyebrow,
@@ -34,6 +35,8 @@ import {
   Select,
   Skeleton,
   TextArea,
+  parsePlacement,
+  placementLabelFromColumns,
   useToast,
 } from "@inkd/ui/web";
 import {
@@ -100,6 +103,8 @@ export function RequestDetail({ requestId }: { requestId: string }) {
   const clientName =
     clientQ.data?.display_name ?? clientQ.data?.handle ?? "Client";
   const open = isRequestOpen(request.status);
+  const placementValue = parsePlacement(request);
+  const placementText = placementLabelFromColumns(request);
 
   async function onAccept() {
     if (!request) return;
@@ -108,7 +113,7 @@ export function RequestDetail({ requestId }: { requestId: string }) {
       const res = await accept.mutateAsync({
         request,
         input: {
-          title: title || request.placement || "Tattoo project",
+          title: title || placementText || request.placement || "Tattoo project",
           depositCents: depositCents || null,
           sessionCount: Math.max(1, Number(sessions) || 1),
         },
@@ -162,7 +167,7 @@ export function RequestDetail({ requestId }: { requestId: string }) {
         <Eyebrow>Booking request</Eyebrow>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-            {request.placement || serviceQ.data?.name || "Custom project"}
+            {placementText || request.placement || serviceQ.data?.name || "Custom project"}
           </h1>
           <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
           {request.has_medical_flags && (
@@ -192,7 +197,29 @@ export function RequestDetail({ requestId }: { requestId: string }) {
       <DetailSection title="Intake">
         <Card padding="lg" className="flex flex-col gap-4">
           <Field label="Service" value={serviceQ.data?.name ?? "Custom project"} />
-          {request.placement && <Field label="Placement" value={request.placement} />}
+          {placementValue && (
+            <div className="flex items-start gap-4 border-b border-border-subtle pb-3">
+              <span className="w-24 shrink-0 font-mono text-[11px] uppercase tracking-widest text-content-muted">
+                Placement
+              </span>
+              <div className="flex flex-1 items-center gap-3">
+                <div className="shrink-0 rounded-lg border border-border-subtle bg-surface-raised/40 p-1">
+                  <BodyMapThumbnail value={placementValue} size={64} />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm font-semibold text-content-primary">
+                    {placementText}
+                  </span>
+                  <span className="font-mono text-[11px] uppercase tracking-widest text-content-muted">
+                    {placementValue.view} view
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+          {request.placement && (
+            <Field label={placementValue ? "Placement details" : "Placement"} value={request.placement} />
+          )}
           {request.size_description && <Field label="Size" value={request.size_description} />}
           {request.description && <Field label="Idea" value={request.description} />}
           <Field

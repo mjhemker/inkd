@@ -745,6 +745,9 @@ export type Database = {
           location_id: string | null
           medical_notes: string | null
           placement: string | null
+          placement_region: string | null
+          placement_side: string | null
+          placement_view: string | null
           preferred_dates: Json
           reference_uploads: Json
           service_id: string | null
@@ -766,6 +769,9 @@ export type Database = {
           location_id?: string | null
           medical_notes?: string | null
           placement?: string | null
+          placement_region?: string | null
+          placement_side?: string | null
+          placement_view?: string | null
           preferred_dates?: Json
           reference_uploads?: Json
           service_id?: string | null
@@ -787,6 +793,9 @@ export type Database = {
           location_id?: string | null
           medical_notes?: string | null
           placement?: string | null
+          placement_region?: string | null
+          placement_side?: string | null
+          placement_view?: string | null
           preferred_dates?: Json
           reference_uploads?: Json
           service_id?: string | null
