@@ -56,6 +56,12 @@ const DEV_ROUTES: { href: string; title: string; description: string }[] = [
       "Messaging thread with image attachments (Composer, ChatThread, MessageBubble) against a mock chat client.",
   },
   {
+    href: "/dev/bookings-calendar-preview",
+    title: "Bookings — calendar & pipeline",
+    description:
+      "The artist Bookings calendar (real week grid with positioned/overlapping session placards + exact header nav, and the month grid) and the full-width pipeline board, against seeded offline sessions/bookings.",
+  },
+  {
     href: "/dev/discover",
     title: "Local discovery",
     description:
