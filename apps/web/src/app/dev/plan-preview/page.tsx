@@ -41,7 +41,6 @@ const artistProfile: ArtistProfile = {
   stripe_onboarding_completed_at: null,
   stripe_payouts_enabled: false,
   plan: "free",
-  aftercare_enabled: true,
   waitlist_enabled: true,
   created_at: NOW,
   updated_at: NOW,
