@@ -74,6 +74,9 @@ const updateArtistSchema = z
     years_experience: z.number().int().min(0).max(80).nullable(),
     instagram_handle: z.string().max(60).nullable(),
     is_published: z.boolean(),
+    // Aftercare healing check-ins (3d/1w/3w). Always-on by default; the
+    // settings toggle flips this. Gates the session-completion schedule trigger.
+    aftercare_enabled: z.boolean(),
   })
   .partial();
 

@@ -63,6 +63,7 @@ import { NotFound } from "./request-detail";
 import { ArtistResponseForm } from "../reviews/artist-response-form";
 import { ReviewCard } from "../reviews/review-card";
 import { ReviewFormModal, type ReviewFormValues } from "../reviews/review-form-modal";
+import { HealingSection } from "../aftercare/healing-section";
 
 export function BookingDetail({ bookingId }: { bookingId: string }) {
   const client = useInkdClient();
@@ -316,6 +317,24 @@ export function BookingDetail({ bookingId }: { bookingId: string }) {
           )}
         </div>
       </DetailSection>
+
+      {/* Healing — aftercare check-in timeline (3d/1w/3w), ratings, shared
+          photos, and the artist's add-to-portfolio / touch-up actions. */}
+      {sessions.some((s) => s.status === "completed") && (
+        <>
+          <Divider />
+          <DetailSection title="Healing">
+            <HealingSection
+              bookingId={booking.id}
+              isArtist={isArtist}
+              artistProfileId={booking.artist_id}
+              artistUserId={artistQ.data?.profile_id ?? ""}
+              clientProfileId={booking.client_id}
+              clientName={clientName}
+            />
+          </DetailSection>
+        </>
+      )}
 
       {/* Review — client leaves one on a healed booking; artist may respond */}
       {booking.status === "completed" && (
