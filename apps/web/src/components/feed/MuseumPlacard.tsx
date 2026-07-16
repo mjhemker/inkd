@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { cx } from "@inkd/ui/web";
 import type { FeedArtist, FeedStyleTag } from "@inkd/core";
 import { BooksSignal } from "./BooksSignal";
@@ -39,7 +40,17 @@ export function MuseumPlacard({
           {styleLabel}
         </span>
         <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[11px] uppercase tracking-[0.16em] text-content-muted">
-          <span className="truncate">{handleLabel(artist)}</span>
+          {artist.handle ? (
+            <Link
+              href={`/a/${artist.handle}`}
+              onClick={(event) => event.stopPropagation()}
+              className="truncate text-content-muted underline-offset-2 outline-none transition-colors hover:text-content-primary hover:underline focus-visible:text-content-primary focus-visible:underline"
+            >
+              {handleLabel(artist)}
+            </Link>
+          ) : (
+            <span className="truncate">{handleLabel(artist)}</span>
+          )}
           {location && <span aria-hidden>·</span>}
           {location && <span className="truncate">{location}</span>}
         </span>

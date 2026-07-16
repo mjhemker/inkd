@@ -45,6 +45,7 @@ export { Select, type SelectOption, type SelectProps } from "./Select";
 export { Sheet, type SheetProps, type SheetSide } from "./Sheet";
 export { Skeleton, type SkeletonProps } from "./Skeleton";
 export { Slider, type SliderProps } from "./Slider";
+export { RangeSlider, type RangeSliderProps } from "./RangeSlider";
 export { Spinner, type SpinnerProps } from "./Spinner";
 export { Stepper, type StepperProps, type StepperStep } from "./Stepper";
 export { Tabs, type TabItem, type TabsProps } from "./Tabs";

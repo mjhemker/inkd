@@ -93,17 +93,41 @@ export function PostDetailOverlay({
         <div className="flex max-h-[92dvh] flex-col gap-5 overflow-y-auto bg-surface-raised p-5 sm:p-6">
           {/* Artist row (right padding clears the absolute close button) */}
           <div className="flex items-center gap-3 pr-10 lg:pr-12">
-            <Avatar src={artist.avatarUrl ?? undefined} name={artist.displayName ?? handle ?? "Artist"} size="md" />
-            <div className="flex min-w-0 flex-col">
-              <span className="truncate font-display text-base font-bold text-content-primary">
-                {artist.displayName ?? "INKD artist"}
-              </span>
-              <span className="truncate font-mono text-xs uppercase tracking-[0.16em] text-content-muted">
-                {handle ? `@${handle}` : ""}
-                {handle && location ? " · " : ""}
-                {location}
-              </span>
-            </div>
+            {handle ? (
+              <Link
+                href={`/a/${handle}`}
+                className="group/artist flex min-w-0 items-center gap-3 outline-none"
+              >
+                <Avatar
+                  src={artist.avatarUrl ?? undefined}
+                  name={artist.displayName ?? handle}
+                  size="md"
+                  className="transition-opacity group-hover/artist:opacity-80"
+                />
+                <div className="flex min-w-0 flex-col">
+                  <span className="truncate font-display text-base font-bold text-content-primary group-hover/artist:underline group-focus-visible/artist:underline">
+                    {artist.displayName ?? "INKD artist"}
+                  </span>
+                  <span className="truncate font-mono text-xs uppercase tracking-[0.16em] text-content-muted">
+                    {`@${handle}`}
+                    {location ? " · " : ""}
+                    {location}
+                  </span>
+                </div>
+              </Link>
+            ) : (
+              <div className="flex min-w-0 items-center gap-3">
+                <Avatar src={artist.avatarUrl ?? undefined} name={artist.displayName ?? "Artist"} size="md" />
+                <div className="flex min-w-0 flex-col">
+                  <span className="truncate font-display text-base font-bold text-content-primary">
+                    {artist.displayName ?? "INKD artist"}
+                  </span>
+                  <span className="truncate font-mono text-xs uppercase tracking-[0.16em] text-content-muted">
+                    {location}
+                  </span>
+                </div>
+              </div>
+            )}
             <button
               type="button"
               disabled={!signedIn}

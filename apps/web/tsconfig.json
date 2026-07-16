@@ -4,7 +4,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    // Colocated *.test.ts run under `node --test` (type-stripping), which needs
+    // explicit .ts import specifiers. Safe because Next typecheck is noEmit.
+    "allowImportingTsExtensions": true
   },
   "include": [
     "next-env.d.ts",

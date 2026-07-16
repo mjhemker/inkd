@@ -10,8 +10,10 @@
  */
 import { useMemo, useState } from "react";
 import {
-  PRICE_BANDS,
   formatMinPrice,
+  usdToCents,
+  PRICE_SLIDER_MIN_USD,
+  PRICE_SLIDER_MAX_USD,
   EMPTY_FILTER_STATE,
   type ArtistCard,
   type DiscoverFilterState,
@@ -87,7 +89,10 @@ function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: num
 
 /** Local stand-in for the search_artists RPC (offline harness only). */
 function applyFilters(cards: ArtistCard[], f: DiscoverFilterState): ArtistCard[] {
-  const band = f.priceBand ? PRICE_BANDS.find((b) => b.slug === f.priceBand) : undefined;
+  const minCents =
+    f.priceMinUsd != null && f.priceMinUsd > PRICE_SLIDER_MIN_USD ? usdToCents(f.priceMinUsd) : null;
+  const maxCents =
+    f.priceMaxUsd != null && f.priceMaxUsd < PRICE_SLIDER_MAX_USD ? usdToCents(f.priceMaxUsd) : null;
   const center = f.lat != null && f.lng != null ? { lat: f.lat, lng: f.lng } : null;
   const q = f.query.trim().toLowerCase();
 
@@ -101,10 +106,10 @@ function applyFilters(cards: ArtistCard[], f: DiscoverFilterState): ArtistCard[]
 
   out = out.filter((c) => {
     if (f.styles.length && !c.styles.some((s) => f.styles.includes(s))) return false;
-    if (band) {
+    if (minCents != null || maxCents != null) {
       if (c.min_price_cents == null) return false;
-      if (band.min != null && c.min_price_cents < band.min) return false;
-      if (band.max != null && c.min_price_cents > band.max) return false;
+      if (minCents != null && c.min_price_cents < minCents) return false;
+      if (maxCents != null && c.min_price_cents > maxCents) return false;
     }
     if (f.booksOpen && !c.books_open) return false;
     if (f.state && c.state !== f.state) return false;
