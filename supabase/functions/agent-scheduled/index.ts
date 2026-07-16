@@ -10,10 +10,11 @@
 // dispatch branch.
 //
 // AUTH: verify_jwt = false at the gateway (config.toml, mirrors agent-run);
-// this function requires the service-role key as the bearer (pg_cron sends
-// it via agent_scheduled_tick(), 20260716090000). Selection + template logic
-// lives in _shared/agent-scheduled.ts and is unit-tested offline.
-import { requireEnv } from "../_shared/env.ts";
+// this function requires the AI-runtime bearer token (pg_cron sends it via
+// agent_scheduled_tick(), 20260716090000 — see _shared/agent-auth.ts). Prefers
+// AGENT_RUNNER_TOKEN, falls back to the service-role key. Selection + template
+// logic lives in _shared/agent-scheduled.ts and is unit-tested offline.
+import { isAuthorizedRunner } from "../_shared/agent-auth.ts";
 import { getAdminClient, type SupabaseClient } from "../_shared/supabaseAdmin.ts";
 import { errorResponse, jsonResponse } from "../_shared/errors.ts";
 import {
@@ -54,9 +55,9 @@ Deno.serve(async (req) => {
     return new Response("Method not allowed", { status: 405 });
   }
 
-  const serviceKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
-  const bearer = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
-  if (!bearer || bearer !== serviceKey) {
+  // AI-runtime bearer required. Prefers AGENT_RUNNER_TOKEN (the short dedicated
+  // shared token the cron sends), falls back to the service-role key.
+  if (!isAuthorizedRunner(req)) {
     return new Response("Unauthorized", { status: 401 });
   }
 
