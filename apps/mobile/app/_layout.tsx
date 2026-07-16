@@ -7,6 +7,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { SessionProvider } from "@/providers/session";
 import { ThemeProvider, useTheme } from "@/providers/theme";
+import { PushSync } from "@/components/PushSync";
 import {
   useFonts,
   BricolageGrotesque_700Bold,
@@ -76,6 +77,8 @@ function ThemedRoot() {
   return (
     <>
       <StatusBar style={resolved === "light" ? "dark" : "light"} />
+      {/* Headless: registers the Expo push token on login + routes taps. */}
+      <PushSync />
       <Stack
         screenOptions={{
           headerShown: false,

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import {
@@ -60,16 +60,27 @@ function NotificationsScreenContent() {
           title="Notifications"
           subtitle="Booking activity, payments, reviews, and messages."
           action={
-            hasUnread ? (
-              <Button
-                variant="secondary"
-                size="sm"
-                onPress={() => markAllRead.mutate()}
-                disabled={markAllRead.isPending}
+            <View className="flex-row items-center gap-2">
+              {hasUnread ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onPress={() => markAllRead.mutate()}
+                  disabled={markAllRead.isPending}
+                >
+                  Mark all read
+                </Button>
+              ) : null}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Notification settings"
+                hitSlop={8}
+                onPress={() => router.push("/notification-settings")}
+                className="h-9 w-9 items-center justify-center rounded-sm border border-border-subtle"
               >
-                Mark all read
-              </Button>
-            ) : undefined
+                <Icon name="settings" size={16} color="#A1A1AA" />
+              </Pressable>
+            </View>
           }
         />
 
