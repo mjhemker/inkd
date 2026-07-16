@@ -39,6 +39,14 @@ const STAT_DEFS: StatDef[] = [
 ];
 
 export default function DashboardScreen() {
+  return (
+    <ArtistOnly requireOnboarding>
+      <DashboardContent />
+    </ArtistOnly>
+  );
+}
+
+function DashboardContent() {
   const profileQ = useCurrentProfile();
   const artistQ = useCurrentArtistProfile();
   const artistId = artistQ.data?.id;
@@ -65,14 +73,6 @@ export default function DashboardScreen() {
   const displayName =
     profileQ.data?.display_name ?? profileQ.data?.handle ?? "your studio";
 
-  return (
-    <ArtistOnly requireOnboarding>
-      <DashboardContent />
-    </ArtistOnly>
-  );
-}
-
-function DashboardContent() {
   return (
     <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
       <ScrollView className="flex-1" contentContainerClassName="gap-6 px-6 py-8">

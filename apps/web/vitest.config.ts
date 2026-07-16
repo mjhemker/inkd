@@ -8,6 +8,9 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
-    include: ["src/**/*.test.{ts,tsx}"],
+    // Scoped to *.test.tsx (jsdom component tests) only. Pure *.test.ts files
+    // (e.g. discover/mapStyle) use Node's built-in runner via `node --test` and
+    // must not be picked up here.
+    include: ["src/**/*.test.tsx"],
   },
 });
