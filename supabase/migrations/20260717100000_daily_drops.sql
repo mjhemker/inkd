@@ -86,7 +86,7 @@ create policy daily_drops_update on public.daily_drops
 --    tags, so it works whether or not anyone tagged manually.
 -- ---------------------------------------------------------------------------
 create or replace function public.user_style_affinity(p_user_id uuid)
-returns table (style_slug text, weight real)
+returns table (style_slug text, weight real, top_source text)
 language sql
 stable
 security definer
@@ -96,7 +96,7 @@ as $$
   -- Artists the user follows -> their style slugs (AI tags on public images
   -- UNION artist_styles), each weighted 3.0.
   follow_styles as (
-    select slug, 3.0::real as w
+    select slug, 3.0::real as w, 'follow'::text as src
     from follows f
     join lateral (
       select st.slug
@@ -113,7 +113,7 @@ as $$
   ),
   -- Liked posts -> their style slugs (AI image tags UNION post_styles), 2.0.
   like_styles as (
-    select slug, 2.0::real as w
+    select slug, 2.0::real as w, 'like'::text as src
     from post_likes pl
     join lateral (
       select st.slug
@@ -130,7 +130,7 @@ as $$
   ),
   -- Saved posts -> their style slugs, 2.5 (the strongest per-item signal).
   save_styles as (
-    select slug, 2.5::real as w
+    select slug, 2.5::real as w, 'save'::text as src
     from saved_posts sp
     join lateral (
       select st.slug
@@ -147,7 +147,7 @@ as $$
   ),
   -- Booking history -> booked artists' style slugs, 2.0.
   booking_styles as (
-    select slug, 2.0::real as w
+    select slug, 2.0::real as w, 'booking'::text as src
     from bookings b
     join lateral (
       select st.slug
@@ -167,12 +167,25 @@ as $$
     union all select * from like_styles
     union all select * from save_styles
     union all select * from booking_styles
+  ),
+  totals as (
+    select slug, sum(w)::real as weight
+    from all_signals
+    where slug is not null
+    group by slug
+  ),
+  -- Per-slug dominant source = the source with the largest summed contribution.
+  ranked as (
+    select slug, src,
+           row_number() over (partition by slug order by sum(w) desc, src asc) as rn
+    from all_signals
+    where slug is not null
+    group by slug, src
   )
-  select slug as style_slug, sum(w)::real as weight
-  from all_signals
-  where slug is not null
-  group by slug
-  order by weight desc, slug asc;
+  select t.slug as style_slug, t.weight, r.src as top_source
+  from totals t
+  join ranked r on r.slug = t.slug and r.rn = 1
+  order by t.weight desc, t.slug asc;
 $$;
 
 grant execute on function public.user_style_affinity(uuid) to authenticated, service_role;
