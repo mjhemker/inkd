@@ -188,7 +188,13 @@ function SignWaiverBody() {
             This consent form is tied to your booking. Sign in with the same
             account you used to book, then come back to this link.
           </Text>
-          <Button onPress={() => router.push("/auth")}>Sign in</Button>
+          <Button
+            onPress={() =>
+              router.push(`/auth?next=/waivers/sign/${bookingId}` as never)
+            }
+          >
+            Sign in
+          </Button>
         </View>
       </SafeAreaView>
     );
