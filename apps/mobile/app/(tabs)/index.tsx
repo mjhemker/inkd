@@ -14,11 +14,13 @@ import {
 import {
   useFeedItems,
   useStyleFilters,
+  useTodayDrop,
   type FeedItem,
   type FeedScope,
 } from "@inkd/core";
 
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { DailyDropCard } from "@/components/daily-drop/DailyDropCard";
 import { FeedCard } from "@/components/feed/FeedCard";
 import { PostDetailSheet } from "@/components/feed/PostDetailSheet";
 import { StyleFilterRow } from "@/components/feed/StyleFilterRow";
@@ -36,6 +38,7 @@ export default function HomeScreen() {
 
   const { data: styleData } = useStyleFilters();
   const styles = styleData ?? [];
+  const { data: drop } = useTodayDrop();
 
   const {
     items,
@@ -67,6 +70,11 @@ export default function HomeScreen() {
         />
       </View>
       <StyleFilterRow styles={styles} selectedSlug={styleSlug} onSelect={setStyleSlug} />
+      {scope === "discover" && drop && (
+        <View className="px-6">
+          <DailyDropCard card={drop} variant="feed" />
+        </View>
+      )}
     </View>
   );
 
