@@ -188,7 +188,14 @@ as $$
   order by t.weight desc, t.slug asc;
 $$;
 
-grant execute on function public.user_style_affinity(uuid) to authenticated, service_role;
+-- Private per-user data (a taste profile derived from follows/likes/saves), and
+-- SECURITY DEFINER, so it must NOT be callable for an arbitrary user_id over
+-- PostgREST. Only the service-role `daily-drop` job calls it. Revoke the default
+-- PUBLIC execute (mirrors the notification/agent trigger-fn hardening).
+revoke execute on function public.user_style_affinity(uuid) from public;
+revoke execute on function public.user_style_affinity(uuid) from anon;
+revoke execute on function public.user_style_affinity(uuid) from authenticated;
+grant execute on function public.user_style_affinity(uuid) to service_role;
 
 -- ---------------------------------------------------------------------------
 -- 3. Guarded daily pg_cron tick. Wakes the `daily-drop` edge function (which
