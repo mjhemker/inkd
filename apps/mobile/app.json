@@ -5,10 +5,12 @@
     "scheme": "inkd",
     "version": "0.1.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "backgroundColor": "#0A0A0B",
+    "icon": "./assets/icon.png",
     "splash": {
+      "image": "./assets/splash.png",
       "backgroundColor": "#0A0A0B",
       "resizeMode": "contain"
     },
@@ -19,12 +21,14 @@
     "android": {
       "package": "co.getinkd.app",
       "adaptiveIcon": {
-        "backgroundColor": "#0A0A0B"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#7C3AED"
       }
     },
     "web": {
       "bundler": "metro",
-      "output": "static"
+      "output": "static",
+      "favicon": "./assets/favicon.png"
     },
     "plugins": ["expo-router"],
     "experiments": {

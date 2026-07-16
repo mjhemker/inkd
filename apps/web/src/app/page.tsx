@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Badge, Eyebrow, Icon, type IconName } from "@inkd/ui/web";
+import { Badge, Eyebrow, Icon, Logo, type IconName } from "@inkd/ui/web";
 import { LinkButton } from "@/components/link-button";
 
 export const metadata: Metadata = {
@@ -213,16 +213,7 @@ function SiteNav() {
   return (
     <header className="sticky top-0 z-40 border-b border-border-subtle bg-surface-base/85 backdrop-blur">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 md:px-8">
-        <span className="flex items-center gap-2.5">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-brand-on">
-            <span className="font-display text-lg font-extrabold leading-none">
-              I
-            </span>
-          </span>
-          <span className="font-display text-xl font-bold tracking-tight">
-            INKD
-          </span>
-        </span>
+        <Logo size={32} />
         <nav className="hidden items-center gap-7 text-sm text-content-secondary sm:flex">
           <Link href="/auth" className="transition-colors hover:text-content-primary">
             For artists
@@ -251,9 +242,7 @@ function SiteFooter() {
   return (
     <footer className="border-t border-border-subtle">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-5 py-10 md:flex-row md:items-center md:justify-between md:px-8">
-        <span className="font-display text-lg font-bold tracking-tight">
-          INKD
-        </span>
+        <Logo size={28} wordmarkClassName="text-lg" />
         <p className="font-mono text-xs uppercase tracking-[0.16em] text-content-muted">
           getinkd.co · Baltimore &amp; Philadelphia pilot · 2026
         </p>

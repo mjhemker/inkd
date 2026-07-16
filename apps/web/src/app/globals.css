@@ -6,8 +6,74 @@
    bg-surface-ember, text-content, bg-brand, font-display, font-mono, font-hand… */
 @config "../../tailwind.config.js";
 
+/* --- Theme layer -----------------------------------------------------------
+   Every semantic color is a CSS custom property (space-separated RGB channels
+   so `rgb(var(--x) / <alpha>)` keeps Tailwind opacity modifiers). `:root` is
+   the DEFAULT DARK gallery; `[data-theme="light"]` on <html> flips to the warm
+   paper-walled gallery. The inline no-flash script in app/layout.tsx sets the
+   attribute before first paint. Values mirror `themes` in @inkd/ui/tokens. */
 :root {
   color-scheme: dark;
+  --color-surface-base: 10 10 11;
+  --color-surface-raised: 17 17 19;
+  --color-surface-overlay: 26 26 29;
+  --color-surface-inverse: 250 250 250;
+  --color-surface-plate: 124 58 237;
+  --color-surface-plate-active: 109 40 217;
+  --color-surface-plate-ink: 46 16 101;
+  --color-surface-ember: 232 161 92;
+  --color-content-primary: 250 250 250;
+  --color-content-secondary: 161 161 170;
+  --color-content-muted: 113 113 122;
+  --color-content-inverse: 10 10 11;
+  --color-content-accent: 167 139 250;
+  --color-content-ember: 232 161 92;
+  --color-border-subtle: 26 26 29;
+  --color-border-default: 39 39 42;
+  --color-border-strong: 63 63 70;
+  --color-border-accent: 124 58 237;
+  --color-border-ember: 211 129 63;
+  --color-brand: 124 58 237;
+  --color-brand-hover: 139 92 246;
+  --color-brand-active: 109 40 217;
+  --color-brand-on: 250 250 250;
+  --color-brand-on-ember: 10 10 11;
+  --color-status-success: 34 197 94;
+  --color-status-warning: 245 158 11;
+  --color-status-danger: 239 68 68;
+  --color-status-info: 59 130 246;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --color-surface-base: 246 242 233;
+  --color-surface-raised: 252 250 244;
+  --color-surface-overlay: 255 255 255;
+  --color-surface-inverse: 28 25 23;
+  --color-surface-plate: 124 58 237;
+  --color-surface-plate-active: 109 40 217;
+  --color-surface-plate-ink: 237 233 254;
+  --color-surface-ember: 232 161 92;
+  --color-content-primary: 28 25 23;
+  --color-content-secondary: 81 75 68;
+  --color-content-muted: 107 98 87;
+  --color-content-inverse: 255 255 255;
+  --color-content-accent: 109 40 217;
+  --color-content-ember: 138 79 32;
+  --color-border-subtle: 230 223 208;
+  --color-border-default: 210 200 180;
+  --color-border-strong: 184 172 146;
+  --color-border-accent: 124 58 237;
+  --color-border-ember: 199 127 62;
+  --color-brand: 124 58 237;
+  --color-brand-hover: 109 40 217;
+  --color-brand-active: 91 33 182;
+  --color-brand-on: 255 255 255;
+  --color-brand-on-ember: 28 25 23;
+  --color-status-success: 21 128 61;
+  --color-status-warning: 180 83 9;
+  --color-status-danger: 220 38 38;
+  --color-status-info: 37 99 235;
 }
 
 html,
@@ -15,12 +81,12 @@ body {
   height: 100%;
 }
 
-/* Brand canvas defaults (near-black base / near-white text). Kept as literal
-   values so the shell renders correctly regardless of utility class order.
-   Font falls back to the system stack until next/font resolves --font-sans. */
+/* Brand canvas defaults. Theme-variable backed so a data-theme flip re-skins
+   the base surface without touching utility class order. Font falls back to the
+   system stack until next/font resolves --font-sans. */
 body {
-  background-color: #0a0a0b;
-  color: #fafafa;
+  background-color: rgb(var(--color-surface-base));
+  color: rgb(var(--color-content-primary));
   font-family:
     var(--font-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -28,10 +94,14 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Thin, high-contrast selection in brand violet. */
+/* Thin, high-contrast selection in brand violet (same accent in both themes). */
 ::selection {
   background-color: rgba(124, 58, 237, 0.35);
   color: #fafafa;
+}
+[data-theme="light"] ::selection {
+  background-color: rgba(124, 58, 237, 0.22);
+  color: #1c1917;
 }
 
 @media (prefers-reduced-motion: reduce) {

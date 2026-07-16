@@ -101,9 +101,29 @@ const info = {
 /**
  * Semantic tokens — reference the ramps above. These are what product code and
  * component libraries should consume so the palette can shift without touching
- * feature code. Values assume the default dark (near-black) theme.
+ * feature code.
+ *
+ * THEME LAYER (2026-07): there are now TWO semantic palettes — `themes.dark`
+ * (the default near-black gallery) and `themes.light` (a warm paper-walled
+ * gallery). On web/mobile these are emitted as CSS custom properties
+ * (see each app's globals.css) and the Tailwind preset reads the vars, so a
+ * single `[data-theme="light"]` / `.dark` flip re-skins everything. JS code
+ * that needs a concrete color per theme (e.g. the mobile tab bar, native icon
+ * glyph colors) should read `themes[scheme]` rather than `semantic` directly.
+ *
+ * `semantic` is kept as an alias of `themes.dark` so existing imports keep the
+ * dark values they always had. DEFAULT REMAINS DARK.
+ *
+ * Light-palette rationale: lean on the print-only `paper` ramp as the light
+ * SURFACE family (warm #F6F2E9 wall, white/near-white placard cards), near-black
+ * warm ink for text, the SAME violet-600 primary + ember accent so the brand
+ * carries across, and slightly heavier warm placard borders to keep the
+ * print-catalog feel. Violet/ember text roles darken (400→700 range) to hold
+ * WCAG AA on the light wall; artwork matting stays dark in the feature code
+ * (literal scrims), so tattoo photos still pop — a gallery with white walls,
+ * not an inverted app. Every key pair verified ≥ AA.
  */
-const semantic = {
+const darkSemantic = {
   surface: {
     base: neutral[950], // app canvas
     raised: neutral[900], // cards, sheets — solid raised ink
@@ -132,7 +152,7 @@ const semantic = {
   },
   brand: {
     primary: primary[600],
-    primaryHover: primary[500],
+    primaryHover: primary[500], // dark: hover lightens
     primaryActive: primary[700],
     onPrimary: neutral[50],
     onEmber: neutral[950], // dark ink on a solid ember plate
@@ -153,6 +173,56 @@ const semantic = {
     accent: paper.accent,
   },
 };
+
+// Light theme — warm paper-walled gallery. Surfaces come from the `paper`
+// family; violet-600 + ember stay the accents; text/accent roles darken for AA.
+const lightSemantic = {
+  surface: {
+    base: "#F6F2E9", // paper wall (paper.base)
+    raised: "#FCFAF4", // warm-white placard card, lifted off the wall
+    overlay: "#FFFFFF", // crisp white menus / popovers (top layer)
+    inverse: "#1C1917", // near-black inverse surface
+    plate: primary[600], // SAME solid violet plate
+    plateActive: primary[700], // pressed violet plate
+    plateInk: primary[100], // pale violet active-nav fill (#EDE9FE)
+    ember: ember[500], // SAME ember stamp plate
+  },
+  text: {
+    primary: "#1C1917", // warm near-black ink (paper.ink)
+    secondary: "#514B44", // warm slate
+    muted: "#6B6257", // paper.muted
+    inverse: "#FFFFFF",
+    accent: primary[700], // darker violet for AA on the light wall (#6D28D9)
+    ember: "#8A4F20", // darkened ember for AA text on paper
+  },
+  border: {
+    subtle: "#E6DFD0",
+    default: "#D2C8B4", // heavier warm placard hairline (print-catalog feel)
+    strong: "#B8AC92",
+    accent: primary[600],
+    ember: "#C77F3E",
+  },
+  brand: {
+    primary: primary[600], // SAME violet-600 primary
+    primaryHover: primary[700], // light: hover darkens (#6D28D9)
+    primaryActive: primary[800], // (#5B21B6)
+    onPrimary: "#FFFFFF",
+    onEmber: "#1C1917", // dark ink on the ember plate
+  },
+  status: {
+    success: success[700], // darkened for legibility on paper (#15803D)
+    warning: warning[700], // (#B45309)
+    danger: danger[600], // (#DC2626)
+    info: info[600], // (#2563EB)
+  },
+  paper: darkSemantic.paper, // print paper set is theme-independent
+};
+
+/** The two on-screen themes. DEFAULT (and `semantic`) is dark. */
+const themes = { dark: darkSemantic, light: lightSemantic };
+
+// Back-compat: existing `tokens.colors.semantic` consumers keep dark values.
+const semantic = darkSemantic;
 
 // --- Spacing (4px base grid) -------------------------------------------------
 const spacing = {
@@ -314,6 +384,8 @@ const tokens = {
     info,
     paper,
     semantic,
+    // Both on-screen themes (semantic === themes.dark). Read per-scheme in JS.
+    themes,
   },
   spacing,
   radii,

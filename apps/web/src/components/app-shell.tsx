@@ -3,13 +3,15 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Avatar, Icon, buttonVariants, cx } from "@inkd/ui/web";
+import { Avatar, Icon, Logo, LogoMark, buttonVariants, cx } from "@inkd/ui/web";
 import { useCurrentProfile } from "@inkd/core/hooks";
 import {
-  artistNav,
+  bottomNavFor,
   isActivePath,
-  primaryNav,
+  primaryNavFor,
+  studioNav,
   type NavItem,
+  type ViewerRole,
 } from "@/lib/nav";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 
@@ -27,6 +29,11 @@ export interface ShellIdentity {
  * and an account footer. Small screens: a top bar + a 5-slot bottom tab bar.
  * The chrome is near-black and recessive so artwork stays the hero; violet marks
  * only the active surface.
+ *
+ * Role + identity come from the signed-in profile so nothing leaks another
+ * user's data: artists keep Bookings in the Studio group, clients get Bookings
+ * in their main nav and no Studio group, and the footer shows the real account.
+ * Overrides exist purely for the unauthenticated dev harness.
  */
 export function AppShell({
   children,
@@ -49,11 +56,9 @@ export function AppShell({
   const pathname = usePathname();
   const active = currentPath ?? pathname;
 
-  // Role + identity come from the signed-in profile so nothing leaks another
-  // user's data. The Studio group only renders for artists; the footer shows the
-  // real account. Overrides exist purely for the unauthenticated dev harness.
   const { data: profile } = useCurrentProfile();
   const isArtist = forceArtistNav ?? Boolean(profile?.is_artist);
+  const role: ViewerRole = isArtist ? "artist" : "client";
   const identity: ShellIdentity = identityOverride ?? {
     name: profile?.display_name || profile?.handle || "Your account",
     handle: profile?.handle ?? null,
@@ -62,7 +67,7 @@ export function AppShell({
 
   return (
     <div className="min-h-dvh bg-surface-base text-content-primary">
-      <Sidebar active={active} isArtist={isArtist} identity={identity} />
+      <Sidebar active={active} role={role} identity={identity} />
 
       <div className="md:pl-64">
         <TopBar title={title} action={action} />
@@ -71,7 +76,7 @@ export function AppShell({
         </main>
       </div>
 
-      <BottomTabs active={active} />
+      <BottomTabs active={active} role={role} />
     </div>
   );
 }
@@ -80,32 +85,24 @@ function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <Link
       href="/feed"
-      className="group inline-flex items-center gap-2.5 outline-none"
+      className="group inline-flex items-center outline-none"
       aria-label="INKD home"
     >
-      <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-brand-on">
-        <span className="font-display text-lg font-extrabold leading-none">
-          I
-        </span>
-      </span>
-      {!compact && (
-        <span className="font-display text-xl font-bold tracking-tight text-content-primary">
-          INKD
-        </span>
-      )}
+      {compact ? <LogoMark size={32} /> : <Logo size={32} />}
     </Link>
   );
 }
 
 function Sidebar({
   active,
-  isArtist,
+  role,
   identity,
 }: {
   active: string;
-  isArtist: boolean;
+  role: ViewerRole;
   identity: ShellIdentity;
 }) {
+  const isArtist = role === "artist";
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-border-subtle bg-surface-base md:flex">
       <div className="flex h-16 items-center px-5">
@@ -114,7 +111,7 @@ function Sidebar({
 
       <nav className="flex-1 overflow-y-auto px-3 py-2">
         <ul className="flex flex-col gap-0.5">
-          {primaryNav.map((item) => (
+          {primaryNavFor(role).map((item) => (
             <SidebarLink key={item.href} item={item} active={active} />
           ))}
         </ul>
@@ -125,7 +122,7 @@ function Sidebar({
               Studio
             </p>
             <ul className="flex flex-col gap-0.5">
-              {artistNav.map((item) => (
+              {studioNav.map((item) => (
                 <SidebarLink key={item.href} item={item} active={active} />
               ))}
             </ul>
@@ -229,12 +226,12 @@ function TopBar({ title, action }: { title?: string; action?: ReactNode }) {
   );
 }
 
-function BottomTabs({ active }: { active: string }) {
+function BottomTabs({ active, role }: { active: string; role: ViewerRole }) {
   const [pressed, setPressed] = useState<string | null>(null);
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border-subtle bg-surface-base/95 backdrop-blur md:hidden">
       <ul className="mx-auto flex max-w-lg items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)] pt-1.5">
-        {primaryNav.map((item) => {
+        {bottomNavFor(role).map((item) => {
           const isActive = isActivePath(active, item.href);
           return (
             <li key={item.href} className="flex-1">

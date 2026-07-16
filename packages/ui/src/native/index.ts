@@ -61,6 +61,7 @@ export { EmptyState, type EmptyStateProps } from "./EmptyState";
 export { FormField, type FormFieldProps } from "./FormField";
 
 export { Input, type InputProps, type InputSize } from "./Input";
+export { Logo, LogoMark, type LogoProps, type LogoMarkProps } from "./Logo";
 
 export { TextArea, type TextAreaProps } from "./TextArea";
 

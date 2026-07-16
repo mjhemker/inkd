@@ -10,6 +10,9 @@ module.exports = {
     "../../packages/ui/src/native/**/*.{ts,tsx}",
   ],
   presets: [nativewindPreset, inkdPreset],
+  // Theme flip is class-based: the ThemeProvider toggles the `dark` scheme
+  // (default) so semantic CSS vars in global.css re-skin the app for light mode.
+  darkMode: "class",
   theme: {
     extend: {
       // React Native registers each weight as its own family (see app/_layout.tsx),

@@ -8,7 +8,10 @@ export interface StyleFilterRowProps {
   onSelect: (slug: string | null) => void;
 }
 
-/** Horizontal style-chip filter row: an "All" chip clears the filter. */
+/**
+ * Horizontal style-chip filter row. The explicit first "All styles" chip clears
+ * the filter and shows its selected (active) state whenever no style is chosen.
+ */
 export function StyleFilterRow({ styles, selectedSlug, onSelect }: StyleFilterRowProps) {
   return (
     <ScrollView
@@ -17,7 +20,7 @@ export function StyleFilterRow({ styles, selectedSlug, onSelect }: StyleFilterRo
       contentContainerClassName="flex-row gap-2 px-6"
     >
       <Chip selected={selectedSlug === null} onPress={() => onSelect(null)}>
-        All
+        All styles
       </Chip>
       {styles.map((style) => (
         <Chip

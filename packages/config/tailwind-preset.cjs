@@ -7,6 +7,16 @@
  *
  * Uses Tailwind v3 config shape, which both the web `@config` compat layer and
  * NativeWind v4 understand.
+ *
+ * THEME LAYER (2026-07): every *semantic* color (surface/content/border/brand)
+ * resolves through a CSS custom property instead of a baked hex, so a single
+ * `[data-theme]` (web) / `.dark:root` (mobile) flip re-skins the whole app for
+ * light mode. Values are stored as space-separated RGB channels
+ * (`--color-x: 124 58 237`) and read back with `rgb(var(--x) / <alpha-value>)`
+ * so Tailwind opacity modifiers (`bg-surface-base/85`) still work. The raw
+ * ramps (primary/ember/neutral/status/paper) stay literal — they're the same
+ * pigment in both themes; only their semantic *roles* move. Channel defaults
+ * (dark) + light overrides live in each app's globals/global.css.
  */
 const tokens = require("@inkd/ui/tokens");
 
@@ -20,6 +30,9 @@ const {
   fontFamily,
   boxShadow,
 } = tokens;
+
+/** `rgb(var(--color-x) / <alpha-value>)` — keeps Tailwind opacity modifiers. */
+const v = (name) => `rgb(var(--color-${name}) / <alpha-value>)`;
 
 /** @type {import("tailwindcss").Config} */
 module.exports = {
@@ -35,41 +48,42 @@ module.exports = {
         info: colors.info,
         // Print-only paper palette (waiver export). Never used on-screen.
         paper: colors.paper,
-        // Semantic aliases — prefer these in product code.
+        // Semantic aliases — prefer these in product code. Theme-variable
+        // backed (see header): one `[data-theme]` / `.dark` flip re-skins all.
         surface: {
-          DEFAULT: colors.semantic.surface.base,
-          base: colors.semantic.surface.base,
-          raised: colors.semantic.surface.raised,
-          overlay: colors.semantic.surface.overlay,
-          inverse: colors.semantic.surface.inverse,
+          DEFAULT: v("surface-base"),
+          base: v("surface-base"),
+          raised: v("surface-raised"),
+          overlay: v("surface-overlay"),
+          inverse: v("surface-inverse"),
           // Solid accent plates (replace old low-opacity brand tints).
-          plate: colors.semantic.surface.plate,
-          "plate-active": colors.semantic.surface.plateActive,
-          "plate-ink": colors.semantic.surface.plateInk,
-          ember: colors.semantic.surface.ember,
+          plate: v("surface-plate"),
+          "plate-active": v("surface-plate-active"),
+          "plate-ink": v("surface-plate-ink"),
+          ember: v("surface-ember"),
         },
         content: {
-          DEFAULT: colors.semantic.text.primary,
-          primary: colors.semantic.text.primary,
-          secondary: colors.semantic.text.secondary,
-          muted: colors.semantic.text.muted,
-          inverse: colors.semantic.text.inverse,
-          accent: colors.semantic.text.accent,
-          ember: colors.semantic.text.ember,
+          DEFAULT: v("content-primary"),
+          primary: v("content-primary"),
+          secondary: v("content-secondary"),
+          muted: v("content-muted"),
+          inverse: v("content-inverse"),
+          accent: v("content-accent"),
+          ember: v("content-ember"),
         },
         border: {
-          DEFAULT: colors.semantic.border.default,
-          subtle: colors.semantic.border.subtle,
-          strong: colors.semantic.border.strong,
-          accent: colors.semantic.border.accent,
-          ember: colors.semantic.border.ember,
+          DEFAULT: v("border-default"),
+          subtle: v("border-subtle"),
+          strong: v("border-strong"),
+          accent: v("border-accent"),
+          ember: v("border-ember"),
         },
         brand: {
-          DEFAULT: colors.semantic.brand.primary,
-          hover: colors.semantic.brand.primaryHover,
-          active: colors.semantic.brand.primaryActive,
-          on: colors.semantic.brand.onPrimary,
-          "on-ember": colors.semantic.brand.onEmber,
+          DEFAULT: v("brand"),
+          hover: v("brand-hover"),
+          active: v("brand-active"),
+          on: v("brand-on"),
+          "on-ember": v("brand-on-ember"),
         },
       },
       spacing,

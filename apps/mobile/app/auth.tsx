@@ -31,6 +31,7 @@ import {
   FormField,
   Icon,
   Input,
+  LogoMark,
   Tabs,
   ToastProvider,
   useToast,
@@ -144,11 +145,7 @@ function AuthForm() {
           keyboardShouldPersistTaps="handled"
         >
           <View className="items-center gap-3">
-            <View className="h-12 w-12 items-center justify-center rounded-2xl bg-brand">
-              <Text className="font-display text-xl font-extrabold text-brand-on">
-                I
-              </Text>
-            </View>
+            <LogoMark size={48} />
             <Eyebrow>Baltimore &middot; Philadelphia</Eyebrow>
             <Text className="text-center font-display text-3xl text-content-primary">
               Welcome to INKD
