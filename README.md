@@ -76,6 +76,9 @@ Supabase dashboard and keep it out of git.
   model, phases, AI agent architecture).
 - [`docs/TESTING.md`](docs/TESTING.md) — pilot test script: demo personas +
   password, per-platform walkthroughs, deploy checklist, gates.
+- [`docs/deployment.md`](docs/deployment.md) — Vercel setup for getinkd.co:
+  monorepo build config, env vars, custom domain, and `/` vs. `/preview`
+  routing behavior.
 - [`docs/agents-runtime.md`](docs/agents-runtime.md) — AI staff runtime, policy
   engine, tiers, and the scheduled-jobs lane.
 - [`docs/payments.md`](docs/payments.md) — Stripe Connect deposits + fee ledger.

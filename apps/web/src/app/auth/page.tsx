@@ -3,7 +3,7 @@
 /**
  * Auth screen: email+password sign-in and sign-up plus a passwordless
  * magic-link option, styled to match the INKD dark gallery aesthetic
- * (see `app/page.tsx` and `dev/ui`). All logic — zod validation via the
+ * (see `app/preview/page.tsx` and `dev/ui`). All logic — zod validation via the
  * shared core auth helpers, magic link, `?next=` redirect, error states —
  * is unchanged from the functional pass; this is a reskin.
  *
@@ -55,11 +55,11 @@ function AuthShell() {
 
       <header className="border-b border-border-subtle">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 md:px-8">
-          <Link href="/" className="flex items-center" aria-label="INKD home">
+          <Link href="/preview" className="flex items-center" aria-label="INKD marketing site">
             <Logo size={32} />
           </Link>
           <Link
-            href="/"
+            href="/preview"
             className="text-sm text-content-secondary transition-colors hover:text-content-primary"
           >
             Back to site

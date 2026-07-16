@@ -15,10 +15,12 @@ import type { Database } from "../types/database";
 import type { InkdSupabaseClient } from "../supabase/client";
 
 /** Route prefixes that require an authenticated session (SPEC §3/§4 surfaces).
- * Public-by-design surfaces stay OUT of this list: `/` (marketing), `/auth`,
- * `/try-on` (deep-linkable fit check), `/a/[handle]` (public artist profile),
- * and the discovery surfaces `/feed` + `/discover`. Everything that reads or
- * writes the signed-in user's own data is gated here. */
+ * Public-by-design surfaces stay OUT of this list: `/` (role-aware entry that
+ * redirects to `/preview` when signed out, or the caller's home when signed
+ * in — see apps/web/src/app/page.tsx), `/preview` (marketing landing),
+ * `/auth`, `/try-on` (deep-linkable fit check), `/a/[handle]` (public artist
+ * profile), and the discovery surfaces `/feed` + `/discover`. Everything that
+ * reads or writes the signed-in user's own data is gated here. */
 export const PROTECTED_ROUTE_PREFIXES = [
   "/dashboard",
   "/bookings",
