@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Avatar, Badge, Card, Eyebrow, Icon, Logo } from "@inkd/ui/web";
-import { shopModeLabel, shopRoleLabel } from "@inkd/core";
+import { shopModeLabel, shopRoleLabel } from "@inkd/core/domain";
 import { classificationLabel } from "@/lib/format";
 import type { PublicShopData } from "../data";
 

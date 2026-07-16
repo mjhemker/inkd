@@ -35,6 +35,10 @@
       "types": "./src/api/index.ts",
       "default": "./src/api/index.ts"
     },
+    "./domain": {
+      "types": "./src/domain/index.ts",
+      "default": "./src/domain/index.ts"
+    },
     "./hooks": {
       "types": "./src/hooks/index.ts",
       "default": "./src/hooks/index.ts"
