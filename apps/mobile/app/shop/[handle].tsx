@@ -18,8 +18,10 @@ import {
 } from "@inkd/core";
 
 import { classificationLabel } from "@/lib/format";
+import { useTheme } from "@/providers/theme";
 
 export default function ShopProfileScreen() {
+  const { colors } = useTheme();
   const { handle } = useLocalSearchParams<{ handle: string }>();
   const { data: shop, isLoading } = useShopByHandle(handle);
   const { data: members } = useActiveShopMembers(shop?.id);
@@ -44,7 +46,7 @@ export default function ShopProfileScreen() {
           onPress={() => router.back()}
           className="h-9 w-9 items-center justify-center rounded-full active:bg-surface-overlay"
         >
-          <Icon name="chevron-left" size={20} color="#FAFAFA" />
+          <Icon name="chevron-left" size={20} color={colors.text.primary} />
         </Pressable>
         <Text className="font-mono text-xs uppercase tracking-[0.18em] text-content-muted">
           {handle ? `@${handle}` : "Shop"}
@@ -59,7 +61,7 @@ export default function ShopProfileScreen() {
         </View>
       ) : !shop ? (
         <View className="flex-1 items-center justify-center gap-2 px-6">
-          <Icon name="layout-grid" size={28} color="#71717A" />
+          <Icon name="layout-grid" size={28} color={colors.text.muted} />
           <Text className="font-display text-lg text-content-primary">Shop not found</Text>
           <Text className="text-center text-sm text-content-muted">
             This shop isn&apos;t published yet, or the handle is wrong.
@@ -116,7 +118,7 @@ export default function ShopProfileScreen() {
             </View>
             {roster.length === 0 ? (
               <Card padding="lg" className="items-center gap-2">
-                <Icon name="user" size={22} color="#71717A" />
+                <Icon name="user" size={22} color={colors.text.muted} />
                 <Text className="text-center text-sm text-content-muted">
                   This shop hasn&apos;t added any artists to its roster yet.
                 </Text>
@@ -137,7 +139,7 @@ export default function ShopProfileScreen() {
                 {publicLocations.map((location) => (
                   <Card key={location.id} padding="md" className="gap-1">
                     <View className="flex-row items-center gap-2">
-                      <Icon name="map-pin" size={15} color="#A78BFA" />
+                      <Icon name="map-pin" size={15} color={colors.text.accent} />
                       <Text className="text-sm font-semibold text-content-primary">
                         {location.name || "Studio"}
                       </Text>
@@ -159,6 +161,7 @@ export default function ShopProfileScreen() {
 }
 
 function MemberCard({ member }: { member: ShopRosterMember }) {
+  const { colors } = useTheme();
   const profile = member.artist?.profile;
   const name = profile?.display_name || (profile?.handle ? `@${profile.handle}` : "Artist");
 
@@ -177,7 +180,7 @@ function MemberCard({ member }: { member: ShopRosterMember }) {
             <Text className="font-mono text-xs text-content-muted">@{profile.handle}</Text>
           )}
         </View>
-        <Icon name="chevron-right" size={16} color="#71717A" />
+        <Icon name="chevron-right" size={16} color={colors.text.muted} />
       </View>
       <View className="flex-row flex-wrap gap-1.5">
         <Badge variant="neutral" size="sm">

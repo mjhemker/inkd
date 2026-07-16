@@ -12,10 +12,9 @@ import {
 
 import { ArtworkPlaceholder } from "../feed/ArtworkPlaceholder";
 import { formatPrice, placardLine } from "../feed/format";
+import { useTheme } from "@/providers/theme";
 
-const ICON_MUTED = "#71717A";
 const ICON_ACTIVE = "#7C3AED";
-const ICON_INK = "#FAFAFA";
 
 export interface DailyDropCardProps {
   card: DailyDropCardData;
@@ -34,6 +33,7 @@ export interface DailyDropCardProps {
  * artist link is opened.
  */
 export function DailyDropCard({ card, variant = "feed", signedIn = true }: DailyDropCardProps) {
+  const { colors } = useTheme();
   const router = useRouter();
   const markSeen = useMarkDropSeen();
   const markClicked = useMarkDropClicked();
@@ -75,7 +75,7 @@ export function DailyDropCard({ card, variant = "feed", signedIn = true }: Daily
       className="overflow-hidden border border-border-accent"
     >
       <View className="flex-row items-center gap-1.5 border-b border-border-subtle bg-surface-ember px-3 py-2">
-        <Icon name="sparkles" size={12} color={ICON_INK} />
+        <Icon name="sparkles" size={12} color="#FAFAFA" />
         <Text className="font-mono text-[10px] font-semibold uppercase tracking-widest text-brand-on-ember">
           Today&apos;s Drop
         </Text>
@@ -181,7 +181,7 @@ export function DailyDropCard({ card, variant = "feed", signedIn = true }: Daily
                   <Feather
                     name="heart"
                     size={16}
-                    color={card.post.likedByViewer ? ICON_ACTIVE : ICON_MUTED}
+                    color={card.post.likedByViewer ? ICON_ACTIVE : colors.text.muted}
                   />
                 </Pressable>
                 <Pressable
@@ -206,7 +206,7 @@ export function DailyDropCard({ card, variant = "feed", signedIn = true }: Daily
                   <Feather
                     name="bookmark"
                     size={16}
-                    color={card.post.savedByViewer ? ICON_ACTIVE : ICON_MUTED}
+                    color={card.post.savedByViewer ? ICON_ACTIVE : colors.text.muted}
                   />
                 </Pressable>
               </>

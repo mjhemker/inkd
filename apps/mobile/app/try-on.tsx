@@ -18,6 +18,8 @@ import * as ImagePicker from "expo-image-picker";
 import * as Sharing from "expo-sharing";
 import { captureRef } from "react-native-view-shot";
 import { Button, Eyebrow, Icon, Slider, Toggle } from "@inkd/ui/native";
+import type { SemanticColors } from "@inkd/ui/tokens";
+import { useTheme } from "@/providers/theme";
 import {
   DEFAULT_TRYON_TRANSFORM,
   TRYON_DISCLAIMER,
@@ -31,12 +33,15 @@ import {
   type WarpStrip,
 } from "@inkd/core";
 
-const SURFACE_BASE = "#0A0A0B";
-const SURFACE_RAISED = "#111113";
-const BORDER = "#1A1A1D";
-const CONTENT_MUTED = "#71717A";
-const EMBER = "#F0662E";
-const INK = "#FAFAFA";
+// Canvas (photo work) stays intentionally DARK in both themes so tattoo photos
+// pop against a neutral stage — the editor stage, the exported placard/before
+// tag, and the empty-state overlay all sit on this dark surface. The screen
+// CHROME (top bar, pickers, controls, disclaimer) is theme-aware — see makeStyles.
+const SURFACE_RAISED = "#111113"; // dark stage fill (canvas)
+const BORDER = "#1A1A1D"; // dark stage frame (canvas)
+const CONTENT_MUTED = "#71717A"; // muted text ON the dark stage
+const EMBER = "#F0662E"; // ember accent — intentional in both themes
+const INK = "#FAFAFA"; // ink text ON the dark stage / composite
 
 /** Local, on-device gesture transform (px offsets; scale/rotation absolute). */
 interface Xf {
@@ -96,6 +101,8 @@ export default function TryOnScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams<{ design?: string }>();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [bodyUri, setBodyUri] = useState<string | null>(null);
   const [designUri, setDesignUri] = useState<string | null>(
@@ -293,7 +300,7 @@ export default function TryOnScreen() {
       {/* Top bar */}
       <View style={styles.topbar}>
         <Pressable onPress={onBack} accessibilityLabel="Back" hitSlop={10}>
-          <Icon name="chevron-left" size={24} color={INK} />
+          <Icon name="chevron-left" size={24} color={colors.text.primary} />
         </Pressable>
         <Text style={styles.topTitle}>{TRYON_TITLE}</Text>
         <View style={{ width: 24 }} />
@@ -304,7 +311,7 @@ export default function TryOnScreen() {
           <Eyebrow>INKD · placement preview</Eyebrow>
           <Text style={styles.tagline}>{TRYON_TAGLINE}</Text>
           <View style={styles.localRow}>
-            <Icon name="shield" size={13} color={CONTENT_MUTED} />
+            <Icon name="shield" size={13} color={colors.text.muted} />
             <Text style={styles.localNote}>{TRYON_LOCAL_ONLY_MOBILE}</Text>
           </View>
         </View>
@@ -374,12 +381,16 @@ export default function TryOnScreen() {
             icon="user"
             filled={bodyUri != null}
             onPress={() => void pick("body")}
+            styles={styles}
+            colors={colors}
           />
           <PickTile
             label={designUri ? "Change design" : "Design"}
             icon="sparkles"
             filled={designUri != null}
             onPress={() => void pick("design")}
+            styles={styles}
+            colors={colors}
           />
         </View>
 
@@ -451,7 +462,7 @@ export default function TryOnScreen() {
 
         {/* Honesty rail */}
         <View style={styles.disclaimer}>
-          <Icon name="shield" size={15} color={CONTENT_MUTED} />
+          <Icon name="shield" size={15} color={colors.text.muted} />
           <Text style={styles.disclaimerText}>{TRYON_DISCLAIMER}</Text>
         </View>
       </ScrollView>
@@ -464,15 +475,19 @@ function PickTile({
   icon,
   filled,
   onPress,
+  styles,
+  colors,
 }: {
   label: string;
   icon: "user" | "sparkles";
   filled: boolean;
   onPress: () => void;
+  styles: ReturnType<typeof makeStyles>;
+  colors: SemanticColors;
 }) {
   return (
     <Pressable onPress={onPress} style={[styles.pickTile, filled && styles.pickTileFilled]}>
-      <Icon name={icon} size={18} color={filled ? EMBER : INK} />
+      <Icon name={icon} size={18} color={filled ? EMBER : colors.text.primary} />
       <Text style={styles.pickTileLabel}>{label}</Text>
     </Pressable>
   );
@@ -538,86 +553,93 @@ function WrapStripView({
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: SURFACE_BASE },
-  topbar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: BORDER,
-  },
-  topTitle: { color: INK, fontSize: 16, fontWeight: "700" },
-  introWrap: { paddingHorizontal: 16, paddingTop: 16, gap: 6 },
-  tagline: { color: EMBER, fontSize: 20, fontFamily: "Caveat_700Bold", lineHeight: 24 },
-  localRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
-  localNote: { color: CONTENT_MUTED, fontSize: 12 },
-  stageOuter: { paddingHorizontal: 16, paddingTop: 14 },
-  stage: {
-    width: "100%",
-    aspectRatio: 4 / 5,
-    borderRadius: 4,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: SURFACE_RAISED,
-  },
-  designImage: { width: "100%", height: "100%" },
-  stageEmpty: { flex: 1, alignItems: "center", justifyContent: "center", gap: 6, padding: 20 },
-  stageEmptyTitle: { color: INK, fontSize: 16, fontWeight: "700", marginTop: 4 },
-  stageEmptyText: { color: CONTENT_MUTED, fontSize: 13, textAlign: "center" },
-  placard: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(10,10,11,0.86)",
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-  },
-  placardEmber: { position: "absolute", top: 0, left: 0, right: 0, height: 2, backgroundColor: EMBER },
-  placardText: { color: INK, fontSize: 10, fontFamily: "JetBrainsMono_500Medium", letterSpacing: 0.3 },
-  beforeTag: {
-    position: "absolute",
-    top: 10,
-    left: 10,
-    backgroundColor: "rgba(10,10,11,0.7)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 3,
-  },
-  beforeTagText: { color: INK, fontSize: 10, fontFamily: "JetBrainsMono_500Medium", letterSpacing: 1 },
-  pickRow: { flexDirection: "row", gap: 12, paddingHorizontal: 16, paddingTop: 14 },
-  pickTile: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: SURFACE_RAISED,
-  },
-  pickTileFilled: { borderColor: EMBER },
-  pickTileLabel: { color: INK, fontSize: 13, fontWeight: "600" },
-  controls: { paddingHorizontal: 16, paddingTop: 18, gap: 16 },
-  hint: { color: CONTENT_MUTED, fontSize: 12, lineHeight: 17 },
-  actionRow: { flexDirection: "row", gap: 12, paddingHorizontal: 16, paddingTop: 18 },
-  errNote: { color: "#F87171", fontSize: 13, paddingHorizontal: 16, paddingTop: 12 },
-  disclaimer: {
-    flexDirection: "row",
-    gap: 8,
-    marginHorizontal: 16,
-    marginTop: 18,
-    padding: 12,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: SURFACE_RAISED,
-  },
-  disclaimerText: { color: "#A1A1AA", fontSize: 12, lineHeight: 17, flex: 1 },
-});
+// Chrome styles resolve per-theme (colors.*); canvas styles stay dark constants
+// (SURFACE_RAISED / BORDER / INK / CONTENT_MUTED) so the photo stage and the
+// exported composite look identical in both themes.
+function makeStyles(colors: SemanticColors) {
+  return StyleSheet.create({
+    root: { flex: 1, backgroundColor: colors.surface.base },
+    topbar: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border.subtle,
+    },
+    topTitle: { color: colors.text.primary, fontSize: 16, fontWeight: "700" },
+    introWrap: { paddingHorizontal: 16, paddingTop: 16, gap: 6 },
+    tagline: { color: EMBER, fontSize: 20, fontFamily: "Caveat_700Bold", lineHeight: 24 },
+    localRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
+    localNote: { color: colors.text.muted, fontSize: 12 },
+    stageOuter: { paddingHorizontal: 16, paddingTop: 14 },
+    // --- canvas (intentionally dark in both themes) ---
+    stage: {
+      width: "100%",
+      aspectRatio: 4 / 5,
+      borderRadius: 4,
+      overflow: "hidden",
+      borderWidth: 1,
+      borderColor: BORDER,
+      backgroundColor: SURFACE_RAISED,
+    },
+    designImage: { width: "100%", height: "100%" },
+    stageEmpty: { flex: 1, alignItems: "center", justifyContent: "center", gap: 6, padding: 20 },
+    stageEmptyTitle: { color: INK, fontSize: 16, fontWeight: "700", marginTop: 4 },
+    stageEmptyText: { color: CONTENT_MUTED, fontSize: 13, textAlign: "center" },
+    placard: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: "rgba(10,10,11,0.86)",
+      paddingVertical: 8,
+      paddingHorizontal: 10,
+    },
+    placardEmber: { position: "absolute", top: 0, left: 0, right: 0, height: 2, backgroundColor: EMBER },
+    placardText: { color: INK, fontSize: 10, fontFamily: "JetBrainsMono_500Medium", letterSpacing: 0.3 },
+    beforeTag: {
+      position: "absolute",
+      top: 10,
+      left: 10,
+      backgroundColor: "rgba(10,10,11,0.7)",
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 3,
+    },
+    beforeTagText: { color: INK, fontSize: 10, fontFamily: "JetBrainsMono_500Medium", letterSpacing: 1 },
+    // --- chrome (theme-aware) ---
+    pickRow: { flexDirection: "row", gap: 12, paddingHorizontal: 16, paddingTop: 14 },
+    pickTile: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      paddingVertical: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border.subtle,
+      backgroundColor: colors.surface.raised,
+    },
+    pickTileFilled: { borderColor: EMBER },
+    pickTileLabel: { color: colors.text.primary, fontSize: 13, fontWeight: "600" },
+    controls: { paddingHorizontal: 16, paddingTop: 18, gap: 16 },
+    hint: { color: colors.text.muted, fontSize: 12, lineHeight: 17 },
+    actionRow: { flexDirection: "row", gap: 12, paddingHorizontal: 16, paddingTop: 18 },
+    errNote: { color: "#F87171", fontSize: 13, paddingHorizontal: 16, paddingTop: 12 },
+    disclaimer: {
+      flexDirection: "row",
+      gap: 8,
+      marginHorizontal: 16,
+      marginTop: 18,
+      padding: 12,
+      borderRadius: 4,
+      borderWidth: 1,
+      borderColor: colors.border.subtle,
+      backgroundColor: colors.surface.raised,
+    },
+    disclaimerText: { color: colors.text.secondary, fontSize: 12, lineHeight: 17, flex: 1 },
+  });
+}

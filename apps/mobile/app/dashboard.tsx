@@ -25,6 +25,7 @@ import { ArtistOnly } from "@/components/ArtistOnly";
 import { StatusBadge, formatTime } from "@/components/bookings/shared";
 import { formatMoney } from "@/components/artist/money";
 import { AUTONOMY_LABEL } from "@/lib/aiStaff";
+import { useTheme } from "@/providers/theme";
 
 interface StatDef {
   label: string;
@@ -47,6 +48,7 @@ export default function DashboardScreen() {
 }
 
 function DashboardContent() {
+  const { colors } = useTheme();
   const profileQ = useCurrentProfile();
   const artistQ = useCurrentArtistProfile();
   const artistId = artistQ.data?.id;
@@ -92,7 +94,7 @@ function DashboardContent() {
                 className="min-w-[45%] flex-1 gap-3"
               >
                 <View className="h-9 w-9 items-center justify-center rounded-lg bg-surface-overlay">
-                  <Icon name={stat.icon} size={18} color="#A78BFA" />
+                  <Icon name={stat.icon} size={18} color={colors.text.accent} />
                 </View>
                 {statsLoading ? (
                   <Skeleton className="h-7 w-16 rounded-sm" />
@@ -123,6 +125,7 @@ function DashboardContent() {
 /** "Today" panel: the artist's sessions scheduled for the current calendar
  * day, or the reassuring empty state when there are none. */
 function TodayPanel({ artistId }: { artistId: string | undefined }) {
+  const { colors } = useTheme();
   const settingsQ = useAgentSettings(artistId ?? "");
   const autonomy = settingsQ.data?.autonomy ?? "draft_only";
 
@@ -153,7 +156,7 @@ function TodayPanel({ artistId }: { artistId: string | undefined }) {
       ) : sessions.length === 0 ? (
         <EmptyState
           className="py-10"
-          icon={<Icon name="calendar" size={28} color="#71717A" />}
+          icon={<Icon name="calendar" size={28} color={colors.text.muted} />}
           title="No sessions scheduled today"
           description="When bookings come in, your day board — with holds, deposits and session notes — shows up right here."
           action={

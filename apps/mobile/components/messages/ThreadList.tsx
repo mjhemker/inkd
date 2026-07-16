@@ -9,8 +9,10 @@ import {
 import { formatThreadTimestamp } from "@inkd/core/utils";
 import type { ThreadSummary } from "@inkd/core/api";
 import { useMemo, useState } from "react";
+import { useTheme } from "@/providers/theme";
 
 export function ThreadList() {
+  const { colors } = useTheme();
   const router = useRouter();
   const [query, setQuery] = useState("");
 
@@ -38,7 +40,7 @@ export function ThreadList() {
           placeholder="Search conversations"
           value={query}
           onChangeText={setQuery}
-          leadingIcon={<Icon name="search" size={16} color="#71717A" />}
+          leadingIcon={<Icon name="search" size={16} color={colors.text.muted} />}
         />
       </View>
 
@@ -49,7 +51,7 @@ export function ThreadList() {
       ) : filtered.length === 0 ? (
         <EmptyState
           className="px-6"
-          icon={<Icon name="message-circle" size={28} color="#71717A" />}
+          icon={<Icon name="message-circle" size={28} color={colors.text.muted} />}
           title={threads && threads.length > 0 ? "No matches" : "No conversations yet"}
           description={
             threads && threads.length > 0

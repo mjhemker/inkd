@@ -30,6 +30,7 @@ import {
 
 import { PickerDateField, PickerTimeField } from "./pickers";
 import type { EditorHandle } from "./types";
+import { useTheme } from "@/providers/theme";
 
 /** Default starter week for a brand-new artist: Tue–Sat, 11:00–19:00. */
 function defaultBlocks(): WeeklyBlock[] {
@@ -47,6 +48,7 @@ export interface BookingEditorProps {
 
 export const BookingEditor = forwardRef<EditorHandle, BookingEditorProps>(
   function BookingEditor({ artist, variant = "onboarding" }, ref) {
+    const { colors } = useTheme();
     const { toast } = useToast();
     const { data: rules } = useAvailabilityRules(artist.id);
     const { data: blocks } = useAvailabilityBlocks(artist.id);
@@ -212,7 +214,7 @@ export const BookingEditor = forwardRef<EditorHandle, BookingEditorProps>(
                             accessibilityLabel="Remove block"
                             className="h-7 w-7 items-center justify-center rounded-md"
                           >
-                            <Icon name="x" size={15} color="#71717A" />
+                            <Icon name="x" size={15} color={colors.text.muted} />
                           </Pressable>
                         </View>
                       ))}
@@ -248,7 +250,7 @@ export const BookingEditor = forwardRef<EditorHandle, BookingEditorProps>(
                   className="flex-row items-center justify-between rounded-lg border border-border-subtle bg-surface-raised/40 px-3.5 py-2.5"
                 >
                   <View className="flex-row items-center gap-2.5">
-                    <Icon name="calendar" size={15} color="#A1A1AA" />
+                    <Icon name="calendar" size={15} color={colors.text.secondary} />
                     <Text className="text-sm text-content-secondary">
                       {new Date(b.starts_at).toLocaleDateString()} –{" "}
                       {new Date(b.ends_at).toLocaleDateString()}
@@ -260,7 +262,7 @@ export const BookingEditor = forwardRef<EditorHandle, BookingEditorProps>(
                     accessibilityLabel="Remove time off"
                     className="h-7 w-7 items-center justify-center rounded-md"
                   >
-                    <Icon name="x" size={15} color="#71717A" />
+                    <Icon name="x" size={15} color={colors.text.muted} />
                   </Pressable>
                 </View>
               ))}

@@ -19,6 +19,7 @@ import { router } from "expo-router";
 import * as Location from "expo-location";
 import { Avatar, Chip, Icon, Input, RangeSlider, Slider, Spinner, Toggle } from "@inkd/ui/native";
 import { useDiscover, useStyles } from "@inkd/core/hooks";
+import { useTheme } from "@/providers/theme";
 import {
   DISCOVER_CITIES,
   DEFAULT_RADIUS_MI,
@@ -40,7 +41,6 @@ import {
   type DiscoverFilterState,
 } from "@inkd/core/api";
 
-const MUTED = "#71717A";
 const BRAND = "#7C3AED";
 const INK = "#0A0A0B";
 
@@ -58,6 +58,7 @@ function radiusToMi(radiusKm: number | undefined): number {
 }
 
 function ArtistPlacardCard({ card }: { card: ArtistCard }) {
+  const { colors } = useTheme();
   const price = formatMinPrice(card.min_price_cents);
   const distance = card.distance_km != null ? formatDistanceMiles(card.distance_km) : null;
   return (
@@ -80,7 +81,7 @@ function ArtistPlacardCard({ card }: { card: ArtistCard }) {
             @{card.handle}
           </Text>
           <View className="mt-0.5 flex-row items-center gap-1">
-            <Icon name="map-pin" size={12} color={MUTED} />
+            <Icon name="map-pin" size={12} color={colors.text.muted} />
             <Text className="text-xs text-content-secondary" numberOfLines={1}>
               {[card.city, card.state].filter(Boolean).join(", ") || "Location private"}
             </Text>
@@ -133,6 +134,7 @@ function ArtistPlacardCard({ card }: { card: ArtistCard }) {
 }
 
 export default function DiscoverScreen() {
+  const { colors } = useTheme();
   const [filter, setFilter] = useState<DiscoverFilterState>(EMPTY_FILTER_STATE);
   const [stylesOpen, setStylesOpen] = useState(false);
   const [locating, setLocating] = useState(false);
@@ -246,7 +248,7 @@ export default function DiscoverScreen() {
         placeholder="Search name, style or city…"
         value={filter.query}
         onChangeText={(t) => patch({ query: t })}
-        leadingIcon={<Icon name="search" size={16} color={MUTED} />}
+        leadingIcon={<Icon name="search" size={16} color={colors.text.muted} />}
         autoCapitalize="none"
       />
 
@@ -257,7 +259,7 @@ export default function DiscoverScreen() {
             {locating ? (
               <Spinner size="small" />
             ) : (
-              <Icon name="compass" size={13} color={nearMeActive ? "#FFFFFF" : MUTED} />
+              <Icon name="compass" size={13} color={nearMeActive ? "#FFFFFF" : colors.text.muted} />
             )}
             <Text className={nearMeActive ? "text-brand-on" : "text-content-secondary"}>Near me</Text>
           </View>
@@ -316,7 +318,7 @@ export default function DiscoverScreen() {
         <Text className="font-mono text-[10px] uppercase tracking-widest text-content-muted">
           Styles{filter.styles.length > 0 ? ` · ${filter.styles.length}` : ""}
         </Text>
-        <Icon name={stylesOpen ? "chevron-down" : "chevron-right"} size={12} color={MUTED} />
+        <Icon name={stylesOpen ? "chevron-down" : "chevron-right"} size={12} color={colors.text.muted} />
       </Pressable>
       {stylesOpen ? (
         <View className="flex-row flex-wrap gap-1.5">
@@ -342,7 +344,7 @@ export default function DiscoverScreen() {
           {isFetching && !isLoading ? " · …" : ""}
         </Text>
         <Pressable onPress={() => setFilter(EMPTY_FILTER_STATE)} className="flex-row items-center gap-1">
-          <Icon name="x" size={12} color={MUTED} />
+          <Icon name="x" size={12} color={colors.text.muted} />
           <Text className="font-mono text-xs uppercase tracking-wider text-content-muted">Clear</Text>
         </Pressable>
       </View>
@@ -365,7 +367,7 @@ export default function DiscoverScreen() {
             </View>
           ) : (
             <View className="items-center gap-2 py-16">
-              <Icon name="search" size={28} color={MUTED} />
+              <Icon name="search" size={28} color={colors.text.muted} />
               <Text className="font-display text-lg text-content-primary">No artists match</Text>
               <Text className="max-w-xs text-center text-sm text-content-secondary">
                 Try widening the distance, clearing a style, or a different price band.

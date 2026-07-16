@@ -38,11 +38,13 @@ import {
   useToast,
 } from "@inkd/ui/native";
 import { DetailSection, IntakeRow, NotFound, ReferencesGallery, StatusBadge, formatDay, toRefs } from "./shared";
+import { useTheme } from "@/providers/theme";
 
 type Dialog = "accept" | "decline" | "ask" | null;
 const SESSION_OPTIONS = ["1", "2", "3", "4", "5", "6"];
 
 export function RequestDetail({ requestId }: { requestId: string }) {
+  const { colors } = useTheme();
   const client = useInkdClient();
   const { toast } = useToast();
   const profileQ = useCurrentProfile();
@@ -264,7 +266,7 @@ export function RequestDetail({ requestId }: { requestId: string }) {
           <Button
             variant="outline"
             onPress={() => setDialog("ask")}
-            leadingIcon={<Icon name="message-circle" size={16} color="#FAFAFA" />}
+            leadingIcon={<Icon name="message-circle" size={16} color={colors.text.primary} />}
           >
             Ask
           </Button>
@@ -307,7 +309,7 @@ export function RequestDetail({ requestId }: { requestId: string }) {
               value={deposit}
               onChangeText={setDeposit}
               placeholder="$150"
-              leadingIcon={<Icon name="credit-card" size={16} color="#A1A1AA" />}
+              leadingIcon={<Icon name="credit-card" size={16} color={colors.text.secondary} />}
             />
           </FormField>
           <FormField label="Sessions">

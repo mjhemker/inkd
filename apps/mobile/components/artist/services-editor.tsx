@@ -25,6 +25,7 @@ import {
 import { MoneyInput, formatMoney } from "./money";
 import { PickerSelect } from "./pickers";
 import type { EditorHandle } from "./types";
+import { useTheme } from "@/providers/theme";
 
 interface AddOn {
   name: string;
@@ -103,6 +104,7 @@ export interface ServicesEditorProps {
 
 export const ServicesEditor = forwardRef<EditorHandle, ServicesEditorProps>(
   function ServicesEditor({ artistId }, ref) {
+    const { colors } = useTheme();
     const { toast } = useToast();
     const { data: services } = useServices(artistId);
     const createService = useCreateService(artistId);
@@ -212,7 +214,7 @@ export const ServicesEditor = forwardRef<EditorHandle, ServicesEditorProps>(
                     <Icon
                       name={added ? "check" : "plus"}
                       size={15}
-                      color={added ? "#A78BFA" : "#A1A1AA"}
+                      color={added ? colors.text.accent : colors.text.secondary}
                     />
                   </View>
                   <Text className="text-xs text-content-muted">{p.duration_minutes} min</Text>
@@ -255,7 +257,7 @@ export const ServicesEditor = forwardRef<EditorHandle, ServicesEditorProps>(
                   accessibilityLabel="Edit service"
                   className="h-8 w-8 items-center justify-center rounded-lg"
                 >
-                  <Icon name="settings" size={15} color="#71717A" />
+                  <Icon name="settings" size={15} color={colors.text.muted} />
                 </Pressable>
                 <Pressable
                   onPress={() => deleteService.mutate(s.id)}
@@ -263,7 +265,7 @@ export const ServicesEditor = forwardRef<EditorHandle, ServicesEditorProps>(
                   accessibilityLabel="Remove service"
                   className="h-8 w-8 items-center justify-center rounded-lg"
                 >
-                  <Icon name="x" size={16} color="#71717A" />
+                  <Icon name="x" size={16} color={colors.text.muted} />
                 </Pressable>
               </Card>
             ))}
@@ -272,7 +274,7 @@ export const ServicesEditor = forwardRef<EditorHandle, ServicesEditorProps>(
 
         <Button
           variant="outline"
-          leadingIcon={<Icon name="plus" size={16} color="#FAFAFA" />}
+          leadingIcon={<Icon name="plus" size={16} color={colors.text.primary} />}
           onPress={() => setDraft({ ...emptyDraft })}
           className="self-start"
         >
@@ -457,7 +459,7 @@ export const ServicesEditor = forwardRef<EditorHandle, ServicesEditorProps>(
                       accessibilityLabel="Remove add-on"
                       className="h-9 w-9 items-center justify-center rounded-lg"
                     >
-                      <Icon name="x" size={15} color="#71717A" />
+                      <Icon name="x" size={15} color={colors.text.muted} />
                     </Pressable>
                   </View>
                 ))}
@@ -465,7 +467,7 @@ export const ServicesEditor = forwardRef<EditorHandle, ServicesEditorProps>(
                   variant="ghost"
                   size="sm"
                   className="self-start"
-                  leadingIcon={<Icon name="plus" size={14} color="#A1A1AA" />}
+                  leadingIcon={<Icon name="plus" size={14} color={colors.text.secondary} />}
                   onPress={() =>
                     setDraft({
                       ...draft,

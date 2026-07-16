@@ -2,6 +2,7 @@ import { useState } from "react";
 import { router } from "expo-router";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "@/providers/theme";
 import {
   Avatar,
   Badge,
@@ -43,6 +44,7 @@ export default function ProfileScreen() {
 }
 
 function ProfileScreenContent() {
+  const { colors } = useTheme();
   const { data: profile, isLoading: profileLoading } = useCurrentProfile();
   const { data: artist, isLoading: artistLoading } = useCurrentArtistProfile();
   const [editOpen, setEditOpen] = useState(false);
@@ -66,7 +68,7 @@ function ProfileScreenContent() {
         <ScrollView className="flex-1" contentContainerClassName="gap-8 px-6 py-8">
           <ScreenHeader eyebrow="PROFILE" title="Profile" subtitle="Sign in to manage your profile." />
           <EmptyState
-            icon={<Icon name="user" size={32} color="#71717A" />}
+            icon={<Icon name="user" size={32} color={colors.text.muted} />}
             title="Sign in to continue"
             description="Your profile — portfolio, posts, and flash — lives here once you're signed in."
             action={
@@ -189,6 +191,7 @@ function ProfileScreenContent() {
 
 /** Minimal client profile body — saves, reviews, and bookings. */
 function ClientSections({ clientId }: { clientId: string }) {
+  const { colors } = useTheme();
   const { data: reviews, isLoading } = useClientReviews(clientId);
 
   return (
@@ -200,7 +203,7 @@ function ClientSections({ clientId }: { clientId: string }) {
           className="flex-row items-center gap-4"
         >
           <View className="h-11 w-11 items-center justify-center rounded-xl bg-surface-overlay">
-            <Icon name="calendar" size={20} color="#A78BFA" />
+            <Icon name="calendar" size={20} color={colors.text.accent} />
           </View>
           <View className="flex-1">
             <Text className="text-sm font-sans-semibold text-content-primary">
@@ -210,7 +213,7 @@ function ClientSections({ clientId }: { clientId: string }) {
               Requests, upcoming sessions, and past work.
             </Text>
           </View>
-          <Icon name="arrow-right" size={16} color="#71717A" />
+          <Icon name="arrow-right" size={16} color={colors.text.muted} />
         </Card>
 
         <Card
@@ -219,7 +222,7 @@ function ClientSections({ clientId }: { clientId: string }) {
           className="flex-row items-center gap-4"
         >
           <View className="h-11 w-11 items-center justify-center rounded-xl bg-surface-overlay">
-            <Icon name="compass" size={20} color="#A78BFA" />
+            <Icon name="compass" size={20} color={colors.text.accent} />
           </View>
           <View className="flex-1">
             <Text className="text-sm font-sans-semibold text-content-primary">
@@ -229,7 +232,7 @@ function ClientSections({ clientId }: { clientId: string }) {
               Everything you&apos;ve saved while browsing.
             </Text>
           </View>
-          <Icon name="arrow-right" size={16} color="#71717A" />
+          <Icon name="arrow-right" size={16} color={colors.text.muted} />
         </Card>
       </View>
 
@@ -239,7 +242,7 @@ function ClientSections({ clientId }: { clientId: string }) {
           <Skeleton className="h-24 w-full" />
         ) : !reviews || reviews.length === 0 ? (
           <EmptyState
-            icon={<Icon name="star" size={26} color="#71717A" />}
+            icon={<Icon name="star" size={26} color={colors.text.muted} />}
             title="No reviews yet"
             description="After a session, you can leave a review for your artist — it'll show up here."
           />
@@ -253,7 +256,7 @@ function ClientSections({ clientId }: { clientId: string }) {
                       key={i}
                       name="star"
                       size={15}
-                      color={i < review.rating ? "#A78BFA" : "#3F3F46"}
+                      color={i < review.rating ? colors.text.accent : colors.border.strong}
                     />
                   ))}
                 </View>

@@ -26,6 +26,7 @@ import {
   useShopInviteActions,
   useShopMutations,
 } from "@inkd/core";
+import { useTheme } from "@/providers/theme";
 
 export function ShopSettingsSection() {
   const { data: shop, isLoading } = useMyShop();
@@ -95,6 +96,7 @@ function ManageShopCard({
 }
 
 function CreateShopCard() {
+  const { colors } = useTheme();
   const { toast } = useToast();
   const { create } = useShopMutations();
   const [name, setName] = useState("");
@@ -124,7 +126,7 @@ function CreateShopCard() {
     <Card padding="lg" className="gap-4">
       <View className="gap-1.5">
         <View className="h-12 w-12 items-center justify-center rounded-xl bg-surface-overlay">
-          <Icon name="layout-grid" size={22} color="#A78BFA" />
+          <Icon name="layout-grid" size={22} color={colors.text.accent} />
         </View>
         <Text className="font-display text-xl text-content-primary">Create a shop</Text>
         <Text className="text-sm text-content-secondary">

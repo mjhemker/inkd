@@ -21,8 +21,10 @@ import {
 } from "@inkd/core";
 import { Button, Card, EmptyState, Eyebrow, Icon, useToast } from "@inkd/ui/native";
 import { StatusBadge, formatDay } from "./shared";
+import { useTheme } from "@/providers/theme";
 
 export function ClientBookings({ clientId }: { clientId: string }) {
+  const { colors } = useTheme();
   const requestsQ = useClientBookingRequests(clientId);
   const bookingsQ = useClientBookings(clientId);
   const client = useInkdClient();
@@ -69,7 +71,7 @@ export function ClientBookings({ clientId }: { clientId: string }) {
       {nothing ? (
         <Card padding="none" className="overflow-hidden">
           <EmptyState
-            icon={<Icon name="calendar" size={26} color="#71717A" />}
+            icon={<Icon name="calendar" size={26} color={colors.text.muted} />}
             title="No bookings yet"
             description="Find an artist you love and send your first request — it lands here while they review it."
             action={

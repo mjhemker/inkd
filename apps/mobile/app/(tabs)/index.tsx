@@ -27,6 +27,7 @@ import { DailyDropCard } from "@/components/daily-drop/DailyDropCard";
 import { FeedCard } from "@/components/feed/FeedCard";
 import { PostDetailSheet } from "@/components/feed/PostDetailSheet";
 import { StyleFilterRow } from "@/components/feed/StyleFilterRow";
+import { useTheme } from "@/providers/theme";
 
 const SCOPE_TABS: TabItem[] = [
   { value: "discover", label: "Discover" },
@@ -34,6 +35,7 @@ const SCOPE_TABS: TabItem[] = [
 ];
 
 export default function HomeScreen() {
+  const { colors } = useTheme();
   const router = useRouter();
   const [scope, setScope] = useState<FeedScope>("discover");
   const [styleSlug, setStyleSlug] = useState<string | null>(null);
@@ -119,7 +121,7 @@ export default function HomeScreen() {
         <View className="flex-1">
           {header}
           <EmptyState
-            icon={<Icon name="image" size={32} color="#71717A" />}
+            icon={<Icon name="image" size={32} color={colors.text.muted} />}
             title="Couldn't load the feed"
             description="Something went wrong reaching INKD. Check your connection and try again."
             action={
@@ -157,7 +159,7 @@ export default function HomeScreen() {
             {scope === "following" ? (
               <EmptyState
                 className="px-6"
-                icon={<Icon name="compass" size={32} color="#71717A" />}
+                icon={<Icon name="compass" size={32} color={colors.text.muted} />}
                 note="nothing here yet — go follow some artists"
                 title="Nothing here yet"
                 description="Follow a few artists you like and their new work will land here."
@@ -170,7 +172,7 @@ export default function HomeScreen() {
             ) : (
               <EmptyState
                 className="px-6"
-                icon={<Icon name="image" size={32} color="#71717A" />}
+                icon={<Icon name="image" size={32} color={colors.text.muted} />}
                 title="The wall's still being hung"
                 description={
                   styleSlug
@@ -226,11 +228,12 @@ function ToolCard({
   description: string;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
   return (
     <Card variant="interactive" padding="md" onPress={onPress} accessibilityLabel={title}>
       <View className="flex-row items-center gap-3">
         <View className="h-9 w-9 items-center justify-center rounded-sm border border-border-subtle bg-surface-base">
-          <Icon name={icon} size={16} color="#A78BFA" />
+          <Icon name={icon} size={16} color={colors.text.accent} />
         </View>
         <View className="flex-1 gap-0.5">
           <Text className="font-sans-semibold text-sm text-content-primary">{title}</Text>

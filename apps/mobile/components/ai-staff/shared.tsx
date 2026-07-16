@@ -3,13 +3,20 @@ import { Icon, cx } from "@inkd/ui/native";
 import type { AgentContextEntry } from "@inkd/core";
 
 import { CONTEXT_SOURCE_LABEL, TIER_META } from "@/lib/aiStaff";
+import { useTheme } from "@/providers/theme";
 
-export const AI_COLORS = {
-  accent: "#A78BFA",
-  muted: "#71717A",
-  emberInk: "#0A0A0B",
-  warn: "#D97706",
-} as const;
+/** Theme-aware AI-staff icon palette. `accent`/`muted` track the active theme
+ * so glyphs stay legible in light mode; `emberInk` (ink on the ember plate) and
+ * `warn` (status) are theme-independent literals. */
+export function useAiColors() {
+  const { colors } = useTheme();
+  return {
+    accent: colors.text.accent,
+    muted: colors.text.muted,
+    emberInk: "#0A0A0B",
+    warn: "#D97706",
+  } as const;
+}
 
 /** Mono tier stamp — the deterministic policy tier, stamped not styled soft. */
 export function TierStamp({ tier, withLabel = true }: { tier: number; withLabel?: boolean }) {
@@ -38,6 +45,7 @@ export function ProvenanceBlock({
   context: AgentContextEntry[];
   className?: string;
 }) {
+  const AI_COLORS = useAiColors();
   return (
     <View className={cx("rounded-sm border border-border-subtle bg-surface-plate-ink/60 p-3", className)}>
       <View className="mb-2 flex-row items-center gap-1.5">

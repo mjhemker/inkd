@@ -46,6 +46,7 @@ import { AppearanceControl } from "@/components/AppearanceControl";
 import { NotificationPreferencesEditor } from "@/components/notifications/NotificationPreferencesEditor";
 import { ShopSettingsSection } from "@/components/shop/ShopSettingsSection";
 import { useSession } from "@/providers/session";
+import { useTheme } from "@/providers/theme";
 
 const TABS = [
   { value: "profile", label: "Profile" },
@@ -72,6 +73,7 @@ export default function SettingsScreen() {
 }
 
 function SettingsView() {
+  const { colors } = useTheme();
   const router = useRouter();
   // Honour the ?tab= deep link (from notifications / cross-links), mirroring
   // web settings-view.tsx which reads searchParams.get("tab").
@@ -107,7 +109,7 @@ function SettingsView() {
         ) : !artist ? (
           <Card padding="lg" className="items-start gap-4">
             <View className="h-12 w-12 items-center justify-center rounded-xl bg-surface-overlay">
-              <Icon name="sparkles" size={22} color="#A78BFA" />
+              <Icon name="sparkles" size={22} color={colors.text.accent} />
             </View>
             <View className="gap-1.5">
               <Text className="font-display text-xl text-content-primary">
@@ -119,7 +121,7 @@ function SettingsView() {
             </View>
             <Button onPress={() => router.push("/onboarding")}>
               Start setup
-              <Icon name="arrow-right" size={16} color="#FAFAFA" />
+              <Icon name="arrow-right" size={16} color={colors.text.primary} />
             </Button>
           </Card>
         ) : (
@@ -155,7 +157,7 @@ function SettingsView() {
                     className="self-start"
                   >
                     Manage waivers
-                    <Icon name="arrow-right" size={16} color="#FAFAFA" />
+                    <Icon name="arrow-right" size={16} color={colors.text.primary} />
                   </Button>
                 </View>
               )}
@@ -180,7 +182,7 @@ function SettingsView() {
                         </Text>
                       </View>
                     </View>
-                    <Icon name="arrow-right" size={16} color="#71717A" />
+                    <Icon name="arrow-right" size={16} color={colors.text.muted} />
                   </Card>
                   <AgentAutonomyEditor artist={artist} variant="settings" />
                 </View>
@@ -271,6 +273,7 @@ function AccountPanel({
   handle: string | null;
   published: boolean;
 }) {
+  const { colors } = useTheme();
   const router = useRouter();
   const { signOut } = useSession();
   const [signingOut, setSigningOut] = useState(false);
@@ -313,7 +316,7 @@ function AccountPanel({
           loading={signingOut}
           className="self-start"
         >
-          <Icon name="arrow-right" size={16} color="#FAFAFA" />
+          <Icon name="arrow-right" size={16} color={colors.text.primary} />
           Sign out
         </Button>
       </View>

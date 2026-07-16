@@ -27,6 +27,7 @@ import { ApprovalCard } from "@/components/ai-staff/ApprovalCard";
 import { ActivityRow } from "@/components/ai-staff/ActivityRow";
 import { PlaybookSection } from "@/components/ai-staff/PlaybookSection";
 import { StaffOverview } from "@/components/ai-staff/StaffOverview";
+import { useTheme } from "@/providers/theme";
 
 const TAB_ITEMS = [
   { value: "approvals", label: "Approvals" },
@@ -45,6 +46,7 @@ export default function AiStaffScreen() {
 }
 
 function AiStaffScreenContent() {
+  const { colors } = useTheme();
   const { toast } = useToast();
   const params = useLocalSearchParams<{ tab?: string; action?: string }>();
   const { data: profile } = useCurrentProfile();
@@ -119,7 +121,7 @@ function AiStaffScreenContent() {
           </View>
         ) : !artist || !artistId ? (
           <EmptyState
-            icon={<Icon name="sparkles" size={24} color="#71717A" />}
+            icon={<Icon name="sparkles" size={24} color={colors.text.muted} />}
             title="Set up your studio first"
             description="Finish onboarding and your AI staff switch on here."
             action={<Button size="sm" onPress={() => router.push("/onboarding")}>Start setup</Button>}
@@ -135,7 +137,7 @@ function AiStaffScreenContent() {
                 <Skeleton className="h-64 w-full" />
               ) : proposed.length === 0 ? (
                 <EmptyState
-                  icon={<Icon name="check" size={24} color="#71717A" />}
+                  icon={<Icon name="check" size={24} color={colors.text.muted} />}
                   title="You're all caught up"
                   description="When your staff drafts a reply or proposes times, it lands here for your ok before anything reaches a client."
                 />
@@ -159,7 +161,7 @@ function AiStaffScreenContent() {
                 <Skeleton className="h-64 w-full" />
               ) : (activityQ.data ?? []).length === 0 ? (
                 <EmptyState
-                  icon={<Icon name="clock" size={22} color="#71717A" />}
+                  icon={<Icon name="clock" size={22} color={colors.text.muted} />}
                   title="Nothing logged yet"
                   description="Every reply, proposed time and handoff your staff makes will appear here — with the reason and the data behind it."
                 />

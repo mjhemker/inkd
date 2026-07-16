@@ -19,8 +19,8 @@ import {
 import { ArtworkPlaceholder } from "./ArtworkPlaceholder";
 import { BooksSignal } from "./BooksSignal";
 import { formatPrice } from "./format";
+import { useTheme } from "@/providers/theme";
 
-const ICON_MUTED = "#71717A";
 const ICON_ACTIVE = "#7C3AED";
 
 export interface PostDetailSheetProps {
@@ -32,6 +32,7 @@ export interface PostDetailSheetProps {
 
 /** Full lightbox for a tapped feed card — artwork, caption, artist row, actions. */
 export function PostDetailSheet({ item, onClose, signedIn = true }: PostDetailSheetProps) {
+  const { colors } = useTheme();
   const router = useRouter();
   const { height: windowHeight } = useWindowDimensions();
   const toggleLike = useToggleLike();
@@ -164,7 +165,7 @@ export function PostDetailSheet({ item, onClose, signedIn = true }: PostDetailSh
                   accessibilityState={{ selected: item.likedByViewer, disabled: !signedIn }}
                   className={cx("flex-row items-center gap-1.5", !signedIn && "opacity-40")}
                 >
-                  <Feather name="heart" size={18} color={item.likedByViewer ? ICON_ACTIVE : ICON_MUTED} />
+                  <Feather name="heart" size={18} color={item.likedByViewer ? ICON_ACTIVE : colors.text.muted} />
                   <Text className="font-mono text-xs text-content-muted">{item.likeCount}</Text>
                 </Pressable>
                 <Pressable
@@ -175,7 +176,7 @@ export function PostDetailSheet({ item, onClose, signedIn = true }: PostDetailSh
                   accessibilityState={{ selected: item.savedByViewer, disabled: !signedIn }}
                   className={cx(!signedIn && "opacity-40")}
                 >
-                  <Feather name="bookmark" size={18} color={item.savedByViewer ? ICON_ACTIVE : ICON_MUTED} />
+                  <Feather name="bookmark" size={18} color={item.savedByViewer ? ICON_ACTIVE : colors.text.muted} />
                 </Pressable>
               </View>
             )}

@@ -38,6 +38,7 @@ import {
 } from "@inkd/ui/native";
 
 import { useSession } from "@/providers/session";
+import { useTheme } from "@/providers/theme";
 
 type Mode = "sign-in" | "sign-up";
 
@@ -50,6 +51,7 @@ export default function AuthScreen() {
 }
 
 function AuthForm() {
+  const { colors } = useTheme();
   const { supabase } = useSession();
   const { toast } = useToast();
   // Return-to destination after sign-in (e.g. a waiver deep link). Only honour
@@ -207,7 +209,7 @@ function AuthForm() {
                             <Icon
                               name={opt.icon}
                               size={16}
-                              color={selected ? "#0A0A0B" : "#71717A"}
+                              color={selected ? "#0A0A0B" : colors.text.muted}
                             />
                           </View>
                           <Text className="text-sm font-sans-semibold text-content-primary">
@@ -226,7 +228,7 @@ function AuthForm() {
                     value={displayName}
                     onChangeText={setDisplayName}
                     autoComplete="name"
-                    leadingIcon={<Icon name="user" size={16} color="#71717A" />}
+                    leadingIcon={<Icon name="user" size={16} color={colors.text.muted} />}
                   />
                 </FormField>
               )}
@@ -240,7 +242,7 @@ function AuthForm() {
                   value={email}
                   onChangeText={setEmail}
                   leadingIcon={
-                    <Icon name="message-circle" size={16} color="#71717A" />
+                    <Icon name="message-circle" size={16} color={colors.text.muted} />
                   }
                 />
               </FormField>
@@ -251,7 +253,7 @@ function AuthForm() {
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
-                  leadingIcon={<Icon name="shield" size={16} color="#71717A" />}
+                  leadingIcon={<Icon name="shield" size={16} color={colors.text.muted} />}
                   trailingIcon={
                     <Pressable
                       onPress={() => setShowPassword((v) => !v)}
@@ -284,7 +286,7 @@ function AuthForm() {
                 size="lg"
                 onPress={magicLink}
                 disabled={pending || !email}
-                leadingIcon={<Icon name="sparkles" size={16} color="#FAFAFA" />}
+                leadingIcon={<Icon name="sparkles" size={16} color={colors.text.primary} />}
               >
                 Email me a magic link
               </Button>

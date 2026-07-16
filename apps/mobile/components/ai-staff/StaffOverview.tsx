@@ -4,7 +4,7 @@ import { Badge, Card, Icon } from "@inkd/ui/native";
 import type { AgentSettings } from "@inkd/core";
 
 import { AUTONOMY_LABEL, STAFF } from "@/lib/aiStaff";
-import { AI_COLORS } from "./shared";
+import { useAiColors } from "./shared";
 
 /** Front Desk, Booking Manager + Studio Manager as staff, with autonomy +
  * pending count. Renders one card per STAFF role in a vertical stack. */
@@ -15,6 +15,7 @@ export function StaffOverview({
   settings: AgentSettings | null | undefined;
   pendingCount: number;
 }) {
+  const AI_COLORS = useAiColors();
   const autonomy = settings?.autonomy ?? "draft_only";
   const enabled: Record<string, boolean> = {
     front_desk: settings?.front_desk_enabled ?? true,

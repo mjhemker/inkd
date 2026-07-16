@@ -64,8 +64,10 @@ import { ArtistResponseForm } from "../reviews/artist-response-form";
 import { ReviewCard } from "../reviews/review-card";
 import { ReviewFormModal, type ReviewFormValues } from "../reviews/review-form-modal";
 import { HealingSection } from "../aftercare/healing-section";
+import { useTheme } from "@/providers/theme";
 
 export function BookingDetail({ bookingId }: { bookingId: string }) {
+  const { colors } = useTheme();
   const client = useInkdClient();
   const { toast } = useToast();
   const bookingQ = useBooking(bookingId);
@@ -303,7 +305,7 @@ export function BookingDetail({ bookingId }: { bookingId: string }) {
               variant="ghost"
               onPress={addSession}
               loading={createSession.isPending}
-              leadingIcon={<Icon name="plus" size={15} color="#D4D4D8" />}
+              leadingIcon={<Icon name="plus" size={15} color={colors.text.secondary} />}
             >
               Add session
             </Button>
@@ -335,14 +337,14 @@ export function BookingDetail({ bookingId }: { bookingId: string }) {
             <Link href={`/waivers/sign/${booking.id}`} asChild>
               <Pressable className="flex-row items-center justify-between rounded-lg border border-border-subtle px-3.5 py-3">
                 <View className="flex-row items-center gap-2.5">
-                  <Icon name="shield" size={16} color="#D4D4D8" />
+                  <Icon name="shield" size={16} color={colors.text.secondary} />
                   <Text className="text-sm text-content-primary">
                     {isArtist
                       ? "Consent form — review or send"
                       : "Sign your consent form"}
                   </Text>
                 </View>
-                <Icon name="chevron-right" size={16} color="#71717A" />
+                <Icon name="chevron-right" size={16} color={colors.text.muted} />
               </Pressable>
             </Link>
           )}
@@ -505,6 +507,7 @@ function SessionCard({
   onComplete: () => void;
   onCancel: () => void;
 }) {
+  const { colors } = useTheme();
   const sMeta = SESSION_STATUS_META[session.status];
   const depositState = sessionDepositState(session, payments);
   const dMeta = DEPOSIT_STATE_META[depositState];
@@ -539,7 +542,7 @@ function SessionCard({
             size="sm"
             variant="outline"
             onPress={onReschedule}
-            leadingIcon={<Icon name="calendar" size={15} color="#D4D4D8" />}
+            leadingIcon={<Icon name="calendar" size={15} color={colors.text.secondary} />}
           >
             {session.scheduled_start ? "Reschedule" : "Schedule"}
           </Button>
@@ -549,7 +552,7 @@ function SessionCard({
               variant="secondary"
               onPress={onRequestDeposit}
               loading={depositBusy}
-              leadingIcon={<Icon name="credit-card" size={15} color="#FAFAFA" />}
+              leadingIcon={<Icon name="credit-card" size={15} color={colors.text.primary} />}
             >
               Request deposit
             </Button>

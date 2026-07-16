@@ -3,10 +3,11 @@ import { Icon } from "@inkd/ui/native";
 import type { AgentRole } from "@inkd/core";
 
 import { staffMeta } from "@/lib/aiStaff";
-import { AI_COLORS } from "./shared";
+import { useAiColors } from "./shared";
 
 /** A member of staff as a mono nameplate with an ember-stamped monogram. */
 export function StaffNameplate({ role }: { role: AgentRole | null }) {
+  const AI_COLORS = useAiColors();
   const meta = staffMeta(role);
   return (
     <View className="flex-row items-center gap-2.5">

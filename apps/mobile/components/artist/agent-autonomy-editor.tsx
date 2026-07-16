@@ -14,6 +14,7 @@ import { useAgentSettings, useUpsertAgentSettings } from "@inkd/core/hooks";
 import { PickerSelect } from "./pickers";
 import { ProStamp } from "./ProStamp";
 import type { EditorHandle } from "./types";
+import { useTheme } from "@/providers/theme";
 
 const OVERRIDE_OPTIONS = [
   { label: "Use my default", value: "default" },
@@ -33,6 +34,7 @@ export interface AgentAutonomyEditorProps {
 
 export const AgentAutonomyEditor = forwardRef<EditorHandle, AgentAutonomyEditorProps>(
   function AgentAutonomyEditor({ artist, variant = "onboarding" }, ref) {
+    const { colors } = useTheme();
     const { toast } = useToast();
     const { data: settings } = useAgentSettings(artist.id);
     const upsert = useUpsertAgentSettings(artist.id);
@@ -78,7 +80,7 @@ export const AgentAutonomyEditor = forwardRef<EditorHandle, AgentAutonomyEditorP
       <View className="gap-6">
         <View className="flex-row items-start gap-3 rounded-xl border border-border-subtle bg-surface-raised/40 p-4">
           <View className="h-9 w-9 items-center justify-center rounded-lg bg-surface-overlay">
-            <Icon name="sparkles" size={17} color="#A78BFA" />
+            <Icon name="sparkles" size={17} color={colors.text.accent} />
           </View>
           <Text className="flex-1 text-sm text-content-secondary">
             Your AI staff can help run the front desk — answering questions, collecting

@@ -20,9 +20,11 @@ import {
   useStyles,
   type PortfolioPiece,
 } from "@inkd/core";
+import { useTheme } from "@/providers/theme";
 import { ImageUploadField } from "./ImageUploadField";
 
 export function PortfolioPanel({ artistId, userId }: { artistId: string; userId: string }) {
+  const { colors } = useTheme();
   const { data: pieces, isLoading } = usePortfolioPieces(artistId);
   const mutations = usePortfolioMutations(artistId);
   const { toast } = useToast();
@@ -70,7 +72,7 @@ export function PortfolioPanel({ artistId, userId }: { artistId: string; userId:
         </View>
       ) : ordered.length === 0 ? (
         <EmptyState
-          icon={<Icon name="layout-grid" size={28} color="#71717A" />}
+          icon={<Icon name="layout-grid" size={28} color={colors.text.muted} />}
           title="Your portfolio is empty"
           description="Upload healed work or your best flash to build out your gallery."
           action={
@@ -126,6 +128,7 @@ function PieceRow({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const { colors } = useTheme();
   return (
     <View className="flex-row items-center gap-3 rounded-xl border border-border-subtle bg-surface-overlay p-2.5">
       <View className="h-16 w-16 overflow-hidden rounded-lg bg-surface-raised">
@@ -133,7 +136,7 @@ function PieceRow({
           <Image source={{ uri: piece.image_url }} className="h-full w-full" resizeMode="cover" />
         ) : (
           <View className="h-full w-full items-center justify-center">
-            <Icon name="image" size={18} color="#71717A" />
+            <Icon name="image" size={18} color={colors.text.muted} />
           </View>
         )}
       </View>
@@ -167,6 +170,7 @@ function IconAction({
   label: string;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -175,7 +179,7 @@ function IconAction({
       onPress={onPress}
       className="h-8 w-8 items-center justify-center rounded-full bg-surface-raised active:bg-brand"
     >
-      <Icon name={icon} size={14} color="#D4D4D8" />
+      <Icon name={icon} size={14} color={colors.text.secondary} />
     </Pressable>
   );
 }

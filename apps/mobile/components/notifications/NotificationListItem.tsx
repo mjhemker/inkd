@@ -2,6 +2,7 @@ import { Pressable, Text, View } from "react-native";
 import { Icon } from "@inkd/ui/native";
 import { formatThreadTimestamp, type Notification } from "@inkd/core";
 import { notificationKindMeta } from "@/lib/notifications";
+import { useTheme } from "@/providers/theme";
 
 /** One notification row for the `/notifications` screen. Mirrors
  * `apps/web/src/components/notifications/notification-row.tsx`. */
@@ -12,6 +13,7 @@ export function NotificationListItem({
   notification: Notification;
   onSelect: (notification: Notification) => void;
 }) {
+  const { colors } = useTheme();
   const meta = notificationKindMeta(notification.type);
   const unread = !notification.is_read;
 
@@ -28,7 +30,7 @@ export function NotificationListItem({
           unread ? "bg-surface-plate-ink" : "bg-surface-overlay"
         }`}
       >
-        <Icon name={meta.icon} size={16} color={unread ? "#C4B5FD" : "#71717A"} />
+        <Icon name={meta.icon} size={16} color={unread ? colors.text.accent : colors.text.muted} />
       </View>
 
       <View className="flex-1 gap-0.5">

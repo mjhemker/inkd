@@ -2,6 +2,7 @@ import { Text, View } from "react-native";
 import { Card, Icon } from "@inkd/ui/native";
 import { PLAN_FEATURES } from "@inkd/core";
 import { ProStamp } from "./ProStamp";
+import { useTheme } from "@/providers/theme";
 
 /**
  * "INKD Pro — coming soon" placard. No payment CTA — subscriptions aren't
@@ -10,11 +11,12 @@ import { ProStamp } from "./ProStamp";
  * previews what becomes a paid tier once billing ships.
  */
 export function PlanCard() {
+  const { colors } = useTheme();
   return (
     <Card padding="lg" className="gap-5">
       <View className="flex-row items-center gap-2.5">
         <View className="h-10 w-10 items-center justify-center rounded-lg bg-surface-overlay">
-          <Icon name="sparkles" size={19} color="#A78BFA" />
+          <Icon name="sparkles" size={19} color={colors.text.accent} />
         </View>
         <View className="gap-0.5">
           <View className="flex-row items-center gap-2">

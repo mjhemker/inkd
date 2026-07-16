@@ -34,6 +34,7 @@ import {
 } from "@inkd/core/hooks";
 
 import type { EditorHandle } from "./types";
+import { useTheme } from "@/providers/theme";
 
 type HandleState = "idle" | "checking" | "available" | "taken" | "invalid";
 
@@ -45,6 +46,7 @@ export interface IdentityEditorProps {
 
 export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
   function IdentityEditor({ profile, artist, variant = "onboarding" }, ref) {
+    const { colors } = useTheme();
     const { toast } = useToast();
     const client = useInkdClient();
     const updateProfile = useUpdateProfile(profile.id);
@@ -265,7 +267,7 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
               {uploadingAvatar ? (
                 <Spinner size="small" />
               ) : (
-                <Icon name="image" size={15} color="#71717A" />
+                <Icon name="image" size={15} color={colors.text.muted} />
               )}
             </Pressable>
           </View>
@@ -275,7 +277,7 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
                 placeholder="Your name"
                 value={displayName}
                 onChangeText={setDisplayName}
-                leadingIcon={<Icon name="user" size={16} color="#71717A" />}
+                leadingIcon={<Icon name="user" size={16} color={colors.text.muted} />}
               />
             </FormField>
           </View>
@@ -305,7 +307,7 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
               handleState === "checking" ? (
                 <Spinner size="small" />
               ) : handleState === "available" ? (
-                <Icon name="check" size={16} color="#A78BFA" />
+                <Icon name="check" size={16} color={colors.text.accent} />
               ) : undefined
             }
           />
@@ -372,7 +374,7 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
                   accessibilityLabel="Remove piece"
                   className="absolute right-1 top-1 h-6 w-6 items-center justify-center rounded-full bg-surface-base/80"
                 >
-                  <Icon name="x" size={13} color="#A1A1AA" />
+                  <Icon name="x" size={13} color={colors.text.secondary} />
                 </Pressable>
               </View>
             ))}
@@ -393,7 +395,7 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
                 </>
               ) : (
                 <>
-                  <Icon name="plus" size={18} color="#71717A" />
+                  <Icon name="plus" size={18} color={colors.text.muted} />
                   <Text className="text-[11px] font-sans-medium text-content-muted">Add images</Text>
                 </>
               )}
@@ -424,6 +426,7 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
  * configured it's a real Connect / Import control.
  */
 function InstagramImportRow({ artistId }: { artistId: string }) {
+  const { colors } = useTheme();
   const { toast } = useToast();
   const { data: status } = useInstagramStatus(artistId);
   const authorizeUrl = useInstagramAuthorizeUrl();
@@ -469,7 +472,7 @@ function InstagramImportRow({ artistId }: { artistId: string }) {
     <View className="flex-row items-center justify-between rounded-xl border border-border-subtle bg-surface-raised/40 px-4 py-3">
       <View className="flex-1 flex-row items-center gap-3">
         <View className="h-8 w-8 items-center justify-center rounded-lg bg-surface-overlay">
-          <Icon name="image" size={16} color="#71717A" />
+          <Icon name="image" size={16} color={colors.text.muted} />
         </View>
         <View className="flex-1">
           <Text className="text-sm font-sans-medium text-content-secondary">

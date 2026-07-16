@@ -11,6 +11,7 @@ import {
 } from "@inkd/core";
 import { RatingStamps } from "./rating-stamps";
 import { ReviewCard } from "./review-card";
+import { useTheme } from "@/providers/theme";
 
 export function ReviewsTab({
   reviews,
@@ -21,12 +22,13 @@ export function ReviewsTab({
   reviewerProfiles: Record<string, Profile>;
   artistName?: string | null;
 }) {
+  const { colors } = useTheme();
   const summary = summarizeReviews(reviews);
 
   if (reviews.length === 0) {
     return (
       <View className="items-center gap-3 rounded-2xl border border-border-subtle bg-surface-raised/40 px-6 py-16">
-        <Icon name="star" size={26} color="#71717A" />
+        <Icon name="star" size={26} color={colors.text.muted} />
         <Text className="font-sans-semibold text-base text-content-primary">No reviews yet</Text>
         <Text className="text-center text-sm text-content-muted">
           Completed sessions will show up here once clients leave a review.

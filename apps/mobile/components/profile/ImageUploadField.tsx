@@ -3,6 +3,7 @@ import { ActivityIndicator, Image, Pressable, Text, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Icon, cx } from "@inkd/ui/native";
 import { useUploadMedia, type MediaFolder } from "@inkd/core";
+import { useTheme } from "@/providers/theme";
 
 /** File-picker tile that uploads straight to the `media` bucket and reports
  * back the public URL, mirroring apps/web's ImageUploadField. */
@@ -23,6 +24,7 @@ export function ImageUploadField({
   label?: string;
   className?: string;
 }) {
+  const { colors } = useTheme();
   const [previewUri, setPreviewUri] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const upload = useUploadMedia(userId);
@@ -75,7 +77,7 @@ export function ImageUploadField({
           <Image source={{ uri: shown }} className="h-full w-full" resizeMode="cover" />
         ) : (
           <View className="items-center gap-2 p-6">
-            <Icon name="image" size={22} color="#71717A" />
+            <Icon name="image" size={22} color={colors.text.muted} />
             <Text className="text-center text-sm text-content-muted">{label}</Text>
           </View>
         )}

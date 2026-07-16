@@ -6,6 +6,7 @@ import { Icon, Modal, cx } from "@inkd/ui/native";
 import { formatMessageTime } from "@inkd/core/utils";
 import { getChatAttachmentUrls, toChatAttachments, useInkdClient } from "@inkd/core";
 import type { Message } from "@inkd/core/types";
+import { useTheme } from "@/providers/theme";
 
 /**
  * One chat bubble. `isMine` sets side + color; `sender_kind === "agent"`
@@ -19,6 +20,7 @@ import type { Message } from "@inkd/core/types";
  * thumbnail opens a full-size lightbox.
  */
 export function MessageBubble({ message, isMine }: { message: Message; isMine: boolean }) {
+  const { colors } = useTheme();
   const isAgent = message.sender_kind === "agent";
   const isHumanDraftedByAgent = !isAgent && message.drafted_by_agent;
   const attachments = toChatAttachments(message.attachments);
@@ -39,7 +41,7 @@ export function MessageBubble({ message, isMine }: { message: Message; isMine: b
       {isAgent && (
         <View className="mb-1 flex-row items-center gap-2 pl-0.5">
           <View className="flex-row items-center gap-1">
-            <Icon name="sparkles" size={11} color="#A78BFA" />
+            <Icon name="sparkles" size={11} color={colors.text.accent} />
             <Text className="font-mono text-[10px] uppercase tracking-widest text-content-accent">
               Drafted by AI staff
             </Text>
@@ -57,7 +59,7 @@ export function MessageBubble({ message, isMine }: { message: Message; isMine: b
               <Text className="font-mono text-[10px] uppercase tracking-widest text-content-muted underline">
                 view in log
               </Text>
-              <Icon name="arrow-right" size={10} color="#71717A" />
+              <Icon name="arrow-right" size={10} color={colors.text.muted} />
             </Pressable>
           ) : null}
         </View>
@@ -85,9 +87,9 @@ export function MessageBubble({ message, isMine }: { message: Message; isMine: b
                 {url ? (
                   <Image source={{ uri: url }} className="h-full w-full" resizeMode="cover" />
                 ) : urlsQuery.isError ? (
-                  <Icon name="x" size={18} color="#71717A" />
+                  <Icon name="x" size={18} color={colors.text.muted} />
                 ) : (
-                  <ActivityIndicator size="small" color="#A78BFA" />
+                  <ActivityIndicator size="small" color={colors.text.accent} />
                 )}
               </Pressable>
             );
@@ -116,7 +118,7 @@ export function MessageBubble({ message, isMine }: { message: Message; isMine: b
           </Text>
           {isHumanDraftedByAgent && (
             <View className="mt-1.5 flex-row items-center gap-1">
-              <Icon name="sparkles" size={10} color={isMine ? "#FAFAFA" : "#71717A"} />
+              <Icon name="sparkles" size={10} color={isMine ? "#FAFAFA" : colors.text.muted} />
               <Text
                 className={cx(
                   "font-mono text-[10px] uppercase tracking-widest",

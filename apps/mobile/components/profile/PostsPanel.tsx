@@ -12,9 +12,11 @@ import {
   useToast,
 } from "@inkd/ui/native";
 import { useArtistPosts, usePostMutations, useStyles, type Post } from "@inkd/core";
+import { useTheme } from "@/providers/theme";
 import { ImageUploadField } from "./ImageUploadField";
 
 export function PostsPanel({ artistId, userId }: { artistId: string; userId: string }) {
+  const { colors } = useTheme();
   const { data: posts, isLoading } = useArtistPosts(artistId);
   const [open, setOpen] = useState(false);
 
@@ -33,7 +35,7 @@ export function PostsPanel({ artistId, userId }: { artistId: string; userId: str
         <GridSkeleton />
       ) : !posts || posts.length === 0 ? (
         <EmptyState
-          icon={<Icon name="image" size={28} color="#71717A" />}
+          icon={<Icon name="image" size={28} color={colors.text.muted} />}
           title="No posts yet"
           description="Share fresh work or studio updates with your followers."
           action={
@@ -56,6 +58,7 @@ export function PostsPanel({ artistId, userId }: { artistId: string; userId: str
 }
 
 function PostTile({ post }: { post: Post }) {
+  const { colors } = useTheme();
   const cover =
     post.cover_url ?? (Array.isArray(post.media) && (post.media[0] as { url?: string } | undefined)?.url);
   return (
@@ -64,7 +67,7 @@ function PostTile({ post }: { post: Post }) {
         <Image source={{ uri: cover }} className="h-full w-full" resizeMode="cover" />
       ) : (
         <View className="h-full w-full items-center justify-center">
-          <Icon name="image" size={18} color="#71717A" />
+          <Icon name="image" size={18} color={colors.text.muted} />
         </View>
       )}
     </View>

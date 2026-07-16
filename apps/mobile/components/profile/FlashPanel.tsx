@@ -23,9 +23,11 @@ import {
   type FlashSheet,
 } from "@inkd/core";
 import { flashPriceLabel } from "@/lib/format";
+import { useTheme } from "@/providers/theme";
 import { ImageUploadField } from "./ImageUploadField";
 
 export function FlashPanel({ artistId, userId }: { artistId: string; userId: string }) {
+  const { colors } = useTheme();
   const { data: sheets, isLoading } = useFlashSheets(artistId);
   const [createOpen, setCreateOpen] = useState(false);
   const [managingId, setManagingId] = useState<string | null>(null);
@@ -49,7 +51,7 @@ export function FlashPanel({ artistId, userId }: { artistId: string; userId: str
         </View>
       ) : !sheets || sheets.length === 0 ? (
         <EmptyState
-          icon={<Icon name="sparkles" size={28} color="#71717A" />}
+          icon={<Icon name="sparkles" size={28} color={colors.text.muted} />}
           title="No flash sheets yet"
           description="Bundle ready-to-book designs with a price and size."
           action={
@@ -83,6 +85,7 @@ export function FlashPanel({ artistId, userId }: { artistId: string; userId: str
 }
 
 function SheetCard({ sheet, onManage }: { sheet: FlashSheet; onManage: () => void }) {
+  const { colors } = useTheme();
   const { data: items } = useFlashItems(sheet.id);
   return (
     <Pressable
@@ -94,7 +97,7 @@ function SheetCard({ sheet, onManage }: { sheet: FlashSheet; onManage: () => voi
           <Image source={{ uri: sheet.cover_url }} className="h-full w-full" resizeMode="cover" />
         ) : (
           <View className="h-full w-full items-center justify-center">
-            <Icon name="sparkles" size={20} color="#71717A" />
+            <Icon name="sparkles" size={20} color={colors.text.muted} />
           </View>
         )}
       </View>
@@ -200,6 +203,7 @@ function ManageSheetModal({
   userId: string;
   onClose: () => void;
 }) {
+  const { colors } = useTheme();
   const { toast } = useToast();
   const { data: items, isLoading } = useFlashItems(sheetId);
   const sheetMutations = useFlashSheetMutations(artistId);
@@ -246,7 +250,7 @@ function ManageSheetModal({
           <Button
             variant="secondary"
             size="sm"
-            leadingIcon={<Icon name="plus" size={16} color="#FAFAFA" />}
+            leadingIcon={<Icon name="plus" size={16} color={colors.text.primary} />}
             onPress={() => setAddingItem(true)}
           >
             Add piece
@@ -288,6 +292,7 @@ function FlashItemRow({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const { colors } = useTheme();
   return (
     <View className="flex-row items-center gap-3 rounded-xl border border-border-subtle bg-surface-overlay p-2.5">
       <View className="h-14 w-14 overflow-hidden rounded-lg bg-surface-raised">
@@ -295,7 +300,7 @@ function FlashItemRow({
           <Image source={{ uri: item.image_url }} className="h-full w-full" resizeMode="cover" />
         ) : (
           <View className="h-full w-full items-center justify-center">
-            <Icon name="image" size={16} color="#71717A" />
+            <Icon name="image" size={16} color={colors.text.muted} />
           </View>
         )}
       </View>
@@ -313,10 +318,10 @@ function FlashItemRow({
       </Badge>
       <Toggle checked={item.is_available} onCheckedChange={onToggleAvailable} />
       <Pressable accessibilityRole="button" accessibilityLabel="Edit piece" hitSlop={6} onPress={onEdit} className="h-8 w-8 items-center justify-center rounded-lg active:bg-surface-raised">
-        <Icon name="settings" size={16} color="#A1A1AA" />
+        <Icon name="settings" size={16} color={colors.text.secondary} />
       </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="Delete piece" hitSlop={6} onPress={onDelete} className="h-8 w-8 items-center justify-center rounded-lg active:bg-surface-raised">
-        <Icon name="x" size={16} color="#A1A1AA" />
+        <Icon name="x" size={16} color={colors.text.secondary} />
       </Pressable>
     </View>
   );

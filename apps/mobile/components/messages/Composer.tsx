@@ -4,6 +4,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useMutation } from "@tanstack/react-query";
 import { Button, Icon, TextArea, cx, useToast } from "@inkd/ui/native";
 import { uploadChatAttachment, useInkdClient, type ChatAttachment } from "@inkd/core";
+import { useTheme } from "@/providers/theme";
 
 const MAX_ATTACHMENTS = 4;
 
@@ -37,6 +38,7 @@ export function Composer({
   onSend: (body: string, attachments: ChatAttachment[]) => void;
   disabled?: boolean;
 }) {
+  const { colors } = useTheme();
   const [value, setValue] = useState("");
   const [pending, setPending] = useState<PendingAttachment[]>([]);
   const client = useInkdClient();
@@ -196,7 +198,7 @@ export function Composer({
             (disabled || !senderId || !canPickMore) && "opacity-40",
           )}
         >
-          <Icon name="image" size={20} color="#71717A" />
+          <Icon name="image" size={20} color={colors.text.muted} />
         </Pressable>
         <TextArea
           value={value}

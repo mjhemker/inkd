@@ -33,6 +33,7 @@ import {
   STEP_META,
   type EditorHandle,
 } from "@/components/artist";
+import { useTheme } from "@/providers/theme";
 
 const STEP_COPY = [
   {
@@ -67,6 +68,7 @@ export default function OnboardingScreen() {
 }
 
 function OnboardingFlow() {
+  const { colors } = useTheme();
   const router = useRouter();
   const { toast } = useToast();
   const { data: profile, isLoading: profileLoading } = useCurrentProfile();
@@ -203,7 +205,7 @@ function OnboardingFlow() {
         <View className="flex-row items-center justify-between gap-3">
           {step > 0 ? (
             <Button variant="ghost" onPress={goBack} disabled={advancing}>
-              <Icon name="chevron-left" size={16} color="#A1A1AA" />
+              <Icon name="chevron-left" size={16} color={colors.text.secondary} />
               Back
             </Button>
           ) : (
@@ -223,6 +225,7 @@ function VerifyStep() {
   // verification session to start. Rather than hide the action, we show it
   // and are honest about the gate on tap, so the step feels complete (a real
   // next action) instead of a dead end.
+  const { colors } = useTheme();
   const [showGateNotice, setShowGateNotice] = useState(false);
   const lines = [
     "Secure ID check handled by Stripe Identity",
@@ -233,7 +236,7 @@ function VerifyStep() {
     <View className="gap-6">
       <View className="flex-row items-start gap-3 rounded-xl border border-border-subtle bg-surface-raised/40 p-4">
         <View className="h-10 w-10 items-center justify-center rounded-xl bg-surface-overlay">
-          <Icon name="shield" size={20} color="#A78BFA" />
+          <Icon name="shield" size={20} color={colors.text.accent} />
         </View>
         <View className="flex-1 gap-1">
           <Text className="text-sm font-sans-medium text-content-primary">
@@ -249,7 +252,7 @@ function VerifyStep() {
       <View className="gap-2.5">
         {lines.map((line) => (
           <View key={line} className="flex-row items-center gap-2.5">
-            <Icon name="check" size={16} color="#A78BFA" />
+            <Icon name="check" size={16} color={colors.text.accent} />
             <Text className="flex-1 text-sm text-content-secondary">{line}</Text>
           </View>
         ))}
@@ -265,7 +268,7 @@ function VerifyStep() {
         </Button>
         {showGateNotice && (
           <View className="w-full flex-row items-start gap-2.5 rounded-xl border border-border-subtle bg-surface-overlay px-4 py-3">
-            <Icon name="alert-triangle" size={16} color="#A78BFA" />
+            <Icon name="alert-triangle" size={16} color={colors.text.accent} />
             <Text className="flex-1 text-sm text-content-secondary">
               Verification opens once payments are configured — you can skip for
               now.
@@ -278,11 +281,12 @@ function VerifyStep() {
 }
 
 function CongratsScreen({ onFinish }: { onFinish: () => void }) {
+  const { colors } = useTheme();
   return (
     <SafeAreaView className="flex-1 items-center justify-center bg-surface-base px-6">
       <View className="max-w-md items-center gap-6">
         <View className="h-16 w-16 items-center justify-center rounded-2xl bg-brand">
-          <Icon name="sparkles" size={30} color="#FAFAFA" />
+          <Icon name="sparkles" size={30} color={colors.text.primary} />
         </View>
         <View className="items-center gap-2">
           <Eyebrow>You&apos;re set up</Eyebrow>
@@ -296,7 +300,7 @@ function CongratsScreen({ onFinish }: { onFinish: () => void }) {
         </View>
         <Button size="lg" onPress={onFinish}>
           Go to dashboard
-          <Icon name="arrow-right" size={18} color="#FAFAFA" />
+          <Icon name="arrow-right" size={18} color={colors.text.primary} />
         </Button>
       </View>
     </SafeAreaView>

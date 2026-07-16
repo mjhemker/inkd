@@ -15,12 +15,14 @@ import type { Message } from "@inkd/core/types";
 import type { ChatAttachment } from "@inkd/core";
 import { MessageBubble } from "./MessageBubble";
 import { Composer } from "./Composer";
+import { useTheme } from "@/providers/theme";
 
 type Row =
   | { kind: "separator"; key: string; label: string }
   | { kind: "message"; key: string; message: Message; isMine: boolean };
 
 export function ChatThread({ threadId }: { threadId: string }) {
+  const { colors } = useTheme();
   const router = useRouter();
   const { data: profile } = useCurrentProfile();
   const { data: artistProfile } = useCurrentArtistProfile();
@@ -111,7 +113,7 @@ export function ChatThread({ threadId }: { threadId: string }) {
             accessibilityLabel="Back to conversations"
             className="h-9 w-9 items-center justify-center rounded-lg"
           >
-            <Icon name="chevron-left" size={22} color="#FAFAFA" />
+            <Icon name="chevron-left" size={22} color={colors.text.primary} />
           </Pressable>
           <Avatar
             name={summary?.counterpart?.displayName ?? "?"}
@@ -136,7 +138,7 @@ export function ChatThread({ threadId }: { threadId: string }) {
           </View>
         ) : rows.length === 0 ? (
           <View className="flex-1 items-center justify-center gap-2 px-8">
-            <Icon name="message-circle" size={28} color="#71717A" />
+            <Icon name="message-circle" size={28} color={colors.text.muted} />
             <Text className="text-center text-sm text-content-secondary">
               Say hello — this is the start of your conversation.
             </Text>

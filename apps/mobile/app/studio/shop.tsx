@@ -40,6 +40,7 @@ import { LocationsEditor, PickerSelect } from "@/components/artist";
 
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { ArtistOnly } from "@/components/ArtistOnly";
+import { useTheme } from "@/providers/theme";
 
 const TABS = [
   { value: "roster", label: "Roster" },
@@ -59,6 +60,7 @@ export default function ShopDashboardScreen() {
 }
 
 function ShopDashboardContent() {
+  const { colors } = useTheme();
   const { data: artist, isLoading: aLoading } = useCurrentArtistProfile();
   const { data: shop, isLoading: sLoading } = useMyShop();
   const [tab, setTab] = useState("roster");
@@ -78,7 +80,7 @@ function ShopDashboardContent() {
           <ScreenHeader eyebrow="Shop" title="Shop" subtitle="Run a shop that hosts other artists." />
           <Card padding="lg" className="items-start gap-4">
             <View className="h-12 w-12 items-center justify-center rounded-xl bg-surface-overlay">
-              <Icon name="layout-grid" size={22} color="#A78BFA" />
+              <Icon name="layout-grid" size={22} color={colors.text.accent} />
             </View>
             <View className="gap-1.5">
               <Text className="font-display text-xl text-content-primary">Create your shop</Text>
@@ -89,7 +91,7 @@ function ShopDashboardContent() {
             </View>
             <Button onPress={() => router.push("/settings")}>
               Set up a shop
-              <Icon name="arrow-right" size={16} color="#FAFAFA" />
+              <Icon name="arrow-right" size={16} color={colors.text.primary} />
             </Button>
           </Card>
         </ScrollView>
@@ -118,7 +120,7 @@ function ShopDashboardContent() {
               onPress={() => router.push(`/shop/${shop.handle}` as never)}
             >
               View public page
-              <Icon name="arrow-right" size={15} color="#D4D4D8" />
+              <Icon name="arrow-right" size={15} color={colors.text.secondary} />
             </Button>
           </View>
         </View>
@@ -185,6 +187,7 @@ function RosterTab({ shopId }: { shopId: string }) {
 }
 
 function InviteForm({ shopId }: { shopId: string }) {
+  const { colors } = useTheme();
   const { toast } = useToast();
   const { inviteByHandle } = useShopMemberMutations(shopId);
   const [handle, setHandle] = useState("");
@@ -250,7 +253,7 @@ function InviteForm({ shopId }: { shopId: string }) {
         </Text>
       </View>
       <Button onPress={() => void submit()} loading={inviteByHandle.isPending} className="self-start">
-        <Icon name="plus" size={16} color="#FAFAFA" />
+        <Icon name="plus" size={16} color={colors.text.primary} />
         Send invite
       </Button>
     </Card>
@@ -266,6 +269,7 @@ function MemberRow({
   shopId: string;
   readOnly?: boolean;
 }) {
+  const { colors } = useTheme();
   const { toast } = useToast();
   const { setRole, setMode, remove } = useShopMemberMutations(shopId);
   const profile = member.artist?.profile;
@@ -303,7 +307,7 @@ function MemberRow({
           )}
           {caps.shopCanViewAgenda && (
             <Badge variant="brand" size="sm">
-              <Icon name="calendar" size={12} color="#FAFAFA" />
+              <Icon name="calendar" size={12} color={colors.text.primary} />
               <Text className="ml-1 text-xs text-brand-on">Calendar shared</Text>
             </Badge>
           )}
@@ -373,6 +377,7 @@ function MemberRow({
 // Managed calendar
 // ---------------------------------------------------------------------------
 function ManagedCalendarTab({ shopId }: { shopId: string }) {
+  const { colors } = useTheme();
   const { data: agenda, isLoading } = useShopManagedAgenda(shopId);
   const byMember = useMemo(() => {
     const rows = agenda ?? [];
@@ -388,7 +393,7 @@ function ManagedCalendarTab({ shopId }: { shopId: string }) {
   return (
     <View className="gap-5">
       <Card padding="md" className="flex-row items-start gap-3">
-        <Icon name="shield" size={18} color="#A78BFA" />
+        <Icon name="shield" size={18} color={colors.text.accent} />
         <Text className="flex-1 text-sm text-content-secondary">
           You only see the calendar of members on a <Text className="font-sans-semibold">managed</Text>{" "}
           membership who have accepted. Promotional members keep their bookings private.

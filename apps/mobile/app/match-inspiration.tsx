@@ -23,6 +23,7 @@ import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Avatar, Icon, Spinner } from "@inkd/ui/native";
 import { useCurrentProfile, useInkdClient } from "@inkd/core/hooks";
+import { useTheme } from "@/providers/theme";
 import {
   CLOSE_MATCH_THRESHOLD,
   STRONG_MATCH_THRESHOLD,
@@ -36,7 +37,6 @@ import {
   type MatchWork,
 } from "@inkd/core/api";
 
-const MUTED = "#71717A";
 const BRAND = "#7C3AED";
 
 const RESULT_LIMIT = 40;
@@ -61,6 +61,7 @@ function titleCase(s: string): string {
 }
 
 export default function MatchInspirationScreen() {
+  const { colors } = useTheme();
   const client = useInkdClient();
   const { data: profile, isLoading: profileLoading } = useCurrentProfile();
 
@@ -180,7 +181,7 @@ export default function MatchInspirationScreen() {
       {/* Header */}
       <View className="flex-row items-center justify-between border-b border-border-subtle px-4 py-3">
         <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="Back" hitSlop={10}>
-          <Icon name="chevron-left" size={24} color="#FAFAFA" />
+          <Icon name="chevron-left" size={24} color={colors.text.primary} />
         </Pressable>
         <Text className="font-display text-base text-content-primary">Match my inspiration</Text>
         <View style={{ width: 24 }} />
@@ -310,9 +311,10 @@ function UploadPanel({
 }
 
 function PrivacyNote() {
+  const { colors } = useTheme();
   return (
     <View className="flex-row items-start gap-2 rounded-sm border border-border-subtle bg-surface-overlay p-3">
-      <Icon name="sparkles" size={14} color={MUTED} />
+      <Icon name="sparkles" size={14} color={colors.text.muted} />
       <Text className="flex-1 text-xs leading-relaxed text-content-secondary">
         Your image is read on the fly to detect its style and{" "}
         <Text className="text-content-primary">never stored</Text> — it&rsquo;s deleted the moment
@@ -342,9 +344,10 @@ function ErrorState({
   message: string;
   onRetry: () => void;
 }) {
+  const { colors } = useTheme();
   return (
     <View className="items-center gap-3 rounded-sm border border-dashed border-border-default bg-surface-raised px-6 py-12">
-      <Icon name="alert-triangle" size={26} color={MUTED} />
+      <Icon name="alert-triangle" size={26} color={colors.text.muted} />
       <Text className="font-display text-lg text-content-primary">
         {notConfigured ? "Image search isn't switched on yet" : "Couldn't read that image"}
       </Text>
@@ -366,7 +369,7 @@ function ErrorState({
           onPress={onRetry}
           className="flex-row items-center gap-1.5 rounded-lg border border-border-strong px-4 py-2"
         >
-          <Icon name="image" size={15} color="#FAFAFA" />
+          <Icon name="image" size={15} color={colors.text.primary} />
           <Text className="text-sm font-semibold text-content-primary">Try another image</Text>
         </Pressable>
       )}
@@ -394,9 +397,10 @@ function SignInGate() {
 }
 
 function NoEndpointState() {
+  const { colors } = useTheme();
   return (
     <View className="items-center gap-3 rounded-sm border border-dashed border-border-default bg-surface-raised px-6 py-12">
-      <Icon name="sparkles" size={28} color={MUTED} />
+      <Icon name="sparkles" size={28} color={colors.text.muted} />
       <Text className="font-display text-lg text-content-primary">
         Image search runs on the web app for now
       </Text>
@@ -561,9 +565,10 @@ function Fallback({
   body: string;
   children: React.ReactNode;
 }) {
+  const { colors } = useTheme();
   return (
     <View className="items-center gap-3 rounded-sm border border-dashed border-border-default bg-surface-raised px-6 py-12">
-      <Icon name={icon} size={30} color={MUTED} />
+      <Icon name={icon} size={30} color={colors.text.muted} />
       <Text className="font-display text-lg text-content-primary">{title}</Text>
       <Text className="max-w-xs text-center text-sm text-content-secondary">{body}</Text>
       {children}
@@ -572,12 +577,13 @@ function Fallback({
 }
 
 function RetryButton({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
   return (
     <Pressable
       onPress={onPress}
       className="flex-row items-center gap-1.5 rounded-lg border border-border-strong px-4 py-2"
     >
-      <Icon name="image" size={15} color="#FAFAFA" />
+      <Icon name="image" size={15} color={colors.text.primary} />
       <Text className="text-sm font-semibold text-content-primary">Try another image</Text>
     </Pressable>
   );
@@ -596,6 +602,7 @@ function BrowseButton({ label = "Browse by style" }: { label?: string }) {
 }
 
 function MatchArtistCardMobile({ group }: { group: MatchArtistGroup }) {
+  const { colors } = useTheme();
   const tone =
     group.topSimilarity >= STRONG_MATCH_THRESHOLD
       ? "text-content-ember"
@@ -650,7 +657,7 @@ function MatchArtistCardMobile({ group }: { group: MatchArtistGroup }) {
           <Text className="font-mono text-[11px] font-semibold uppercase tracking-widest text-content-secondary">
             View portfolio
           </Text>
-          <Icon name="arrow-right" size={14} color={MUTED} />
+          <Icon name="arrow-right" size={14} color={colors.text.muted} />
         </View>
       ) : null}
     </Pressable>
@@ -658,13 +665,14 @@ function MatchArtistCardMobile({ group }: { group: MatchArtistGroup }) {
 }
 
 function WorkThumb({ work }: { work: MatchWork }) {
+  const { colors } = useTheme();
   return (
     <View className="relative aspect-square w-[24%] overflow-hidden bg-surface-overlay">
       {work.imageUrl ? (
         <Image source={{ uri: work.imageUrl }} className="h-full w-full" resizeMode="cover" />
       ) : (
         <View className="h-full w-full items-center justify-center">
-          <Icon name="image" size={16} color={MUTED} />
+          <Icon name="image" size={16} color={colors.text.muted} />
         </View>
       )}
       <View className="absolute bottom-1 right-1 rounded-sm bg-surface-base/85 px-1 py-0.5">
@@ -677,6 +685,7 @@ function WorkThumb({ work }: { work: MatchWork }) {
 }
 
 function SaveStub() {
+  const { colors } = useTheme();
   return (
     <View className="flex-row items-center justify-between gap-3 rounded-sm border border-border-subtle bg-surface-overlay px-4 py-3">
       <Text className="flex-1 text-xs text-content-secondary">
@@ -688,7 +697,7 @@ function SaveStub() {
         }
         className="flex-row shrink-0 items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5"
       >
-        <Icon name="plus" size={13} color="#FAFAFA" />
+        <Icon name="plus" size={13} color={colors.text.primary} />
         <Text className="text-xs font-semibold text-content-primary">Save</Text>
         <Text className="font-mono text-[9px] uppercase tracking-widest text-content-muted">
           Soon

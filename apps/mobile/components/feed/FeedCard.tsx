@@ -11,8 +11,8 @@ import {
 import { ArtworkPlaceholder } from "./ArtworkPlaceholder";
 import { BooksSignal } from "./BooksSignal";
 import { formatPrice, placardLine } from "./format";
+import { useTheme } from "@/providers/theme";
 
-const ICON_MUTED = "#71717A";
 const ICON_ACTIVE = "#7C3AED";
 
 export interface FeedCardProps {
@@ -24,6 +24,7 @@ export interface FeedCardProps {
 
 /** A single feed card — post or flash variant, artwork-forward with a museum placard. */
 export function FeedCard({ item, onOpen, signedIn = true }: FeedCardProps) {
+  const { colors } = useTheme();
   const router = useRouter();
   const toggleLike = useToggleLike();
   const toggleSave = useToggleSave();
@@ -119,7 +120,7 @@ export function FeedCard({ item, onOpen, signedIn = true }: FeedCardProps) {
               <Feather
                 name="heart"
                 size={16}
-                color={item.likedByViewer ? ICON_ACTIVE : ICON_MUTED}
+                color={item.likedByViewer ? ICON_ACTIVE : colors.text.muted}
               />
               <Text className="font-mono text-xs text-content-muted">{item.likeCount}</Text>
             </Pressable>
@@ -135,7 +136,7 @@ export function FeedCard({ item, onOpen, signedIn = true }: FeedCardProps) {
               <Feather
                 name="bookmark"
                 size={16}
-                color={item.savedByViewer ? ICON_ACTIVE : ICON_MUTED}
+                color={item.savedByViewer ? ICON_ACTIVE : colors.text.muted}
               />
             </Pressable>
           </View>

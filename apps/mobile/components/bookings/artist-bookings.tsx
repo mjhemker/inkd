@@ -31,6 +31,7 @@ import {
 } from "@inkd/core";
 import { Badge, Card, EmptyState, Eyebrow, Icon, Tabs, type IconName } from "@inkd/ui/native";
 import { StatusBadge, formatDay, formatTime } from "./shared";
+import { useTheme } from "@/providers/theme";
 
 type View_ = "inbox" | "pipeline" | "calendar";
 
@@ -93,10 +94,11 @@ function StatTile({
   value: string;
   icon: IconName;
 }) {
+  const { colors } = useTheme();
   return (
     <Card padding="md" className="flex-1 gap-2">
       <View className="h-9 w-9 items-center justify-center rounded-lg bg-surface-overlay">
-        <Icon name={icon} size={18} color="#A78BFA" />
+        <Icon name={icon} size={18} color={colors.text.accent} />
       </View>
       <Text className="font-display text-2xl text-content-primary">{value}</Text>
       <Text className="text-sm text-content-secondary">{label}</Text>
@@ -112,6 +114,7 @@ function InboxView({
   requests: BookingRequest[];
   loading: boolean;
 }) {
+  const { colors } = useTheme();
   const open = requests.filter((r) => isRequestOpen(r.status));
   const handled = requests.filter((r) => !isRequestOpen(r.status));
 
@@ -119,7 +122,7 @@ function InboxView({
     return (
       <Card padding="none" className="overflow-hidden">
         <EmptyState
-          icon={<Icon name="message-circle" size={26} color="#71717A" />}
+          icon={<Icon name="message-circle" size={26} color={colors.text.muted} />}
           title="No requests yet"
           description="When a client sends a booking request, it lands here to triage — accept, ask a question, or decline."
         />
@@ -160,6 +163,7 @@ function InboxView({
 }
 
 function RequestRow({ request, muted }: { request: BookingRequest; muted?: boolean }) {
+  const { colors } = useTheme();
   const meta = REQUEST_STATUS_META[request.status];
   return (
     <Card
@@ -172,7 +176,7 @@ function RequestRow({ request, muted }: { request: BookingRequest; muted?: boole
         <Text className="flex-1 font-display text-base text-content-primary" numberOfLines={1}>
           {request.placement || request.description?.slice(0, 44) || "Custom project"}
         </Text>
-        <Icon name="chevron-right" size={18} color="#71717A" />
+        <Icon name="chevron-right" size={18} color={colors.text.muted} />
       </View>
       <View className="flex-row flex-wrap items-center gap-1.5">
         <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
@@ -202,6 +206,7 @@ function PipelineView({
   bookings: Booking[];
   loading: boolean;
 }) {
+  const { colors } = useTheme();
   const columns = useMemo(() => {
     const map = new Map<PipelineStage, Booking[]>();
     for (const stage of PIPELINE_STAGES) map.set(stage.key, []);
@@ -216,7 +221,7 @@ function PipelineView({
     return (
       <Card padding="none" className="overflow-hidden">
         <EmptyState
-          icon={<Icon name="layout-grid" size={26} color="#71717A" />}
+          icon={<Icon name="layout-grid" size={26} color={colors.text.muted} />}
           title="No bookings in the pipeline"
           description="Accept a request from the inbox and it starts moving through here — deposit, scheduled, in progress, healed."
         />
@@ -257,6 +262,7 @@ function PipelineView({
 }
 
 function PipelineCard({ booking }: { booking: Booking }) {
+  const { colors } = useTheme();
   return (
     <Card
       padding="sm"
@@ -271,7 +277,7 @@ function PipelineCard({ booking }: { booking: Booking }) {
         <Text className="font-mono text-[10px] uppercase tracking-widest text-content-muted">
           {formatDay(booking.updated_at)}
         </Text>
-        <Icon name="chevron-right" size={14} color="#71717A" />
+        <Icon name="chevron-right" size={14} color={colors.text.muted} />
       </View>
     </Card>
   );
@@ -297,6 +303,7 @@ type CalendarMode = "week" | "month";
  * selected period.
  */
 function CalendarView({ artistId }: { artistId: string }) {
+  const { colors } = useTheme();
   const [anchor, setAnchor] = useState(() => new Date());
   const [mode, setMode] = useState<CalendarMode>("week");
 
@@ -334,7 +341,7 @@ function CalendarView({ artistId }: { artistId: string }) {
             className="h-9 w-9 items-center justify-center rounded-lg bg-surface-overlay"
             onPress={() => step(-1)}
           >
-            <Icon name="chevron-left" size={18} color="#A1A1AA" />
+            <Icon name="chevron-left" size={18} color={colors.text.secondary} />
           </Pressable>
           <Text className="flex-1 text-center font-display text-lg text-content-primary">
             {label}
@@ -345,7 +352,7 @@ function CalendarView({ artistId }: { artistId: string }) {
             className="h-9 w-9 items-center justify-center rounded-lg bg-surface-overlay"
             onPress={() => step(1)}
           >
-            <Icon name="chevron-right" size={18} color="#A1A1AA" />
+            <Icon name="chevron-right" size={18} color={colors.text.secondary} />
           </Pressable>
         </View>
         <Tabs
@@ -370,7 +377,7 @@ function CalendarView({ artistId }: { artistId: string }) {
       {byDay.length === 0 ? (
         <Card padding="none" className="overflow-hidden">
           <EmptyState
-            icon={<Icon name="calendar" size={26} color="#71717A" />}
+            icon={<Icon name="calendar" size={26} color={colors.text.muted} />}
             title={mode === "week" ? "Nothing this week" : "Nothing this month"}
             description="Sessions you schedule in this period show up here, grouped by day. Use ‹ › to move between periods."
           />

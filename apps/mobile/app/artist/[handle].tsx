@@ -31,6 +31,7 @@ import {
   travelBadges,
 } from "@/lib/format";
 import { ReviewsTab } from "@/components/reviews/reviews-tab";
+import { useTheme } from "@/providers/theme";
 
 const TABS: TabItem[] = [
   { value: "portfolio", label: "Portfolio" },
@@ -41,6 +42,7 @@ const TABS: TabItem[] = [
 ];
 
 export default function ArtistProfileScreen() {
+  const { colors } = useTheme();
   const { handle } = useLocalSearchParams<{ handle: string }>();
   const { data, isLoading } = usePublicArtistProfile(handle);
   const [tab, setTab] = useState("portfolio");
@@ -55,7 +57,7 @@ export default function ArtistProfileScreen() {
           onPress={() => router.back()}
           className="h-9 w-9 items-center justify-center rounded-full active:bg-surface-overlay"
         >
-          <Icon name="chevron-left" size={20} color="#FAFAFA" />
+          <Icon name="chevron-left" size={20} color={colors.text.primary} />
         </Pressable>
         <Text className="font-mono text-xs uppercase tracking-[0.18em] text-content-muted">
           {handle ? `@${handle}` : "Artist"}
@@ -70,7 +72,7 @@ export default function ArtistProfileScreen() {
         </View>
       ) : !data ? (
         <View className="flex-1 items-center justify-center gap-2 px-6">
-          <Icon name="user" size={28} color="#71717A" />
+          <Icon name="user" size={28} color={colors.text.muted} />
           <Text className="font-display text-lg text-content-primary">Profile not found</Text>
           <Text className="text-center text-sm text-content-muted">
             This artist isn&apos;t published yet, or the handle is wrong.
@@ -105,6 +107,7 @@ function Hero({ data }: { data: PublicArtistProfileData }) {
   const primaryLocation = data.studioLocations.find((l) => l.is_primary) ?? data.studioLocations[0];
   const reviewSummary = summarizeReviews(data.reviews.filter((r) => r.is_public));
   const { data: shopBadges } = useArtistShopBadges(artist.id);
+  const { colors } = useTheme();
 
   return (
     <View className="gap-4">
@@ -175,7 +178,7 @@ function Hero({ data }: { data: PublicArtistProfileData }) {
           <Button
             className="flex-1"
             onPress={() => router.push(`/book/${profile.handle}` as never)}
-            leadingIcon={<Icon name="calendar" size={16} color="#FAFAFA" />}
+            leadingIcon={<Icon name="calendar" size={16} color={colors.text.primary} />}
           >
             Request a booking
           </Button>
@@ -183,7 +186,7 @@ function Hero({ data }: { data: PublicArtistProfileData }) {
             variant="secondary"
             className="flex-1"
             onPress={() => router.push({ pathname: "/messages/new", params: { to: profile.id } } as never)}
-            leadingIcon={<Icon name="message-circle" size={16} color="#D4D4D8" />}
+            leadingIcon={<Icon name="message-circle" size={16} color={colors.text.secondary} />}
           >
             Message
           </Button>
@@ -208,6 +211,7 @@ function PortfolioGrid({ data }: { data: PublicArtistProfileData }) {
 }
 
 function PostsGrid({ data }: { data: PublicArtistProfileData }) {
+  const { colors } = useTheme();
   if (data.posts.length === 0) return <EmptyTab icon="image" title="No posts yet" description="Updates from this artist will show up here." />;
   return (
     <View className="flex-row flex-wrap gap-2.5">
@@ -220,7 +224,7 @@ function PostsGrid({ data }: { data: PublicArtistProfileData }) {
               <Image source={{ uri: cover }} className="h-full w-full" resizeMode="cover" />
             ) : (
               <View className="h-full w-full items-center justify-center">
-                <Icon name="image" size={16} color="#71717A" />
+                <Icon name="image" size={16} color={colors.text.muted} />
               </View>
             )}
           </View>
@@ -231,6 +235,7 @@ function PostsGrid({ data }: { data: PublicArtistProfileData }) {
 }
 
 function FlashList({ data }: { data: PublicArtistProfileData }) {
+  const { colors } = useTheme();
   const withItems = data.flashSheets.filter((s) => s.items.length > 0);
   if (withItems.length === 0) return <EmptyTab icon="sparkles" title="No flash available" description="Check back for ready-to-book designs." />;
   return (
@@ -246,7 +251,7 @@ function FlashList({ data }: { data: PublicArtistProfileData }) {
                     <Image source={{ uri: item.image_url }} className="h-full w-full" resizeMode="cover" />
                   ) : (
                     <View className="h-full w-full items-center justify-center">
-                      <Icon name="sparkles" size={16} color="#71717A" />
+                      <Icon name="sparkles" size={16} color={colors.text.muted} />
                     </View>
                   )}
                 </View>
@@ -268,6 +273,7 @@ function FlashList({ data }: { data: PublicArtistProfileData }) {
 }
 
 function InfoTab({ data }: { data: PublicArtistProfileData }) {
+  const { colors } = useTheme();
   const { artist, services, availabilityRules, bookingPolicy, studioLocations } = data;
   return (
     <View className="gap-6">
@@ -304,13 +310,13 @@ function InfoTab({ data }: { data: PublicArtistProfileData }) {
 
       <Card className="gap-3">
         <View className="flex-row items-center gap-2">
-          <Icon name="clock" size={16} color="#A78BFA" />
+          <Icon name="clock" size={16} color={colors.text.accent} />
           <Text className="text-sm font-semibold text-content-primary">Hours</Text>
         </View>
         <Text className="text-sm text-content-secondary">{hoursSummary(availabilityRules)}</Text>
         <View className="h-px bg-border-subtle" />
         <View className="flex-row items-center gap-2">
-          <Icon name="calendar" size={16} color="#A78BFA" />
+          <Icon name="calendar" size={16} color={colors.text.accent} />
           <Text className="text-sm font-semibold text-content-primary">Booking window</Text>
         </View>
         <Badge variant={bookingPolicy?.booking_window === "closed" ? "neutral" : "brand"} size="sm" className="self-start">
@@ -321,7 +327,7 @@ function InfoTab({ data }: { data: PublicArtistProfileData }) {
       {studioLocations.length > 0 && (
         <Card className="gap-3">
           <View className="flex-row items-center gap-2">
-            <Icon name="map-pin" size={16} color="#A78BFA" />
+            <Icon name="map-pin" size={16} color={colors.text.accent} />
             <Text className="text-sm font-semibold text-content-primary">Studio locations</Text>
           </View>
           {studioLocations.map((location) => (
@@ -339,9 +345,10 @@ function InfoTab({ data }: { data: PublicArtistProfileData }) {
 }
 
 function EmptyTab({ icon, title, description }: { icon: IconName; title: string; description: string }) {
+  const { colors } = useTheme();
   return (
     <View className="items-center gap-3 rounded-2xl border border-border-subtle bg-surface-raised/40 px-6 py-16">
-      <Icon name={icon} size={26} color="#71717A" />
+      <Icon name={icon} size={26} color={colors.text.muted} />
       <Text className="font-sans-semibold text-base text-content-primary">{title}</Text>
       <Text className="text-center text-sm text-content-muted">{description}</Text>
     </View>

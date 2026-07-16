@@ -10,6 +10,7 @@ import { useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
+import { useTheme } from "@/providers/theme";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import {
@@ -140,6 +141,7 @@ function BookLoaded({
 }: {
   artist: NonNullable<ReturnType<typeof usePublicArtist>["data"]>;
 }) {
+  const { colors } = useTheme();
   const { toast } = useToast();
   const profileQ = useCurrentProfile();
   const servicesQ = usePublicServices(artist.artist.id);
@@ -318,7 +320,7 @@ function BookLoaded({
       {booksClosed ? (
         <Card padding="lg" className="items-center gap-3">
           <View className="h-12 w-12 items-center justify-center rounded-xl bg-surface-overlay">
-            <Icon name="clock" size={22} color="#71717A" />
+            <Icon name="clock" size={22} color={colors.text.muted} />
           </View>
           <Text className="font-display text-xl text-content-primary">Books are closed right now</Text>
           <Text className="text-center text-content-secondary">
@@ -332,7 +334,7 @@ function BookLoaded({
 
           {!signedIn && (
             <View className="flex-row items-center gap-3 rounded-xl border border-border-subtle bg-surface-raised px-4 py-3">
-              <Icon name="user" size={16} color="#A78BFA" />
+              <Icon name="user" size={16} color={colors.text.accent} />
               <Text className="flex-1 text-sm text-content-secondary">
                 Sign in on the app to send your request — you can still build it now.
               </Text>
@@ -381,7 +383,7 @@ function BookLoaded({
               variant="ghost"
               onPress={() => setStepIdx((i) => Math.max(0, i - 1))}
               disabled={stepIdx === 0}
-              leadingIcon={<Icon name="chevron-left" size={16} color="#D4D4D8" />}
+              leadingIcon={<Icon name="chevron-left" size={16} color={colors.text.secondary} />}
             >
               Back
             </Button>
@@ -394,7 +396,7 @@ function BookLoaded({
                 onPress={submit}
                 loading={submitting}
                 disabled={!signedIn}
-                leadingIcon={<Icon name="check" size={16} color="#FAFAFA" />}
+                leadingIcon={<Icon name="check" size={16} color={colors.text.primary} />}
               >
                 {signedIn ? "Send request" : "Sign in on the app to send"}
               </Button>
@@ -481,6 +483,7 @@ function ServiceCard({
   description?: string | null;
   icon?: boolean;
 }) {
+  const { colors } = useTheme();
   return (
     <Card
       onPress={onPress}
@@ -490,7 +493,7 @@ function ServiceCard({
       <View className="flex-row items-center justify-between">
         <Text className="font-display text-base text-content-primary">{title}</Text>
         {icon ? (
-          <Icon name="sparkles" size={16} color="#A78BFA" />
+          <Icon name="sparkles" size={16} color={colors.text.accent} />
         ) : (
           <View
             className={
@@ -499,7 +502,7 @@ function ServiceCard({
                 : "h-5 w-5 items-center justify-center rounded-full border border-border"
             }
           >
-            {selected && <Icon name="check" size={12} color="#FAFAFA" />}
+            {selected && <Icon name="check" size={12} color={colors.text.primary} />}
           </View>
         )}
       </View>
@@ -518,6 +521,7 @@ function StepDetails({
   patch: (n: Partial<FormState>) => void;
   service: Service | null;
 }) {
+  const { colors } = useTheme();
   return (
     <View className="gap-5">
       <StepHeading
@@ -539,7 +543,7 @@ function StepDetails({
           value={form.placement}
           onChangeText={(v) => patch({ placement: v })}
           placeholder="Inner wrist, wrapping toward the elbow"
-          leadingIcon={<Icon name="map-pin" size={16} color="#A1A1AA" />}
+          leadingIcon={<Icon name="map-pin" size={16} color={colors.text.secondary} />}
         />
       </FormField>
       <FormField label="Approx. size">
@@ -559,7 +563,7 @@ function StepDetails({
           value={form.budgetMin}
           onChangeText={(v) => patch({ budgetMin: v })}
           placeholder="$300"
-          leadingIcon={<Icon name="credit-card" size={16} color="#A1A1AA" />}
+          leadingIcon={<Icon name="credit-card" size={16} color={colors.text.secondary} />}
         />
       </FormField>
       <FormField label="Budget — high">
@@ -568,7 +572,7 @@ function StepDetails({
           value={form.budgetMax}
           onChangeText={(v) => patch({ budgetMax: v })}
           placeholder="$600"
-          leadingIcon={<Icon name="credit-card" size={16} color="#A1A1AA" />}
+          leadingIcon={<Icon name="credit-card" size={16} color={colors.text.secondary} />}
         />
       </FormField>
       <View className="gap-4 rounded-xl border border-border-subtle bg-surface-raised/50 p-4">
@@ -602,6 +606,7 @@ function StepReferences({
   onPickDocument: () => void;
   onDrop: (ref: ReferenceUpload) => void;
 }) {
+  const { colors } = useTheme();
   const images = form.references.filter((r) => r.kind === "image");
   const docs = form.references.filter((r) => r.kind === "document");
   return (
@@ -628,7 +633,7 @@ function StepReferences({
                 onPress={onPickImages}
                 disabled={!signedIn}
                 loading={uploading}
-                leadingIcon={<Icon name="image" size={16} color="#FAFAFA" />}
+                leadingIcon={<Icon name="image" size={16} color={colors.text.primary} />}
               >
                 Add reference images
               </Button>
@@ -638,7 +643,7 @@ function StepReferences({
                 variant="outline"
                 onPress={onPickDocument}
                 disabled={!signedIn}
-                leadingIcon={<Icon name="plus" size={16} color="#D4D4D8" />}
+                leadingIcon={<Icon name="plus" size={16} color={colors.text.secondary} />}
               >
                 Add a PDF
               </Button>
@@ -661,7 +666,7 @@ function StepReferences({
                   key={r.path}
                   className="flex-row items-center gap-3 rounded-lg border border-border-subtle bg-surface-raised px-3 py-2"
                 >
-                  <Icon name="image" size={16} color="#71717A" />
+                  <Icon name="image" size={16} color={colors.text.muted} />
                   <Text className="flex-1 text-sm text-content-secondary" numberOfLines={1}>
                     {r.name}
                   </Text>
@@ -671,7 +676,7 @@ function StepReferences({
                     accessibilityLabel={`Remove ${r.name}`}
                     hitSlop={6}
                   >
-                    <Icon name="x" size={16} color="#71717A" />
+                    <Icon name="x" size={16} color={colors.text.muted} />
                   </Pressable>
                 </View>
               ))}
@@ -721,10 +726,11 @@ function StepReferences({
  * filename chip (no live thumbnail) rather than fetching a signed URL per
  * tile, mirroring apps/web's RefTile. */
 function RefImageTile({ item, onRemove }: { item: ReferenceUpload; onRemove: () => void }) {
+  const { colors } = useTheme();
   return (
     <View className="h-24 w-24 overflow-hidden rounded-xl border border-border-subtle bg-surface-overlay">
       <View className="h-full w-full items-center justify-center">
-        <Icon name="image" size={22} color="#71717A" />
+        <Icon name="image" size={22} color={colors.text.muted} />
       </View>
       <View className="absolute inset-x-0 bottom-0 bg-surface-base/80 px-1.5 py-1">
         <Text className="text-[10px] text-content-muted" numberOfLines={1}>
@@ -737,7 +743,7 @@ function RefImageTile({ item, onRemove }: { item: ReferenceUpload; onRemove: () 
         accessibilityLabel={`Remove ${item.name}`}
         className="absolute right-1 top-1 h-6 w-6 items-center justify-center rounded-full bg-surface-base/80"
       >
-        <Icon name="x" size={13} color="#A1A1AA" />
+        <Icon name="x" size={13} color={colors.text.secondary} />
       </Pressable>
     </View>
   );
@@ -951,10 +957,11 @@ function LoadingBody() {
 }
 
 function NotFoundBody({ handle }: { handle: string }) {
+  const { colors } = useTheme();
   return (
     <Card padding="lg" className="items-center gap-3">
       <View className="h-12 w-12 items-center justify-center rounded-xl bg-surface-overlay">
-        <Icon name="search" size={22} color="#71717A" />
+        <Icon name="search" size={22} color={colors.text.muted} />
       </View>
       <Text className="font-display text-xl text-content-primary">No artist at @{handle}</Text>
       <Text className="text-center text-content-secondary">

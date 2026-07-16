@@ -1,5 +1,6 @@
 import { View } from "react-native";
 import { Icon, cx } from "@inkd/ui/native";
+import { useTheme } from "@/providers/theme";
 
 // A small set of tasteful near-black / deep-violet tones — no CSS gradients on
 // RN, so a missing-artwork card gets a deterministic solid tone (picked from
@@ -21,10 +22,11 @@ export interface ArtworkPlaceholderProps {
 
 /** Deterministic placeholder for a feed card with no image. */
 export function ArtworkPlaceholder({ id, className }: ArtworkPlaceholderProps) {
+  const { colors } = useTheme();
   return (
     <View className={cx("items-center justify-center overflow-hidden", toneForId(id), className)}>
       <View className="absolute inset-x-0 top-0 h-1 bg-brand" />
-      <Icon name="image" size={28} color="#52525B" />
+      <Icon name="image" size={28} color={colors.text.muted} />
     </View>
   );
 }

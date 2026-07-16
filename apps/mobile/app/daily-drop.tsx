@@ -20,10 +20,12 @@ import { ScreenHeader } from "@/components/ScreenHeader";
 import { DailyDropCard } from "@/components/daily-drop/DailyDropCard";
 import { ArtworkPlaceholder } from "@/components/feed/ArtworkPlaceholder";
 import { placardLine } from "@/components/feed/format";
+import { useTheme } from "@/providers/theme";
 
 const HISTORY_LIMIT = 14;
 
 export default function DailyDropScreen() {
+  const { colors } = useTheme();
   const { data: profile } = useCurrentProfile();
   const signedIn = Boolean(profile);
   const todayQ = useTodayDrop();
@@ -51,7 +53,7 @@ export default function DailyDropScreen() {
           <DailyDropCard card={drop} variant="full" signedIn={signedIn} />
         ) : (
           <EmptyState
-            icon={<Icon name="sparkles" size={28} color="#71717A" />}
+            icon={<Icon name="sparkles" size={28} color={colors.text.muted} />}
             title="Your first drop lands tomorrow morning"
             description="INKD is still getting a feel for your taste — follow a few artists and like some posts to help it along."
           />
@@ -97,6 +99,7 @@ function BackLink() {
 
 /** A lighter row for a past drop — thumbnail, reason, byline, date. */
 function DropHistoryRow({ card }: { card: DailyDropCardData }) {
+  const { colors } = useTheme();
   const router = useRouter();
   const imageUrl = card.subjectType === "post" ? card.post?.coverUrl : card.flash?.imageUrl;
   const handle = card.artist?.handle ?? null;
@@ -139,7 +142,7 @@ function DropHistoryRow({ card }: { card: DailyDropCardData }) {
         accessibilityLabel="View drop"
         onPress={() => (handle ? router.push(`/artist/${handle}` as never) : undefined)}
       >
-        <Icon name="chevron-right" size={16} color="#71717A" />
+        <Icon name="chevron-right" size={16} color={colors.text.muted} />
       </Pressable>
     </Card>
   );

@@ -4,12 +4,13 @@ import { Badge, Card, Icon } from "@inkd/ui/native";
 import { useAgentActions, useCurrentArtistProfile } from "@inkd/core/hooks";
 
 import { STATUS_META, actionTypeMeta, formatRelative } from "@/lib/aiStaff";
-import { AI_COLORS } from "./shared";
+import { useAiColors } from "./shared";
 import { StaffNameplate } from "./StaffNameplate";
 
 /** Dashboard "AI staff activity" card — pending count + latest, taps into
  * /studio/ai. Degrades to a calm prompt when there's nothing (or no DB). */
 export function AiStaffDashboardCard() {
+  const AI_COLORS = useAiColors();
   const { data: artist } = useCurrentArtistProfile();
   const actionsQ = useAgentActions(artist?.id, { limit: 8 });
   const actions = actionsQ.data ?? [];

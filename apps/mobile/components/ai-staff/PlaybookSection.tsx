@@ -21,12 +21,13 @@ import {
 } from "@inkd/core/hooks";
 
 import { PLAYBOOK_CATEGORY_LABEL } from "@/lib/aiStaff";
-import { AI_COLORS } from "./shared";
+import { useAiColors } from "./shared";
 
 const CATEGORIES = Object.keys(PLAYBOOK_CATEGORY_LABEL) as PlaybookCategory[];
 
 /** Playbook CRUD — the honest knowledge base the AI staff answer from. */
 export function PlaybookSection({ artistId }: { artistId: string }) {
+  const AI_COLORS = useAiColors();
   const { toast } = useToast();
   const listQ = usePlaybooks(artistId);
   const create = useCreatePlaybook(artistId);

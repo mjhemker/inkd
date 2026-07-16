@@ -14,6 +14,7 @@ import { Button, Chip, EmptyState, Icon, Skeleton, ToastProvider } from "@inkd/u
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { NotificationListItem } from "@/components/notifications/NotificationListItem";
 import { NOTIFICATION_FILTER_TYPES, notificationKindMeta } from "@/lib/notifications";
+import { useTheme } from "@/providers/theme";
 
 const PAGE_SIZE = 20;
 
@@ -28,6 +29,7 @@ export default function NotificationsScreen() {
 }
 
 function NotificationsScreenContent() {
+  const { colors } = useTheme();
   const { data: profile } = useCurrentProfile();
   const profileId = profile?.id;
 
@@ -78,7 +80,7 @@ function NotificationsScreenContent() {
                 onPress={() => router.push("/notification-settings")}
                 className="h-9 w-9 items-center justify-center rounded-sm border border-border-subtle"
               >
-                <Icon name="settings" size={16} color="#A1A1AA" />
+                <Icon name="settings" size={16} color={colors.text.secondary} />
               </Pressable>
             </View>
           }
@@ -94,7 +96,7 @@ function NotificationsScreenContent() {
               <Chip
                 key={type}
                 selected={filter === type}
-                leadingIcon={<Icon name={meta.icon} size={14} color={filter === type ? "#0A0A0B" : "#A1A1AA"} />}
+                leadingIcon={<Icon name={meta.icon} size={14} color={filter === type ? "#0A0A0B" : colors.text.secondary} />}
                 onPress={() => setFilter(type)}
               >
                 {meta.label}
@@ -111,7 +113,7 @@ function NotificationsScreenContent() {
           </View>
         ) : notifications.length === 0 ? (
           <EmptyState
-            icon={<Icon name="bell" size={26} color="#71717A" />}
+            icon={<Icon name="bell" size={26} color={colors.text.muted} />}
             title="No notifications yet"
             description="Booking activity, payments, reviews, and messages will show up here as they happen."
           />

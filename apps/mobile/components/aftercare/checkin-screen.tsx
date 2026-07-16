@@ -21,6 +21,7 @@ import {
   type AftercareCheckin,
 } from "@inkd/core";
 import { Button, Card, Eyebrow, Icon, Spinner, TextArea, Toggle, useToast } from "@inkd/ui/native";
+import { useTheme } from "@/providers/theme";
 
 const RATINGS = [
   { value: 1, label: "Rough" },
@@ -31,6 +32,7 @@ const RATINGS = [
 ];
 
 export function AftercareCheckinScreen({ checkinId }: { checkinId: string }) {
+  const { colors } = useTheme();
   const { toast } = useToast();
   const client = useInkdClient();
   const { data: profile } = useCurrentProfile();
@@ -250,7 +252,7 @@ export function AftercareCheckinScreen({ checkinId }: { checkinId: string }) {
             {uploading ? (
               <Spinner size="small" />
             ) : (
-              <Icon name="image" size={18} color="#D4D4D8" />
+              <Icon name="image" size={18} color={colors.text.secondary} />
             )}
             <Text className="text-sm text-content-secondary">
               {uploading ? "Uploading…" : "Choose a photo"}

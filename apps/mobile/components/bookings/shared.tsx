@@ -8,6 +8,7 @@ import {
   type StatusTone,
 } from "@inkd/core";
 import { Badge, Icon, type BadgeVariant } from "@inkd/ui/native";
+import { useTheme } from "@/providers/theme";
 
 /** Our StatusTone tokens line up 1:1 with the design-system Badge variants. */
 export function StatusBadge({
@@ -60,6 +61,7 @@ export function toRefs(value: unknown): ReferenceUpload[] {
 
 /** Gallery of reference uploads — resolves short-lived signed URLs on mount. */
 export function ReferencesGallery({ refs }: { refs: ReferenceUpload[] }) {
+  const { colors } = useTheme();
   const client = useInkdClient();
   const paths = refs.map((r) => r.path);
   const urlsQ = useQuery({
@@ -86,7 +88,7 @@ export function ReferencesGallery({ refs }: { refs: ReferenceUpload[] }) {
               <Image source={{ uri: url }} className="h-full w-full" resizeMode="cover" />
             ) : (
               <View className="h-full w-full items-center justify-center gap-1.5 p-2">
-                <Icon name="credit-card" size={20} color="#A1A1AA" />
+                <Icon name="credit-card" size={20} color={colors.text.secondary} />
                 <Text
                   className="text-center text-[10px] text-content-muted"
                   numberOfLines={1}
@@ -127,10 +129,11 @@ export function DetailSection({
 
 /** Generic "not found" state for detail screens. */
 export function NotFound({ title, body }: { title: string; body: string }) {
+  const { colors } = useTheme();
   return (
     <View className="gap-4 items-center rounded-xl border border-border-subtle bg-surface-raised p-6">
       <View className="h-12 w-12 items-center justify-center rounded-xl bg-surface-overlay">
-        <Icon name="search" size={22} color="#71717A" />
+        <Icon name="search" size={22} color={colors.text.muted} />
       </View>
       <Text className="text-center font-display text-xl text-content-primary">{title}</Text>
       <Text className="text-center text-sm text-content-secondary">{body}</Text>

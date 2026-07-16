@@ -14,7 +14,7 @@ import {
 } from "@inkd/core";
 
 import { actionTypeMeta, formatRelative, formatSlot } from "@/lib/aiStaff";
-import { AI_COLORS, ProvenanceBlock, TierStamp } from "./shared";
+import { useAiColors, ProvenanceBlock, TierStamp } from "./shared";
 import { StaffNameplate } from "./StaffNameplate";
 
 /**
@@ -33,6 +33,7 @@ export function ApprovalCard({
   onReject: (reason?: string) => void;
   busy?: boolean;
 }) {
+  const AI_COLORS = useAiColors();
   const meta = actionTypeMeta(action.action_type);
   const draft = action.contract.draft_text ?? "";
   const slots = action.contract.proposed_slots ?? [];

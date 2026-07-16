@@ -11,6 +11,7 @@ import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, EmptyState, Icon, Spinner } from "@inkd/ui/native";
 import { useCurrentArtistProfile, useCurrentProfile } from "@inkd/core/hooks";
+import { useTheme } from "@/providers/theme";
 
 export function ArtistOnly({
   children,
@@ -19,6 +20,7 @@ export function ArtistOnly({
   children: ReactNode;
   requireOnboarding?: boolean;
 }) {
+  const { colors } = useTheme();
   const { data: profile, isLoading: pLoading } = useCurrentProfile();
   const { data: artist, isLoading: aLoading } = useCurrentArtistProfile();
 
@@ -35,7 +37,7 @@ export function ArtistOnly({
       <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
         <View className="flex-1 justify-center px-6">
           <EmptyState
-            icon={<Icon name="shield" size={32} color="#71717A" />}
+            icon={<Icon name="shield" size={32} color={colors.text.muted} />}
             title="Artist account required"
             description="This is part of the studio tools for tattoo artists. Your account is set up as a client."
             action={
@@ -54,7 +56,7 @@ export function ArtistOnly({
       <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
         <View className="flex-1 justify-center px-6">
           <EmptyState
-            icon={<Icon name="sparkles" size={32} color="#A78BFA" />}
+            icon={<Icon name="sparkles" size={32} color={colors.text.accent} />}
             title="Finish setting up your studio"
             description="Complete onboarding to unlock your dashboard, AI staff, and studio tools."
             action={

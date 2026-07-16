@@ -5,7 +5,7 @@ import { Badge, Card, CardPlacard, Icon } from "@inkd/ui/native";
 import type { AgentActionView } from "@inkd/core";
 
 import { STATUS_META, actionTypeMeta, formatRelative } from "@/lib/aiStaff";
-import { AI_COLORS, ProvenanceBlock, TierStamp } from "./shared";
+import { useAiColors, ProvenanceBlock, TierStamp } from "./shared";
 import { StaffNameplate } from "./StaffNameplate";
 
 function deepLink(action: AgentActionView): { href: string; label: string } | null {
@@ -26,6 +26,7 @@ export function ActivityRow({
   action: AgentActionView;
   highlighted?: boolean;
 }) {
+  const AI_COLORS = useAiColors();
   const meta = actionTypeMeta(action.action_type);
   const statusMeta = STATUS_META[action.status];
   const link = deepLink(action);

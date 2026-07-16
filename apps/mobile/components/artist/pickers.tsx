@@ -20,6 +20,7 @@ import {
   cx,
   type SelectSize,
 } from "@inkd/ui/native";
+import { useTheme } from "@/providers/theme";
 
 export interface PickerOption {
   label: string;
@@ -33,6 +34,7 @@ interface OptionListProps {
 }
 
 function OptionList({ options, value, onSelect }: OptionListProps) {
+  const { colors } = useTheme();
   return (
     <View className="gap-0.5 pb-2">
       {options.map((o) => {
@@ -52,7 +54,7 @@ function OptionList({ options, value, onSelect }: OptionListProps) {
             >
               {o.label}
             </Text>
-            {active ? <Icon name="check" size={16} color="#A78BFA" /> : null}
+            {active ? <Icon name="check" size={16} color={colors.text.accent} /> : null}
           </Pressable>
         );
       })}

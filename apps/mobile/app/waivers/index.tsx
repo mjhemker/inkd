@@ -43,6 +43,7 @@ import {
 } from "@inkd/core/waivers";
 
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { useTheme } from "@/providers/theme";
 
 type StateTab = "MD" | "PA" | "GENERIC";
 
@@ -86,6 +87,7 @@ export default function WaiversScreen() {
 }
 
 function WaiversScreenBody() {
+  const { colors } = useTheme();
   const { toast } = useToast();
   const { data: artistProfile, isLoading: artistLoading } = useCurrentArtist();
   const artistId = artistProfile?.id ?? "";
@@ -165,7 +167,7 @@ function WaiversScreenBody() {
       <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
         <View className="flex-1 px-6 py-8">
           <EmptyState
-            icon={<Icon name="shield" size={32} color="#71717A" />}
+            icon={<Icon name="shield" size={32} color={colors.text.muted} />}
             title="Artist profile required"
             description="Waiver templates are managed per artist workspace. Finish onboarding to set one up."
           />
@@ -256,7 +258,7 @@ function WaiversScreenBody() {
             </Card>
           ) : (
             <EmptyState
-              icon={<Icon name="shield" size={24} color="#71717A" />}
+              icon={<Icon name="shield" size={24} color={colors.text.muted} />}
               title="No template available"
               description="INKD hasn't published a template for this jurisdiction yet."
             />
@@ -271,7 +273,7 @@ function WaiversScreenBody() {
             <Skeleton className="h-32 w-full" />
           ) : !signedWaivers || signedWaivers.length === 0 ? (
             <EmptyState
-              icon={<Icon name="check" size={24} color="#71717A" />}
+              icon={<Icon name="check" size={24} color={colors.text.muted} />}
               title="No signed waivers yet"
               description="Once a client signs, the immutable record shows up here."
             />

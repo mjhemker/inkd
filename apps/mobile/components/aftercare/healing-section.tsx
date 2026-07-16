@@ -30,6 +30,7 @@ import {
   useToast,
   type BadgeVariant,
 } from "@inkd/ui/native";
+import { useTheme } from "@/providers/theme";
 
 export interface HealingSectionProps {
   bookingId: string;
@@ -44,6 +45,7 @@ export interface HealingSectionProps {
 }
 
 export function HealingSection(props: HealingSectionProps) {
+  const { colors } = useTheme();
   const { data, isLoading } = useBookingAftercare(props.bookingId);
   const checkins = data ?? [];
 
@@ -57,7 +59,7 @@ export function HealingSection(props: HealingSectionProps) {
   if (checkins.length === 0) {
     return (
       <Card padding="lg" className="flex-row items-center gap-3">
-        <Icon name="clock" size={18} color="#D4D4D8" />
+        <Icon name="clock" size={18} color={colors.text.secondary} />
         <Text className="flex-1 text-sm text-content-secondary">
           Healing check-ins (3 days, 1 week, 3 weeks) are scheduled automatically once a session
           is marked complete.
@@ -88,6 +90,7 @@ function HealingCheckinCard({
   clientProfileId,
   clientName,
 }: { checkin: AftercareCheckin } & HealingSectionProps) {
+  const { colors } = useTheme();
   const { toast } = useToast();
   const shareState = deriveShareState(checkin);
   const photoQ = useAftercarePhotoUrl(checkin.photo_path);
@@ -193,7 +196,7 @@ function HealingCheckinCard({
                 size="sm"
                 variant="secondary"
                 onPress={() => router.push(`/messages/new?to=${clientProfileId}`)}
-                leadingIcon={<Icon name="message-circle" size={15} color="#FAFAFA" />}
+                leadingIcon={<Icon name="message-circle" size={15} color={colors.text.primary} />}
               >
                 Request touch-up
               </Button>

@@ -26,6 +26,7 @@ import {
 import { CLASSIFICATIONS, STATE_OPTIONS } from "@inkd/core";
 import { PickerSelect } from "./pickers";
 import type { EditorHandle } from "./types";
+import { useTheme } from "@/providers/theme";
 
 interface LocationDraft {
   name: string;
@@ -52,6 +53,7 @@ export interface LocationsEditorProps {
 
 export const LocationsEditor = forwardRef<EditorHandle, LocationsEditorProps>(
   function LocationsEditor({ artist, variant = "onboarding" }, ref) {
+    const { colors } = useTheme();
     const { toast } = useToast();
     const { data: locations } = useStudioLocations(artist.id);
     const { create, remove } = useStudioLocationMutations(artist.id);
@@ -141,7 +143,7 @@ export const LocationsEditor = forwardRef<EditorHandle, LocationsEditorProps>(
               <Button
                 size="sm"
                 variant="outline"
-                leadingIcon={<Icon name="plus" size={15} color="#FAFAFA" />}
+                leadingIcon={<Icon name="plus" size={15} color={colors.text.primary} />}
                 onPress={() => setAdding(true)}
               >
                 Add location
@@ -154,7 +156,7 @@ export const LocationsEditor = forwardRef<EditorHandle, LocationsEditorProps>(
               {locations.map((loc: StudioLocation) => (
                 <Card key={loc.id} padding="sm" className="flex-row items-center gap-3">
                   <View className="h-9 w-9 items-center justify-center rounded-lg bg-surface-overlay">
-                    <Icon name="map-pin" size={16} color="#A78BFA" />
+                    <Icon name="map-pin" size={16} color={colors.text.accent} />
                   </View>
                   <View className="flex-1">
                     <View className="flex-row items-center gap-2">
@@ -178,7 +180,7 @@ export const LocationsEditor = forwardRef<EditorHandle, LocationsEditorProps>(
                     accessibilityLabel="Remove location"
                     className="h-8 w-8 items-center justify-center rounded-lg"
                   >
-                    <Icon name="x" size={16} color="#71717A" />
+                    <Icon name="x" size={16} color={colors.text.muted} />
                   </Pressable>
                 </Card>
               ))}

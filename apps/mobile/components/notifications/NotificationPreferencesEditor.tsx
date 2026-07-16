@@ -23,6 +23,7 @@ import {
   getPushPermissionStatus,
   registerForPushNotificationsAsync,
 } from "@/lib/push";
+import { useTheme } from "@/providers/theme";
 
 const CHANNELS: { key: keyof ChannelPrefs; label: string }[] = [
   { key: "in_app", label: "In-app" },
@@ -31,6 +32,7 @@ const CHANNELS: { key: keyof ChannelPrefs; label: string }[] = [
 ];
 
 export function NotificationPreferencesEditor() {
+  const { colors } = useTheme();
   const { data: profile } = useCurrentProfile();
   const userId = profile?.id;
   const prefsQ = useNotificationPreferences(userId);
@@ -109,7 +111,7 @@ export function NotificationPreferencesEditor() {
               pushGranted ? "bg-surface-ember" : "bg-surface-overlay"
             }`}
           >
-            <Icon name="bell" size={17} color={pushGranted ? "#0A0A0B" : "#A1A1AA"} />
+            <Icon name="bell" size={17} color={pushGranted ? "#0A0A0B" : colors.text.secondary} />
           </View>
           <View className="flex-1">
             <Text className="text-sm font-sans-semibold text-content-primary">
