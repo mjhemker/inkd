@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Avatar, Icon, buttonVariants, cx } from "@inkd/ui/web";
+import { useCurrentProfile } from "@inkd/core/hooks";
 import {
   artistNav,
   isActivePath,
@@ -11,6 +12,13 @@ import {
   type NavItem,
 } from "@/lib/nav";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+
+/** The identity rendered in the sidebar footer. */
+export interface ShellIdentity {
+  name: string;
+  handle: string | null;
+  avatarUrl: string | null;
+}
 
 /**
  * INKD authenticated app shell.
@@ -25,19 +33,36 @@ export function AppShell({
   currentPath,
   title,
   action,
+  identity: identityOverride,
+  forceArtistNav,
 }: {
   children: ReactNode;
   /** Override active-path detection (used by the /dev/shell preview). */
   currentPath?: string;
   title?: string;
   action?: ReactNode;
+  /** Override the footer identity (dev/preview harnesses only). */
+  identity?: ShellIdentity;
+  /** Force the artist "Studio" nav group on (dev/preview harnesses only). */
+  forceArtistNav?: boolean;
 }) {
   const pathname = usePathname();
   const active = currentPath ?? pathname;
 
+  // Role + identity come from the signed-in profile so nothing leaks another
+  // user's data. The Studio group only renders for artists; the footer shows the
+  // real account. Overrides exist purely for the unauthenticated dev harness.
+  const { data: profile } = useCurrentProfile();
+  const isArtist = forceArtistNav ?? Boolean(profile?.is_artist);
+  const identity: ShellIdentity = identityOverride ?? {
+    name: profile?.display_name || profile?.handle || "Your account",
+    handle: profile?.handle ?? null,
+    avatarUrl: profile?.avatar_url ?? null,
+  };
+
   return (
     <div className="min-h-dvh bg-surface-base text-content-primary">
-      <Sidebar active={active} />
+      <Sidebar active={active} isArtist={isArtist} identity={identity} />
 
       <div className="md:pl-64">
         <TopBar title={title} action={action} />
@@ -72,7 +97,15 @@ function BrandMark({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function Sidebar({ active }: { active: string }) {
+function Sidebar({
+  active,
+  isArtist,
+  identity,
+}: {
+  active: string;
+  isArtist: boolean;
+  identity: ShellIdentity;
+}) {
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-border-subtle bg-surface-base md:flex">
       <div className="flex h-16 items-center px-5">
@@ -86,14 +119,18 @@ function Sidebar({ active }: { active: string }) {
           ))}
         </ul>
 
-        <p className="px-3 pb-2 pt-6 font-mono text-[11px] uppercase tracking-[0.2em] text-content-muted">
-          Studio
-        </p>
-        <ul className="flex flex-col gap-0.5">
-          {artistNav.map((item) => (
-            <SidebarLink key={item.href} item={item} active={active} />
-          ))}
-        </ul>
+        {isArtist && (
+          <>
+            <p className="px-3 pb-2 pt-6 font-mono text-[11px] uppercase tracking-[0.2em] text-content-muted">
+              Studio
+            </p>
+            <ul className="flex flex-col gap-0.5">
+              {artistNav.map((item) => (
+                <SidebarLink key={item.href} item={item} active={active} />
+              ))}
+            </ul>
+          </>
+        )}
       </nav>
 
       <div className="border-t border-border-subtle p-3">
@@ -101,14 +138,20 @@ function Sidebar({ active }: { active: string }) {
           href="/profile"
           className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-surface-raised"
         >
-          <Avatar name="Jayden Cole" size="sm" />
+          <Avatar
+            src={identity.avatarUrl ?? undefined}
+            name={identity.name}
+            size="sm"
+          />
           <span className="flex min-w-0 flex-col">
             <span className="truncate text-sm font-semibold text-content-primary">
-              Jayden Cole
+              {identity.name}
             </span>
-            <span className="truncate font-mono text-xs text-content-muted">
-              @jayden.ink
-            </span>
+            {identity.handle && (
+              <span className="truncate font-mono text-xs text-content-muted">
+                @{identity.handle}
+              </span>
+            )}
           </span>
         </Link>
       </div>
