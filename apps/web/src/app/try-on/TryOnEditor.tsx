@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge, Button, Eyebrow, Icon, Slider, Toggle, cx } from "@inkd/ui/web";
 import {
   DEFAULT_TRYON_TRANSFORM,
@@ -13,6 +14,7 @@ import {
   type TryOnTransform,
 } from "@inkd/core";
 import {
+  createWarpCache,
   drawComposite,
   downloadBlob,
   exportComposite,
@@ -32,6 +34,7 @@ export function TryOnEditor({
   /** Dev-harness only: preload a sample body photo. Never set in production. */
   initialBody?: string | null;
 }) {
+  const router = useRouter();
   const [body, setBody] = useState<LoadedImage | null>(null);
   const [design, setDesign] = useState<LoadedImage | null>(null);
   const [transform, setTransform] = useState<TryOnTransform>(DEFAULT_TRYON_TRANSFORM);
@@ -39,8 +42,25 @@ export function TryOnEditor({
   const [status, setStatus] = useState<Status>(null);
   const [busy, setBusy] = useState(false);
 
+  // Real history-back when we got here from inside the app (this also lets
+  // a "Try it on" launched from a post's overlay land back on that same
+  // post — Next's client router cache restores the prior page's component
+  // state, including an open post overlay, on a true back navigation). Falls
+  // back to /feed when there's nothing to go back to (a shared /try-on link
+  // opened directly, or the standalone dev harness).
+  const onBack = useCallback(() => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/feed");
+    }
+  }, [router]);
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const dragRef = useRef<{ px: number; py: number; tx: number; ty: number } | null>(null);
+  // Persists across redraws so the cylindrical wrap only re-slices when the
+  // wrap amount or source design changes, not on every drag/scale/opacity tick.
+  const warpCacheRef = useRef(createWarpCache());
 
   const patch = useCallback(
     (next: Partial<TryOnTransform>) =>
@@ -95,6 +115,7 @@ export function TryOnEditor({
     if (!ctx) return;
     drawComposite(ctx, size.width, size.height, body, design, transform, {
       showDesign: !showBefore,
+      warpCache: warpCacheRef.current,
     });
   }, [body, design, transform, showBefore, size]);
 
@@ -191,7 +212,7 @@ export function TryOnEditor({
 
   return (
     <div className="min-h-dvh bg-surface-base text-content-primary">
-      <Header />
+      <Header onBack={onBack} />
 
       <main className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[1.3fr_1fr] lg:px-6 lg:py-8">
         {/* Stage */}
@@ -291,10 +312,10 @@ export function TryOnEditor({
             />
             <Slider
               label="Wrap (limb curve)"
-              value={transform.skewX}
-              onValueChange={(v) => patch({ skewX: v })}
-              min={TRYON_LIMITS.skewMin}
-              max={TRYON_LIMITS.skewMax}
+              value={transform.wrap}
+              onValueChange={(v) => patch({ wrap: v })}
+              min={TRYON_LIMITS.wrapMin}
+              max={TRYON_LIMITS.wrapMax}
               step={1}
             />
             <Slider
@@ -353,10 +374,18 @@ export function TryOnEditor({
   );
 }
 
-function Header() {
+function Header({ onBack }: { onBack: () => void }) {
   return (
     <header className="border-b border-border-subtle">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-6 lg:px-6">
+        <button
+          type="button"
+          onClick={onBack}
+          className="-ml-1.5 inline-flex w-fit items-center gap-1 rounded-lg px-1.5 py-1 text-sm font-semibold text-content-secondary transition-colors hover:text-content-primary"
+        >
+          <Icon name="chevron-left" size={18} />
+          Back
+        </button>
         <Eyebrow>INKD · fit check</Eyebrow>
         <h1 className="font-display text-3xl font-extrabold tracking-tight lg:text-4xl">
           {TRYON_TITLE}
