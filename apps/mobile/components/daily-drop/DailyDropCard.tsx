@@ -22,6 +22,8 @@ export interface DailyDropCardProps {
   /** "feed" renders compactly atop the discovery feed; "full" is the fuller
    * treatment on the dedicated Daily Drop screen. */
   variant?: "feed" | "full";
+  /** Like/save require an account; web disables these when signed out. */
+  signedIn?: boolean;
 }
 
 /**
@@ -31,7 +33,7 @@ export interface DailyDropCardProps {
  * once when a real card first renders, and `clickedAt` when the artwork or
  * artist link is opened.
  */
-export function DailyDropCard({ card, variant = "feed" }: DailyDropCardProps) {
+export function DailyDropCard({ card, variant = "feed", signedIn = true }: DailyDropCardProps) {
   const router = useRouter();
   const markSeen = useMarkDropSeen();
   const markClicked = useMarkDropClicked();
@@ -166,11 +168,15 @@ export function DailyDropCard({ card, variant = "feed" }: DailyDropCardProps) {
                       on: !card.post!.likedByViewer,
                     })
                   }
+                  disabled={!signedIn}
                   hitSlop={8}
                   accessibilityRole="button"
                   accessibilityLabel={card.post.likedByViewer ? "Unlike this post" : "Like this post"}
-                  accessibilityState={{ selected: card.post.likedByViewer }}
-                  className="h-9 w-9 items-center justify-center rounded-sm border border-border-subtle"
+                  accessibilityState={{ selected: card.post.likedByViewer, disabled: !signedIn }}
+                  className={cx(
+                    "h-9 w-9 items-center justify-center rounded-sm border border-border-subtle",
+                    !signedIn && "opacity-40",
+                  )}
                 >
                   <Feather
                     name="heart"
@@ -187,11 +193,15 @@ export function DailyDropCard({ card, variant = "feed" }: DailyDropCardProps) {
                       on: !card.post!.savedByViewer,
                     })
                   }
+                  disabled={!signedIn}
                   hitSlop={8}
                   accessibilityRole="button"
                   accessibilityLabel={card.post.savedByViewer ? "Remove from saved" : "Save this post"}
-                  accessibilityState={{ selected: card.post.savedByViewer }}
-                  className="h-9 w-9 items-center justify-center rounded-sm border border-border-subtle"
+                  accessibilityState={{ selected: card.post.savedByViewer, disabled: !signedIn }}
+                  className={cx(
+                    "h-9 w-9 items-center justify-center rounded-sm border border-border-subtle",
+                    !signedIn && "opacity-40",
+                  )}
                 >
                   <Feather
                     name="bookmark"

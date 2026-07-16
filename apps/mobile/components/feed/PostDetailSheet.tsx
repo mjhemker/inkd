@@ -7,6 +7,7 @@ import {
   Button,
   Divider,
   Sheet,
+  cx,
 } from "@inkd/ui/native";
 import {
   useToggleFollow,
@@ -25,10 +26,12 @@ const ICON_ACTIVE = "#7C3AED";
 export interface PostDetailSheetProps {
   item: FeedItem | null;
   onClose: () => void;
+  /** Follow/like/save require an account; web disables these when signed out. */
+  signedIn?: boolean;
 }
 
 /** Full lightbox for a tapped feed card — artwork, caption, artist row, actions. */
-export function PostDetailSheet({ item, onClose }: PostDetailSheetProps) {
+export function PostDetailSheet({ item, onClose, signedIn = true }: PostDetailSheetProps) {
   const router = useRouter();
   const { height: windowHeight } = useWindowDimensions();
   const toggleLike = useToggleLike();
@@ -135,6 +138,7 @@ export function PostDetailSheet({ item, onClose }: PostDetailSheetProps) {
               <Button
                 size="sm"
                 variant={item.artist.isFollowedByViewer ? "secondary" : "primary"}
+                disabled={!signedIn}
                 onPress={() =>
                   toggleFollow.mutate({
                     artistId: item.artist.artistId,
@@ -154,19 +158,22 @@ export function PostDetailSheet({ item, onClose }: PostDetailSheetProps) {
               <View className="flex-row items-center gap-4 pt-1">
                 <Pressable
                   onPress={() => toggleLike.mutate({ postId: item.id, liked: !item.likedByViewer })}
+                  disabled={!signedIn}
                   accessibilityRole="button"
                   accessibilityLabel={item.likedByViewer ? "Unlike this post" : "Like this post"}
-                  accessibilityState={{ selected: item.likedByViewer }}
-                  className="flex-row items-center gap-1.5"
+                  accessibilityState={{ selected: item.likedByViewer, disabled: !signedIn }}
+                  className={cx("flex-row items-center gap-1.5", !signedIn && "opacity-40")}
                 >
                   <Feather name="heart" size={18} color={item.likedByViewer ? ICON_ACTIVE : ICON_MUTED} />
                   <Text className="font-mono text-xs text-content-muted">{item.likeCount}</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => toggleSave.mutate({ postId: item.id, saved: !item.savedByViewer })}
+                  disabled={!signedIn}
                   accessibilityRole="button"
                   accessibilityLabel={item.savedByViewer ? "Remove from saved" : "Save this post"}
-                  accessibilityState={{ selected: item.savedByViewer }}
+                  accessibilityState={{ selected: item.savedByViewer, disabled: !signedIn }}
+                  className={cx(!signedIn && "opacity-40")}
                 >
                   <Feather name="bookmark" size={18} color={item.savedByViewer ? ICON_ACTIVE : ICON_MUTED} />
                 </Pressable>
