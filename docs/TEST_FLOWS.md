@@ -6,7 +6,45 @@ Legend: **[WORKS]** = fully functional now · **[GATED]** = built + visible but 
 
 ---
 
-## Round 2 retest (start here)
+## Round 3 retest (START HERE — newest features)
+
+The big Round-3 batch: multi-channel notifications, AI auto-tagging, shops, aftercare, daily drop, match-my-inspiration, body-map placement, cancellation waitlist, mobile light-mode fix. Run these first.
+
+**Before you start — set 3 vault secrets** (SQL editor) or the scheduled/AI parts stay idle:
+```
+select vault.create_secret('https://khlpidflnvkqafkvkpfy.supabase.co/functions/v1/notify-dispatch','notify_dispatch_url');
+select vault.create_secret('https://khlpidflnvkqafkvkpfy.supabase.co/functions/v1/tag-image','image_tagger_url');
+select vault.create_secret('https://khlpidflnvkqafkvkpfy.supabase.co/functions/v1/daily-drop','daily_drop_url');
+```
+Without them: **in-app** notifications still work; push/email fan-out, the AI image-tag backfill, and daily-drop generation stay off. Push also needs a physical device; email needs a Resend key + `getinkd.co` verified (until then email silently skips).
+
+**New demo login:** `desmond.wright@inkd.demo` / `Password123!` — owns the shop **"Fells Point Ink"** (`/s/fells-point-ink`); roster: Marcus Vane (managed), Sofia Marchetti (promotional), Priya Anand (pending invite).
+
+**A. Notification preferences center.** Settings → **Notifications**. **Expect:** every category (booking / deposit / message / review / AI approval / aftercare / waitlist…) with **In-app / Push / Email** toggles, plus a push-enable button on mobile. Flip a few, reload — choices persist.
+
+**B. Rich, informative notifications.** As **Mara**, request a booking with Jayden. As **Jayden**, open the **bell** → **Expect** a notification whose body actually tells you something ("Mara Vance requested a booking — [project], forearm, [date]"), and clicking it deep-links to the request. (Push shows on a real device only; email only if Resend is set.)
+
+**C. Landing moved to /preview.** Signed out, visit **`/preview`** → the marketing landing renders there now. Visit **`/`** → it redirects sensibly (signed-in → feed/dashboard; signed-out → preview/auth).
+
+**D. Shops.** (1) Public: open **`/s/fells-point-ink`** → shop page with a roster (Marcus, Sofia) linking to each profile + a "**Hosted by** Desmond Wright" link; an in-shop artist's profile shows a "**@ shop**" badge. (2) Manage: sign in as **desmond.wright@inkd.demo** → **Studio → Shop** → see members with role + **promotional/managed** mode; **invite** an artist by handle (they get a notification and must accept); the *managed* member shows a "calendar shared" affordance, the *promotional* one doesn't. (3) Create: as an artist with no shop (Nova), **Settings → Shop → create** → confirm a Shop entry appears in the Studio nav.
+
+**E. Aftercare timeline + healed-photo loop.** As an artist, open a booking with a **completed** session → confirm aftercare check-ins are scheduled at **3 days / 1 week / 3 weeks**. As the **client**, when a check-in is due you get a "**how's it healing?**" prompt with a photo upload → submit → with consent it can become a **portfolio piece** + prompt a **review** + a touch-up **rebook nudge**. (Check-ins fire on the daily tick — to see one immediately, a session dated in the past is easiest.)
+
+**F. Daily drop.** Home feed → a **Daily Drop** card: one highlighted post (flash or original) personalized to the styles you've viewed + artists you follow. (Generates on the daily cron once `daily_drop_url` is set; empty/placeholder until the first run.)
+
+**G. Match my inspiration.** Discover (or the feed tool card) → **Match my inspiration** → upload an inspiration image → **Expect** ranked artists whose work matches the aesthetic. (Needs the AI tag backfill — set `image_tagger_url` first; results sharpen as it completes.)
+
+**H. Body-map placement.** Start a booking request (`/book/[handle]`) → the placement step is now a **visual body map**: tap a region (front/back, arms/legs), pick a side → confirm it carries into the request, and as the artist the request shows the structured placement.
+
+**I. Cancellation waitlist + auto-fill.** As a **client**, on an artist with tight availability → **Join the waitlist** with a desired window. As the **artist**, **cancel** a booked session that matches → **Expect** the freed slot auto-offers to the best-matching waitlist client (notification + a claim **with a countdown**). The offered client **claims** → it converts to a booking; a second client **cannot** claim the same slot. Artist's list is under **Bookings → Waitlist**.
+
+**J. Light mode on MOBILE (the fix).** In the mobile app (Expo Go), **Settings → Appearance → Light** → **Expect** icons and text stay legible everywhere (some were invisible before). Spot-check Settings, Feed, Bookings, Try-on. Toggle back to Dark — confirm it looks unchanged.
+
+**K. Parity fixes.** Feed while **signed out** → like/save/follow are visibly **disabled** (not silently failing). A notification that deep-links to a specific settings tab **lands on that tab**. A signed-out client opening a **waiver** sign link → after signing in, **returns to the waiver** (not the feed).
+
+---
+
+## Round 2 retest (earlier fixes)
 
 These are the items fixed or newly landed since your last pass. Run through them first — each has exact steps. The full Flows 1–9 below remain the reference for everything else. Logins/password are in **Prep**.
 
@@ -48,7 +86,9 @@ These are the items fixed or newly landed since your last pass. Run through them
 
 Display-only artists you'll see in discovery (no login needed): Marcus Vane, Priya Anand, Desmond Wright, Sofia Marchetti.
 
-**What's gated (so you're not surprised):** Stripe deposits won't charge, Stripe ID verification is skippable, live AI *drafting* is off (but the seeded drafts are already there to approve/reject), Instagram import shows "coming soon," INKD Pro shows "coming soon."
+**What's live now (changed since earlier rounds):** Stripe deposits **charge in test mode** (card `4242 4242 4242 4242`) — Jayden is wired to a test connected account, so the Poppy-cluster deposit works end-to-end; live **AI drafting** is on (real drafts appear in `/studio/ai`); the **map** renders real Mapbox tiles (with the token in `.env.local`).
+
+**Still gated (so you're not surprised):** Stripe ID verification is skippable; **email** notifications skip until a Resend key + `getinkd.co` domain are set; **push** needs a physical device (+ EAS creds for a store build); Instagram import shows "coming soon"; INKD Pro shows "coming soon"; SMS is not built (by design).
 
 ---
 
