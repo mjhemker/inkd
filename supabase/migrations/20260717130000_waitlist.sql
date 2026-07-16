@@ -96,6 +96,7 @@ create table public.waitlist_openings (
   updated_at   timestamptz not null default now()
 );
 create index waitlist_openings_artist_idx on public.waitlist_openings (artist_id, status);
+create index waitlist_openings_service_idx on public.waitlist_openings (service_id);
 create index waitlist_openings_open_idx on public.waitlist_openings (slot_start)
   where status = 'open';
 -- At most one live opening per freed session (idempotent re-cancellation).
@@ -131,6 +132,10 @@ create index waitlist_offers_entry_idx on public.waitlist_offers (waitlist_entry
 create index waitlist_offers_client_idx on public.waitlist_offers (client_id, status);
 create index waitlist_offers_artist_idx on public.waitlist_offers (artist_id, status);
 create index waitlist_offers_opening_idx on public.waitlist_offers (opening_id);
+-- Cover the remaining FKs (avoid seq-scans on ON DELETE cascade + perf advisor).
+create index waitlist_offers_booking_idx on public.waitlist_offers (booking_id);
+create index waitlist_offers_service_idx on public.waitlist_offers (service_id);
+create index waitlist_offers_session_idx on public.waitlist_offers (session_id);
 -- Expiry scan for the tick.
 create index waitlist_offers_pending_idx on public.waitlist_offers (expires_at)
   where status = 'pending';
