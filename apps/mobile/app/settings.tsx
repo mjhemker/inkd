@@ -41,6 +41,7 @@ import { ScreenHeader } from "@/components/ScreenHeader";
 import { ArtistOnly } from "@/components/ArtistOnly";
 import { AppearanceControl } from "@/components/AppearanceControl";
 import { NotificationPreferencesEditor } from "@/components/notifications/NotificationPreferencesEditor";
+import { ShopSettingsSection } from "@/components/shop/ShopSettingsSection";
 import { useSession } from "@/providers/session";
 
 const TABS = [
@@ -48,6 +49,7 @@ const TABS = [
   { value: "locations", label: "Locations" },
   { value: "booking", label: "Hours & booking" },
   { value: "services", label: "Services" },
+  { value: "shop", label: "Shop" },
   { value: "ai", label: "AI staff" },
   { value: "waivers", label: "Waivers" },
   { value: "grow", label: "Share & connect" },
@@ -124,6 +126,7 @@ function SettingsView() {
               {tab === "services" && (
                 <ServicesEditor artistId={artist.id} variant="settings" />
               )}
+              {tab === "shop" && <ShopSettingsSection />}
               {tab === "waivers" && (
                 <View className="gap-4 rounded-xl border border-border-subtle p-5">
                   <Text className="text-base font-sans-semibold text-content-primary">

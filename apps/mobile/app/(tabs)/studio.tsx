@@ -2,6 +2,7 @@ import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Card, Icon, type IconName } from "@inkd/ui/native";
+import { useMyShop } from "@inkd/core";
 
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { AiStaffDashboardCard } from "@/components/ai-staff/DashboardCard";
@@ -42,6 +43,18 @@ const LINKS: { href: string; icon: IconName; title: string; subtitle: string }[]
 
 export default function StudioScreen() {
   const { colors } = useTheme();
+  const { data: shop } = useMyShop();
+  const links = shop
+    ? [
+        ...LINKS,
+        {
+          href: "/studio/shop",
+          icon: "layout-grid" as IconName,
+          title: "Shop",
+          subtitle: "Roster, membership & shop profile",
+        },
+      ]
+    : LINKS;
   return (
     <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
       <ScrollView className="flex-1" contentContainerClassName="gap-6 px-6 py-8">
@@ -54,7 +67,7 @@ export default function StudioScreen() {
         <AiStaffDashboardCard />
 
         <View className="gap-3">
-          {LINKS.map((link) => (
+          {links.map((link) => (
             <Card
               key={link.href}
               padding="md"
