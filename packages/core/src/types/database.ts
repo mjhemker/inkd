@@ -22,6 +22,102 @@ export type Database = {
   }
   public: {
     Tables: {
+      aftercare_checkins: {
+        Row: {
+          artist_id: string
+          booking_id: string | null
+          client_id: string
+          consent_to_share: boolean
+          created_at: string
+          healing_rating: number | null
+          id: string
+          kind: Database["public"]["Enums"]["aftercare_checkin_kind"]
+          note: string | null
+          photo_path: string | null
+          responded_at: string | null
+          scheduled_for: string
+          sent_at: string | null
+          session_id: string
+          shared_as_portfolio_piece_id: string | null
+          status: Database["public"]["Enums"]["aftercare_checkin_status"]
+          updated_at: string
+        }
+        Insert: {
+          artist_id: string
+          booking_id?: string | null
+          client_id: string
+          consent_to_share?: boolean
+          created_at?: string
+          healing_rating?: number | null
+          id?: string
+          kind: Database["public"]["Enums"]["aftercare_checkin_kind"]
+          note?: string | null
+          photo_path?: string | null
+          responded_at?: string | null
+          scheduled_for: string
+          sent_at?: string | null
+          session_id: string
+          shared_as_portfolio_piece_id?: string | null
+          status?: Database["public"]["Enums"]["aftercare_checkin_status"]
+          updated_at?: string
+        }
+        Update: {
+          artist_id?: string
+          booking_id?: string | null
+          client_id?: string
+          consent_to_share?: boolean
+          created_at?: string
+          healing_rating?: number | null
+          id?: string
+          kind?: Database["public"]["Enums"]["aftercare_checkin_kind"]
+          note?: string | null
+          photo_path?: string | null
+          responded_at?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          session_id?: string
+          shared_as_portfolio_piece_id?: string | null
+          status?: Database["public"]["Enums"]["aftercare_checkin_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aftercare_checkins_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aftercare_checkins_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aftercare_checkins_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aftercare_checkins_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aftercare_checkins_shared_as_portfolio_piece_id_fkey"
+            columns: ["shared_as_portfolio_piece_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_pieces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_actions: {
         Row: {
           action_type: string
@@ -348,6 +444,7 @@ export type Database = {
       artist_profiles: {
         Row: {
           accepts_new_clients: boolean
+          aftercare_enabled: boolean
           bio: string | null
           classification:
             | Database["public"]["Enums"]["artist_classification"]
@@ -372,10 +469,12 @@ export type Database = {
           travel_fly_out: boolean
           travel_house_calls: boolean
           updated_at: string
+          waitlist_enabled: boolean
           years_experience: number | null
         }
         Insert: {
           accepts_new_clients?: boolean
+          aftercare_enabled?: boolean
           bio?: string | null
           classification?:
             | Database["public"]["Enums"]["artist_classification"]
@@ -400,10 +499,12 @@ export type Database = {
           travel_fly_out?: boolean
           travel_house_calls?: boolean
           updated_at?: string
+          waitlist_enabled?: boolean
           years_experience?: number | null
         }
         Update: {
           accepts_new_clients?: boolean
+          aftercare_enabled?: boolean
           bio?: string | null
           classification?:
             | Database["public"]["Enums"]["artist_classification"]
@@ -428,6 +529,7 @@ export type Database = {
           travel_fly_out?: boolean
           travel_house_calls?: boolean
           updated_at?: string
+          waitlist_enabled?: boolean
           years_experience?: number | null
         }
         Relationships: [
@@ -646,6 +748,9 @@ export type Database = {
           location_id: string | null
           medical_notes: string | null
           placement: string | null
+          placement_region: string | null
+          placement_side: string | null
+          placement_view: string | null
           preferred_dates: Json
           reference_uploads: Json
           service_id: string | null
@@ -667,6 +772,9 @@ export type Database = {
           location_id?: string | null
           medical_notes?: string | null
           placement?: string | null
+          placement_region?: string | null
+          placement_side?: string | null
+          placement_view?: string | null
           preferred_dates?: Json
           reference_uploads?: Json
           service_id?: string | null
@@ -688,6 +796,9 @@ export type Database = {
           location_id?: string | null
           medical_notes?: string | null
           placement?: string | null
+          placement_region?: string | null
+          placement_side?: string | null
+          placement_view?: string | null
           preferred_dates?: Json
           reference_uploads?: Json
           service_id?: string | null
@@ -796,6 +907,78 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_drops: {
+        Row: {
+          artist_id: string | null
+          clicked_at: string | null
+          created_at: string
+          drop_date: string
+          generated_at: string
+          id: string
+          is_cold_start: boolean
+          reacted_at: string | null
+          reason: string
+          reason_style: string | null
+          score: number | null
+          seen_at: string | null
+          subject_id: string
+          subject_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          artist_id?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          drop_date: string
+          generated_at?: string
+          id?: string
+          is_cold_start?: boolean
+          reacted_at?: string | null
+          reason: string
+          reason_style?: string | null
+          score?: number | null
+          seen_at?: string | null
+          subject_id: string
+          subject_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          artist_id?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          drop_date?: string
+          generated_at?: string
+          id?: string
+          is_cold_start?: boolean
+          reacted_at?: string | null
+          reason?: string
+          reason_style?: string | null
+          score?: number | null
+          seen_at?: string | null
+          subject_id?: string
+          subject_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_drops_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_drops_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2064,6 +2247,124 @@ export type Database = {
           },
         ]
       }
+      shop_members: {
+        Row: {
+          artist_profile_id: string
+          created_at: string
+          id: string
+          invited_at: string
+          invited_by: string | null
+          joined_at: string | null
+          membership_mode: Database["public"]["Enums"]["shop_membership_mode"]
+          role: Database["public"]["Enums"]["shop_member_role"]
+          shop_id: string
+          status: Database["public"]["Enums"]["shop_member_status"]
+          updated_at: string
+        }
+        Insert: {
+          artist_profile_id: string
+          created_at?: string
+          id?: string
+          invited_at?: string
+          invited_by?: string | null
+          joined_at?: string | null
+          membership_mode?: Database["public"]["Enums"]["shop_membership_mode"]
+          role?: Database["public"]["Enums"]["shop_member_role"]
+          shop_id: string
+          status?: Database["public"]["Enums"]["shop_member_status"]
+          updated_at?: string
+        }
+        Update: {
+          artist_profile_id?: string
+          created_at?: string
+          id?: string
+          invited_at?: string
+          invited_by?: string | null
+          joined_at?: string | null
+          membership_mode?: Database["public"]["Enums"]["shop_membership_mode"]
+          role?: Database["public"]["Enums"]["shop_member_role"]
+          shop_id?: string
+          status?: Database["public"]["Enums"]["shop_member_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_members_artist_profile_id_fkey"
+            columns: ["artist_profile_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_members_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_members_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shops: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          handle: string
+          id: string
+          is_published: boolean
+          name: string
+          owner_artist_id: string
+          primary_location_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          handle: string
+          id?: string
+          is_published?: boolean
+          name: string
+          owner_artist_id: string
+          primary_location_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          handle?: string
+          id?: string
+          is_published?: boolean
+          name?: string
+          owner_artist_id?: string
+          primary_location_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shops_owner_artist_id_fkey"
+            columns: ["owner_artist_id"]
+            isOneToOne: true
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shops_primary_location_id_fkey"
+            columns: ["primary_location_id"]
+            isOneToOne: false
+            referencedRelation: "studio_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signed_waivers: {
         Row: {
           artist_id: string
@@ -2359,6 +2660,247 @@ export type Database = {
           },
         ]
       }
+      waitlist_entries: {
+        Row: {
+          artist_id: string
+          client_id: string
+          created_at: string
+          earliest_date: string | null
+          id: string
+          latest_date: string | null
+          note: string | null
+          preferred_time_end: string | null
+          preferred_time_start: string | null
+          preferred_weekdays: number[] | null
+          priority: number
+          service_id: string | null
+          status: Database["public"]["Enums"]["waitlist_entry_status"]
+          updated_at: string
+        }
+        Insert: {
+          artist_id: string
+          client_id: string
+          created_at?: string
+          earliest_date?: string | null
+          id?: string
+          latest_date?: string | null
+          note?: string | null
+          preferred_time_end?: string | null
+          preferred_time_start?: string | null
+          preferred_weekdays?: number[] | null
+          priority?: number
+          service_id?: string | null
+          status?: Database["public"]["Enums"]["waitlist_entry_status"]
+          updated_at?: string
+        }
+        Update: {
+          artist_id?: string
+          client_id?: string
+          created_at?: string
+          earliest_date?: string | null
+          id?: string
+          latest_date?: string | null
+          note?: string | null
+          preferred_time_end?: string | null
+          preferred_time_start?: string | null
+          preferred_weekdays?: number[] | null
+          priority?: number
+          service_id?: string | null
+          status?: Database["public"]["Enums"]["waitlist_entry_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_entries_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_entries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_entries_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      waitlist_offers: {
+        Row: {
+          artist_id: string
+          booking_id: string | null
+          client_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          offered_at: string
+          opening_id: string
+          responded_at: string | null
+          service_id: string | null
+          session_id: string | null
+          slot_end: string | null
+          slot_start: string
+          status: Database["public"]["Enums"]["waitlist_offer_status"]
+          updated_at: string
+          waitlist_entry_id: string
+        }
+        Insert: {
+          artist_id: string
+          booking_id?: string | null
+          client_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          offered_at?: string
+          opening_id: string
+          responded_at?: string | null
+          service_id?: string | null
+          session_id?: string | null
+          slot_end?: string | null
+          slot_start: string
+          status?: Database["public"]["Enums"]["waitlist_offer_status"]
+          updated_at?: string
+          waitlist_entry_id: string
+        }
+        Update: {
+          artist_id?: string
+          booking_id?: string | null
+          client_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          offered_at?: string
+          opening_id?: string
+          responded_at?: string | null
+          service_id?: string | null
+          session_id?: string | null
+          slot_end?: string | null
+          slot_start?: string
+          status?: Database["public"]["Enums"]["waitlist_offer_status"]
+          updated_at?: string
+          waitlist_entry_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_offers_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_offers_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_offers_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_offers_opening_id_fkey"
+            columns: ["opening_id"]
+            isOneToOne: false
+            referencedRelation: "waitlist_openings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_offers_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_offers_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_offers_waitlist_entry_id_fkey"
+            columns: ["waitlist_entry_id"]
+            isOneToOne: false
+            referencedRelation: "waitlist_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      waitlist_openings: {
+        Row: {
+          artist_id: string
+          created_at: string
+          id: string
+          service_id: string | null
+          session_id: string | null
+          slot_end: string | null
+          slot_start: string
+          source: string
+          status: Database["public"]["Enums"]["waitlist_opening_status"]
+          updated_at: string
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string
+          id?: string
+          service_id?: string | null
+          session_id?: string | null
+          slot_end?: string | null
+          slot_start: string
+          source?: string
+          status?: Database["public"]["Enums"]["waitlist_opening_status"]
+          updated_at?: string
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string
+          id?: string
+          service_id?: string | null
+          session_id?: string | null
+          slot_end?: string | null
+          slot_start?: string
+          source?: string
+          status?: Database["public"]["Enums"]["waitlist_opening_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_openings_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_openings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_openings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       waiver_templates: {
         Row: {
           artist_id: string | null
@@ -2441,7 +2983,14 @@ export type Database = {
       agent_run_tick: { Args: never; Returns: undefined }
       agent_scheduled_enqueue: { Args: never; Returns: undefined }
       agent_scheduled_tick: { Args: never; Returns: undefined }
+      claim_waitlist_offer: { Args: { p_offer_id: string }; Returns: string }
       current_artist_id: { Args: never; Returns: string }
+      current_owned_shop_id: { Args: never; Returns: string }
+      daily_drop_tick: { Args: never; Returns: undefined }
+      decline_waitlist_offer: {
+        Args: { p_offer_id: string }
+        Returns: undefined
+      }
       enqueue_untagged_images: { Args: never; Returns: number }
       image_tag_jobs_lease: {
         Args: { p_limit?: number }
@@ -2469,6 +3018,7 @@ export type Database = {
         }
       }
       image_tag_run_tick: { Args: never; Returns: undefined }
+      is_shop_manager: { Args: { p_shop_id: string }; Returns: boolean }
       notification_category_default_email: {
         Args: { p_category: string }
         Returns: boolean
@@ -2539,6 +3089,38 @@ export type Database = {
           travel_house_calls: boolean
         }[]
       }
+      search_shops: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_query?: string
+          p_state?: string
+        }
+        Returns: {
+          avatar_url: string
+          bio: string
+          city: string
+          handle: string
+          member_count: number
+          name: string
+          shop_id: string
+          state: string
+        }[]
+      }
+      shop_managed_member_agenda: {
+        Args: { p_from?: string; p_limit?: number; p_shop_id: string }
+        Returns: {
+          booking_id: string
+          member_artist_id: string
+          member_handle: string
+          member_name: string
+          scheduled_end: string
+          scheduled_start: string
+          session_id: string
+          session_number: number
+          session_status: Database["public"]["Enums"]["session_status"]
+        }[]
+      }
       similar_works: {
         Args: {
           p_embedding: string
@@ -2556,8 +3138,40 @@ export type Database = {
           subject_type: Database["public"]["Enums"]["image_subject_type"]
         }[]
       }
+      user_style_affinity: {
+        Args: { p_user_id: string }
+        Returns: {
+          style_slug: string
+          top_source: string
+          weight: number
+        }[]
+      }
+      waitlist_artist_open_session: {
+        Args: { p_session_id: string }
+        Returns: string
+      }
+      waitlist_cascade: { Args: { p_opening_id: string }; Returns: undefined }
+      waitlist_create_offer: {
+        Args: { p_entry_id: string; p_opening_id: string }
+        Returns: string
+      }
+      waitlist_match_next: { Args: { p_opening_id: string }; Returns: string }
+      waitlist_open_slot: {
+        Args: {
+          p_artist_id: string
+          p_service_id: string
+          p_session_id: string
+          p_slot_end: string
+          p_slot_start: string
+          p_source: string
+        }
+        Returns: string
+      }
+      waitlist_tick: { Args: never; Returns: undefined }
     }
     Enums: {
+      aftercare_checkin_kind: "day_3" | "week_1" | "week_3"
+      aftercare_checkin_status: "pending" | "sent" | "responded" | "skipped"
       agent_action_status:
         | "proposed"
         | "approved"
@@ -2630,8 +3244,24 @@ export type Database = {
         | "cancelled"
         | "no_show"
         | "rescheduled"
+      shop_member_role: "owner" | "manager" | "resident" | "guest"
+      shop_member_status: "invited" | "active" | "removed"
+      shop_membership_mode: "promotional" | "managed"
       thread_status: "active" | "archived" | "closed"
       us_state: "MD" | "PA"
+      waitlist_entry_status:
+        | "active"
+        | "offered"
+        | "claimed"
+        | "expired"
+        | "cancelled"
+      waitlist_offer_status: "pending" | "accepted" | "declined" | "expired"
+      waitlist_opening_status:
+        | "open"
+        | "filled"
+        | "exhausted"
+        | "expired"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2759,6 +3389,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      aftercare_checkin_kind: ["day_3", "week_1", "week_3"],
+      aftercare_checkin_status: ["pending", "sent", "responded", "skipped"],
       agent_action_status: [
         "proposed",
         "approved",
@@ -2840,8 +3472,26 @@ export const Constants = {
         "no_show",
         "rescheduled",
       ],
+      shop_member_role: ["owner", "manager", "resident", "guest"],
+      shop_member_status: ["invited", "active", "removed"],
+      shop_membership_mode: ["promotional", "managed"],
       thread_status: ["active", "archived", "closed"],
       us_state: ["MD", "PA"],
+      waitlist_entry_status: [
+        "active",
+        "offered",
+        "claimed",
+        "expired",
+        "cancelled",
+      ],
+      waitlist_offer_status: ["pending", "accepted", "declined", "expired"],
+      waitlist_opening_status: [
+        "open",
+        "filled",
+        "exhausted",
+        "expired",
+        "cancelled",
+      ],
     },
   },
 } as const

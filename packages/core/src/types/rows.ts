@@ -110,3 +110,15 @@ export type AgentPlaybookUpdate = TablesUpdate<"agent_playbooks">;
 export type NotificationUpdate = TablesUpdate<"notifications">;
 export type NotificationPreferenceUpdate = TablesUpdate<"notification_preferences">;
 export type ReviewUpdate = TablesUpdate<"reviews">;
+
+// --- Waitlist (Wave 2) ------------------------------------------------------
+export type WaitlistEntryStatus = Enums<"waitlist_entry_status">;
+export type WaitlistOfferStatus = Enums<"waitlist_offer_status">;
+export type WaitlistOpeningStatus = Enums<"waitlist_opening_status">;
+
+export type WaitlistEntry = Tables<"waitlist_entries">;
+export type WaitlistOpening = Tables<"waitlist_openings">;
+export type WaitlistOffer = Tables<"waitlist_offers">;
+
+export type WaitlistEntryInsert = TablesInsert<"waitlist_entries">;
+export type WaitlistEntryUpdate = TablesUpdate<"waitlist_entries">;
