@@ -1,6 +1,7 @@
 /** Data access: availability_rules, availability_blocks, booking_policies. */
 import { z } from "zod";
 
+import { diffAvailabilityRules, mergeWeeklyBlocks, type WeeklyBlock } from "../booking/weeklyHours";
 import type { InkdSupabaseClient } from "../supabase/client";
 import type {
   AvailabilityRule,
@@ -79,6 +80,42 @@ export async function deleteAvailabilityRule(
     .delete()
     .eq("id", id);
   if (error) throw error;
+}
+
+/**
+ * Reconcile the artist's weekly open blocks against what's persisted, applying
+ * the minimal set of insert/update/delete operations (never a blind
+ * delete-all + re-insert). Supports multiple blocks per weekday. `existing` is
+ * the current `availability_rules` snapshot; `desired` is the editor's block
+ * list (blocks with an `id` map to persisted rows).
+ */
+export async function saveAvailabilityRules(
+  client: InkdSupabaseClient,
+  artistId: string,
+  existing: AvailabilityRule[],
+  desired: WeeklyBlock[],
+): Promise<void> {
+  const plan = diffAvailabilityRules(existing, mergeWeeklyBlocks(desired));
+
+  for (const id of plan.toDelete) {
+    await deleteAvailabilityRule(client, id);
+  }
+  for (const row of plan.toUpdate) {
+    await updateAvailabilityRule(client, row.id, {
+      weekday: row.weekday,
+      start_time: row.start,
+      end_time: row.end,
+      is_open: true,
+    });
+  }
+  for (const row of plan.toInsert) {
+    await createAvailabilityRule(client, artistId, {
+      weekday: row.weekday,
+      start_time: row.start,
+      end_time: row.end,
+      is_open: true,
+    });
+  }
 }
 
 // --- Date-range blocks (vacations, holidays) --------------------------------
