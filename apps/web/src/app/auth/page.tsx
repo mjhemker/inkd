@@ -29,6 +29,7 @@ import {
   FormField,
   Icon,
   Input,
+  Logo,
   Tabs,
 } from "@inkd/ui/web";
 
@@ -53,15 +54,8 @@ function AuthShell() {
 
       <header className="border-b border-border-subtle">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 md:px-8">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-brand-on">
-              <span className="font-display text-lg font-extrabold leading-none">
-                I
-              </span>
-            </span>
-            <span className="font-display text-xl font-bold tracking-tight">
-              INKD
-            </span>
+          <Link href="/" className="flex items-center" aria-label="INKD home">
+            <Logo size={32} />
           </Link>
           <Link
             href="/"

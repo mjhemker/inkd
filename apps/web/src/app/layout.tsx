@@ -70,6 +70,21 @@ export const metadata: Metadata = {
   description:
     "INKD — the operating system for independent tattoo artists. Bookings, clients, and AI staff in one place.",
   applicationName: "INKD",
+  // Brand mark → favicons + web app icons (generated from the SVGs in
+  // public/brand via scripts/generate-brand-icons.cjs). favicon.ico is also
+  // served by the app/favicon.ico file convention for legacy browsers.
+  icons: {
+    icon: [
+      { url: "/brand/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/inkd-mark.svg", type: "image/svg+xml" },
+      { url: "/brand/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/brand/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/brand/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+  manifest: "/manifest.webmanifest",
 };
 
 export const viewport: Viewport = {

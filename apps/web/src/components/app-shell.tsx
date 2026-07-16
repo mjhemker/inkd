@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Avatar, Icon, buttonVariants, cx } from "@inkd/ui/web";
+import { Avatar, Icon, Logo, LogoMark, buttonVariants, cx } from "@inkd/ui/web";
 import {
   bottomNavFor,
   isActivePath,
@@ -63,19 +63,10 @@ function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <Link
       href="/feed"
-      className="group inline-flex items-center gap-2.5 outline-none"
+      className="group inline-flex items-center outline-none"
       aria-label="INKD home"
     >
-      <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-brand-on">
-        <span className="font-display text-lg font-extrabold leading-none">
-          I
-        </span>
-      </span>
-      {!compact && (
-        <span className="font-display text-xl font-bold tracking-tight text-content-primary">
-          INKD
-        </span>
-      )}
+      {compact ? <LogoMark size={32} /> : <Logo size={32} />}
     </Link>
   );
 }
