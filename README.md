@@ -86,8 +86,14 @@ Supabase dashboard and keep it out of git.
 
 ## Status — pilot build
 
-All five phases are implemented and green on lint / typecheck / web build /
-mobile tsc / 144 edge-function tests:
+All five phases plus the Wave F1/F2 polish passes are implemented and green on
+lint / typecheck (8/8) / web build / mobile tsc / 144 edge-function + 41 core +
+10 web-node + 1 vitest tests. Wave F2 adds: a Calendly-style drag/resize weekly
+**hours grid** (multi-block split days), a real **bookings week grid** with
+exact week-range header nav and a full-width pipeline, a **light-mode theme
+layer** (Settings → Appearance) with the new **INKD logo / favicons / app
+icons**, role-aware nav (Bookings inside the artist STUDIO group; no Studio for
+clients), and a photo **try-on** with a real cylindrical wrap:
 
 - **P0 Foundation** — monorepo, design tokens, Supabase schema v1 + RLS + seed,
   dual-role auth, CI. ✅

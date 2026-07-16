@@ -6,6 +6,28 @@ Legend: **[WORKS]** = fully functional now · **[GATED]** = built + visible but 
 
 ---
 
+## Round 2 retest (start here)
+
+These are the items fixed or newly landed since your last pass. Run through them first — each has exact steps. The full Flows 1–9 below remain the reference for everything else. Logins/password are in **Prep**.
+
+1. **Typing in any modal field (focus bug fixed).** Sign in as Jayden → **Bookings** → open any booking → click **Ask a question** (or any modal with a text field). Type a full sentence. **Expect:** every keystroke lands; focus never jumps out after the first character. Try the New-booking and review modals too.
+2. **Ask-a-Question → thread appears in Messages (both sides).** As the **client** (Window B, Mara), open Jayden's profile or a booking → **Ask a question** → send a message. **Expect:** a thread is created and shows in the client's **Messages**. Switch to **Window A (Jayden)** → **Messages** → the **same thread is there** with the client's message. Reply from Jayden; confirm it appears back on the client side.
+3. **Full messaging + image attachments (was untested last round).** In an open thread, send several text messages back and forth. Then tap the **attachment/image** control, pick an image, and send. **Expect:** the image uploads, renders inline in the bubble on the sender side, and appears for the other party. Scroll history; confirm ordering and timestamps.
+4. **Artist profiles reachable from feed/discover cards (was untested last round).** Go to **Home (feed)** → tap an artist's name/avatar on a post → **Expect:** their public profile opens. Repeat from **Discover** → tap an artist placard/card → their profile opens. Back navigation returns you to the feed/discover list.
+5. **Fresh signup → account-type choice → email confirm → auto-onboarding.** Use a brand-new email. Sign up → **choose account type** (artist vs client) → complete the **email confirmation** → **Expect:** an artist is dropped straight into **onboarding** automatically; a client lands in the app with no studio setup.
+6. **Client account sees no Studio nav.** Sign in as a **client** → **Expect:** the left sidebar / bottom tabs show **no "Studio" group** and no Dashboard/AI-staff/Settings-studio items. Bookings appears in the client's **main** nav (not under Studio). As an **artist**, confirm the **Studio** group is present with Bookings inside it.
+7. **Delete account + artist→client downgrade.** As an artist: **Settings → Account** → **Switch to a client account**; confirm the modal, then confirm the Studio nav disappears and artist-only surfaces are gone. Then (on a throwaway account) **Settings → Account → Delete account**, type the confirmation, and confirm the account + data are removed and you're signed out.
+8. **Avatar upload preview.** **Settings → Profile** (or onboarding identity step) → upload an avatar image → **Expect:** the preview updates immediately to the chosen image before/after save.
+9. **Real dashboard stats.** As Jayden, open **Dashboard** → **Expect:** the stat tiles and Today panel show **real seeded numbers** (upcoming sessions, requests, etc.), not zeros or placeholders.
+10. **Discover shows 6 artists + map (or honest placard) + sliders.** Open **Discover** → **Expect:** at least **6 artists** in the list, a working **map** (or an honest "map unavailable" placard if the key is gated — not a blank/null-island), and the **range sliders** (distance/price) filter the list as you drag.
+11. **Drag-create weekly hours, multi-block.** **Settings → Hours** (or onboarding step 3) → on the weekly grid, **drag on a day** to create an hours block; **drag the block** to move it and **drag its edges** to resize; **click a block** to set exact times in the popover. Create **two blocks on the same day** (split shift, e.g. Tue 11:00–14:00 and 17:00–21:00) and save. Reload; confirm both blocks persist.
+12. **Bookings week grid + week-range header + full-width pipeline.** **Bookings** → **Expect:** a real **week grid** with sessions placed at their times; the header reads an exact **week range** ("Month DD – DD, YYYY") with **‹ ›** navigation and a **Week/Month** toggle; today's column is highlighted; the **pipeline** board renders **full-width** below/alongside.
+13. **Light mode toggle across key screens.** **Settings → Appearance** → switch to **Light** → **Expect:** feed, discover, bookings, hours grid, settings, and profile all flip to the warm light theme with legible text (no dark-on-dark). Toggle back to **Dark**; confirm the choice persists across a reload.
+14. **Try-on wrap slider curves + Back button.** Open **Fit check (try-on)** → place a design on the body photo → drag the **wrap** slider → **Expect:** the tattoo visibly **curves around the limb** (cylindrical wrap), not just a flat skew. Confirm the **Back**/exit button returns you out of the editor.
+15. **New logo / favicon.** Confirm the **INKD logo** shows in the sidebar/top bar, and the **browser tab favicon** is the new INKD mark (check the tab icon and, on mobile, the app icon/splash).
+
+---
+
 ## Prep (do once)
 
 1. In the repo root: `pnpm install`, then `pnpm --filter web dev`. Open **http://localhost:3000**.
