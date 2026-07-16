@@ -21,7 +21,7 @@ interface WallPiece {
 // with a solid museum placard beneath it. Artwork is the hero even before real
 // images land. Two pieces carry an ember FLASH stamp.
 const wall: WallPiece[] = [
-  { style: "Blackwork", handle: "@jayden.ink", gradient: "linear-gradient(150deg,#241733,#0a0a0b 72%)", tall: true, flash: true },
+  { style: "Blackwork", handle: "@ravn.ink", gradient: "linear-gradient(150deg,#241733,#0a0a0b 72%)", tall: true, flash: true },
   { style: "Fine line", handle: "@mara.fine", gradient: "linear-gradient(150deg,#15213a,#0a0a0b 72%)" },
   { style: "Neo-trad", handle: "@dez.ttt", gradient: "linear-gradient(150deg,#331327,#0a0a0b 72%)" },
   { style: "Japanese", handle: "@ito.irezumi", gradient: "linear-gradient(150deg,#1c1340,#0a0a0b 72%)", tall: true },

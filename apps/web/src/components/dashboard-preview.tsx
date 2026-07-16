@@ -2,12 +2,12 @@ import {
   Badge,
   Card,
   EmptyState,
-  Eyebrow,
   Icon,
   type IconName,
 } from "@inkd/ui/web";
 import { LinkButton } from "@/components/link-button";
 import { AiStaffDashboardCard } from "@/components/ai-staff/AiStaffDashboardCard";
+import { DashboardEyebrow } from "@/components/dashboard-eyebrow";
 
 interface Stat {
   label: string;
@@ -39,7 +39,7 @@ export function DashboardPreview({
   return (
     <div className="flex flex-col gap-8">
       <header className="flex flex-col gap-2">
-        <Eyebrow>Studio · Jayden Cole</Eyebrow>
+        <DashboardEyebrow fallbackName={liveAiStaff ? undefined : "Jayden Cole"} />
         <h1 className="font-display text-3xl font-bold tracking-tight text-content-primary sm:text-4xl">
           Dashboard
         </h1>

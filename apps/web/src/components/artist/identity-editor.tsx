@@ -218,7 +218,7 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
             <FormField label="Display name" htmlFor="id-name" required>
               <Input
                 id="id-name"
-                placeholder="Jayden Cole"
+                placeholder="Your name"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 leadingIcon={<Icon name="user" size={16} />}
@@ -243,7 +243,7 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
         >
           <Input
             id="id-handle"
-            placeholder="jayden.ink"
+            placeholder="yourhandle"
             value={handle}
             invalid={handleState === "taken" || handleState === "invalid"}
             onChange={(e) => setHandle(e.target.value.replace(/\s/g, ""))}

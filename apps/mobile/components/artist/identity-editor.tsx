@@ -259,7 +259,7 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
           <View className="flex-1">
             <FormField label="Display name" required>
               <Input
-                placeholder="Jayden Cole"
+                placeholder="Your name"
                 value={displayName}
                 onChangeText={setDisplayName}
                 leadingIcon={<Icon name="user" size={16} color="#71717A" />}
@@ -282,7 +282,7 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
           }
         >
           <Input
-            placeholder="jayden.ink"
+            placeholder="yourhandle"
             autoCapitalize="none"
             value={handle}
             invalid={handleState === "taken" || handleState === "invalid"}
