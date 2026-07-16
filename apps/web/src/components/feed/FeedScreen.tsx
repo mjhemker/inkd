@@ -9,6 +9,7 @@ import {
   useToggleFollow,
   useToggleLike,
   useToggleSave,
+  useTodayDrop,
   type FeedItem,
   type FeedPostItem,
   type FeedScope,
@@ -16,6 +17,7 @@ import {
 import { FeedCard } from "./FeedCard";
 import { StyleFilterChips } from "./StyleFilterChips";
 import { PostDetailOverlay } from "./PostDetailOverlay";
+import { DailyDropCard } from "@/components/daily-drop/DailyDropCard";
 
 const SCOPES: { value: FeedScope; label: string }[] = [
   { value: "discover", label: "Discover" },
@@ -37,6 +39,7 @@ export function FeedScreen() {
   const signedIn = Boolean(profile);
 
   const { data: styles } = useStyleFilters();
+  const todayDrop = useTodayDrop();
   const feed = useFeedItems(scope, { styleSlug });
   const like = useToggleLike();
   const save = useToggleSave();
@@ -109,6 +112,23 @@ export function FeedScreen() {
           )}
         </div>
       </header>
+
+      {scope === "discover" && todayDrop.data && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-3">
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-content-ember">
+              Today&apos;s drop
+            </span>
+            <a
+              href="/daily-drop"
+              className="font-mono text-[11px] uppercase tracking-[0.16em] text-content-muted underline-offset-2 outline-none hover:text-content-primary hover:underline focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              See all
+            </a>
+          </div>
+          <DailyDropCard card={todayDrop.data} variant="feed" signedIn={signedIn} />
+        </div>
+      )}
 
       {loading ? (
         <FeedSkeletonGrid />
