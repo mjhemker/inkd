@@ -8,6 +8,7 @@
  */
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Eyebrow, Icon, Spinner, cx } from "@inkd/ui/web";
 import { useDiscover, useStyles } from "@inkd/core/hooks";
@@ -81,7 +82,17 @@ export function DiscoverView() {
             Find your artist
           </h1>
         </div>
-        {isFetching && !isLoading && <Spinner size={16} />}
+        <div className="flex items-center gap-3">
+          {isFetching && !isLoading && <Spinner size={16} />}
+          <Link
+            href="/discover/match"
+            className="inline-flex items-center gap-2 rounded-lg bg-surface-ember px-3.5 py-2 font-mono text-xs font-bold uppercase tracking-widest text-brand-on-ember transition-opacity hover:opacity-90"
+          >
+            <Icon name="image" size={15} />
+            <span className="hidden sm:inline">Match my inspiration</span>
+            <span className="sm:hidden">Match photo</span>
+          </Link>
+        </div>
       </header>
 
       <FilterBar

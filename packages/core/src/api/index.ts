@@ -38,3 +38,5 @@ export * from "./similarWorks";
 export * from "./shops";
 export * from "./aftercare";
 export * from "./dailyDrop";
+export * from "./matchInspiration";
+export * from "./matchInspirationRun";

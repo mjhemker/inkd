@@ -238,6 +238,22 @@ function FeedEmptyState({
         )}
       </div>
 
+      {/* Tools: match my inspiration — image-based artist discovery. */}
+      <a
+        href="/discover/match"
+        className="mt-2 flex w-full max-w-sm items-center gap-3 rounded-sm border border-border-subtle bg-surface-overlay px-4 py-3 text-left outline-none transition-colors hover:border-border-strong focus-visible:ring-2 focus-visible:ring-brand"
+      >
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-sm border border-border-subtle bg-surface-base text-content-ember">
+          <Icon name="image" size={16} />
+        </span>
+        <span className="flex flex-col">
+          <span className="text-sm font-semibold text-content-primary">Match my inspiration</span>
+          <span className="text-xs text-content-muted">
+            Upload a tattoo you love — find artists whose work matches that vibe.
+          </span>
+        </span>
+      </a>
+
       {/* Tools: photo-based fit check — a client-facing utility, no account needed. */}
       <a
         href="/try-on"
