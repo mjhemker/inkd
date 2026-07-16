@@ -34,6 +34,8 @@ export type PlaybookSource = Enums<"playbook_source">;
 export type ShopMemberRole = Enums<"shop_member_role">;
 export type ShopMembershipMode = Enums<"shop_membership_mode">;
 export type ShopMemberStatus = Enums<"shop_member_status">;
+export type AftercareCheckinKind = Enums<"aftercare_checkin_kind">;
+export type AftercareCheckinStatus = Enums<"aftercare_checkin_status">;
 
 // --- Row aliases ------------------------------------------------------------
 export type Profile = Tables<"profiles">;
@@ -71,6 +73,7 @@ export type DevicePushToken = Tables<"device_push_tokens">;
 export type InstagramImportRun = Tables<"instagram_import_runs">;
 export type Shop = Tables<"shops">;
 export type ShopMember = Tables<"shop_members">;
+export type AftercareCheckin = Tables<"aftercare_checkins">;
 
 // --- Insert aliases (only the ones the api layer mutates through) -----------
 export type ProfileInsert = TablesInsert<"profiles">;
@@ -98,6 +101,7 @@ export type ShopInsert = TablesInsert<"shops">;
 export type ShopMemberInsert = TablesInsert<"shop_members">;
 export type NotificationInsert = TablesInsert<"notifications">;
 export type NotificationPreferenceInsert = TablesInsert<"notification_preferences">;
+export type AftercareCheckinInsert = TablesInsert<"aftercare_checkins">;
 
 // --- Update aliases ---------------------------------------------------------
 export type ProfileUpdate = TablesUpdate<"profiles">;
@@ -119,3 +123,4 @@ export type NotificationPreferenceUpdate = TablesUpdate<"notification_preference
 export type ReviewUpdate = TablesUpdate<"reviews">;
 export type ShopUpdate = TablesUpdate<"shops">;
 export type ShopMemberUpdate = TablesUpdate<"shop_members">;
+export type AftercareCheckinUpdate = TablesUpdate<"aftercare_checkins">;

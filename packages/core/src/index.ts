@@ -19,3 +19,4 @@ export * from "./waivers";
 export * from "./reviews";
 export * from "./tryon";
 export * from "./notifications";
+export * from "./aftercare";

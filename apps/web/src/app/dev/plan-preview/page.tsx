@@ -28,7 +28,7 @@ const artistProfile: ArtistProfile = {
   travel_house_calls: false,
   travel_at_home: false,
   accepts_new_clients: true,
-  aftercare_enabled: false,
+  aftercare_enabled: true,
   years_experience: 9,
   instagram_handle: "jayden.ink",
   onboarding_step: 5,

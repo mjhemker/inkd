@@ -34,3 +34,4 @@ export * from "./useNotificationPreferences";
 export * from "./useInstagram";
 export * from "./useDashboardStats";
 export * from "./useShops";
+export * from "./useAftercare";

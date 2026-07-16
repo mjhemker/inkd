@@ -35,6 +35,7 @@ import {
 import { AppearanceControl } from "@/components/appearance-control";
 import { NotificationPreferencesPanel } from "@/components/notifications/notification-preferences";
 import { ShopSettingsPanel } from "@/components/shop/ShopSettingsPanel";
+import { AftercareSettingsCard } from "@/components/aftercare/aftercare-settings-card";
 
 const TABS = [
   { value: "profile", label: "Profile" },
@@ -164,7 +165,12 @@ export function SettingsView() {
         {tab === "locations" && (
           <LocationsEditor artist={artist} variant="settings" />
         )}
-        {tab === "booking" && <BookingEditor artist={artist} variant="settings" />}
+        {tab === "booking" && (
+          <div className="flex flex-col gap-6">
+            <BookingEditor artist={artist} variant="settings" />
+            <AftercareSettingsCard artist={artist} />
+          </div>
+        )}
         {tab === "services" && (
           <ServicesEditor artistId={artist.id} variant="settings" />
         )}
