@@ -33,6 +33,7 @@ import {
   Eyebrow,
   Icon,
   Tabs,
+  placementLabelFromColumns,
 } from "@inkd/ui/web";
 import { StatusBadge, formatDay } from "./shared";
 import { SessionsCalendar, type CalendarMode } from "./sessions-calendar";
@@ -184,7 +185,10 @@ function RequestRow({
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <div className="flex items-center gap-2">
               <span className="truncate font-display text-base font-bold tracking-tight">
-                {request.placement || request.description?.slice(0, 44) || "Custom project"}
+                {placementLabelFromColumns(request) ||
+                  request.placement ||
+                  request.description?.slice(0, 44) ||
+                  "Custom project"}
               </span>
               <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
               {request.has_medical_flags && (
