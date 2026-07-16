@@ -35,3 +35,4 @@ export * from "./instagram";
 export * from "./plan";
 export * from "./dashboardStats";
 export * from "./similarWorks";
+export * from "./shops";
