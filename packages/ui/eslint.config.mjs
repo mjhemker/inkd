@@ -4,6 +4,7 @@
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import reactHooks from "eslint-plugin-react-hooks";
+import reactPlugin from "eslint-plugin-react";
 import globals from "globals";
 
 export default [
@@ -29,7 +30,8 @@ export default [
   })),
   {
     files: ["src/**/*.{ts,tsx}"],
-    plugins: { "react-hooks": reactHooks },
+    plugins: { "react-hooks": reactHooks, react: reactPlugin },
+    settings: { react: { version: "detect" } },
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: "module",
@@ -42,6 +44,7 @@ export default [
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
+      "react/no-unstable-nested-components": ["error", { allowAsProps: true }],
       "@typescript-eslint/no-unused-vars": [
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },

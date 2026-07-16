@@ -33,6 +33,17 @@ export function Modal({
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // Keep the latest onClose in a ref so the open/focus effect below does NOT
+  // depend on it. Callers almost always pass an inline `() => setOpen(false)`,
+  // which is a fresh function every render — if the effect depended on it, it
+  // would re-run on every parent render (i.e. every keystroke in a field inside
+  // the modal) and `panelRef.current?.focus()` would steal focus back from the
+  // input. Ref-forwarding the handler lets the effect key purely on `open`.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
   useEffect(() => {
     if (!open) return;
 
@@ -41,7 +52,7 @@ export function Modal({
     panelRef.current?.focus();
 
     function handleKeyDown(event: globalThis.KeyboardEvent) {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") onCloseRef.current();
     }
 
     document.addEventListener("keydown", handleKeyDown);
@@ -49,7 +60,7 @@ export function Modal({
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 

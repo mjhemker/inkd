@@ -8,4 +8,13 @@ module.exports = [
   {
     ignores: ["dist/**", ".expo/**", "expo-env.d.ts"],
   },
+  {
+    // Same guard as the shared web config: a component defined inside another
+    // component's render body remounts every render and drops input focus per
+    // keystroke. eslint-config-expo already registers the `react` plugin.
+    files: ["**/*.{jsx,tsx}"],
+    rules: {
+      "react/no-unstable-nested-components": ["error", { allowAsProps: true }],
+    },
+  },
 ];

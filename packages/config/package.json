@@ -19,7 +19,8 @@
     "./tailwind-preset": "./tailwind-preset.cjs"
   },
   "dependencies": {
-    "@inkd/ui": "workspace:*"
+    "@inkd/ui": "workspace:*",
+    "eslint-plugin-react": "^7.37.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",

@@ -103,6 +103,11 @@ function useInvalidatePipeline(artistId: string) {
     qc.invalidateQueries({ queryKey: ["sessions"] });
     qc.invalidateQueries({ queryKey: ["bookingRequests"] });
     qc.invalidateQueries({ queryKey: pipelineKeys.artistSessions(artistId) });
+    // Ask-a-question and decline-with-reason create/append to a messages
+    // thread. Without this, the 30s default staleTime leaves the /messages
+    // inbox showing a cached (often empty) list right after the artist is
+    // routed there — the just-created conversation never surfaces.
+    qc.invalidateQueries({ queryKey: ["threadSummaries"] });
   };
 }
 
