@@ -30,6 +30,7 @@ import {
 import {
   Avatar,
   Badge,
+  BodyMap,
   Button,
   Card,
   Chip,
@@ -42,7 +43,10 @@ import {
   Stepper,
   TextArea,
   Toggle,
+  placementLabel,
+  serializePlacement,
   useToast,
+  type PlacementValue,
 } from "@inkd/ui/web";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -65,7 +69,8 @@ const CUSTOM = "__custom__";
 
 interface FormState {
   serviceId: string | null; // null when custom
-  placement: string;
+  placementValue: PlacementValue | null; // structured body-map selection
+  placement: string; // free-text specifics ("inner wrist, wrapping toward elbow")
   sizeDescription: string;
   description: string;
   budgetMin: string;
@@ -80,6 +85,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   serviceId: CUSTOM,
+  placementValue: null,
   placement: "",
   sizeDescription: "",
   description: "",
@@ -223,6 +229,7 @@ function BookLoaded({
         service_id: selectedService?.id ?? null,
         location_id: primaryLocation?.id ?? null,
         placement: form.placement || null,
+        ...serializePlacement(form.placementValue),
         size_description: form.sizeDescription || null,
         description: form.description || null,
         reference_uploads: form.references as unknown as Record<string, unknown>[],
@@ -254,7 +261,7 @@ function BookLoaded({
     step.id === "service"
       ? form.serviceId !== null
       : step.id === "details"
-        ? form.description.trim().length > 0 || form.placement.trim().length > 0
+        ? form.description.trim().length > 0 || form.placementValue !== null
         : true;
 
   return (
@@ -532,13 +539,28 @@ function StepDetails({
             : "Describe the tattoo you want — the more detail, the better the quote."
         }
       />
+      <FormField
+        label="Placement"
+        description="Tap where the piece goes — front or back, left or right."
+      >
+        <div className="rounded-xl border border-border-subtle bg-surface-raised/50 p-4">
+          <BodyMap
+            value={form.placementValue}
+            onChange={(v) => patch({ placementValue: v })}
+          />
+        </div>
+      </FormField>
       <div className="grid gap-5 sm:grid-cols-2">
-        <FormField label="Placement" htmlFor="bk-placement">
+        <FormField
+          label="Placement details"
+          htmlFor="bk-placement"
+          description="Optional — the specifics."
+        >
           <Input
             id="bk-placement"
             value={form.placement}
             onChange={(e) => patch({ placement: e.target.value })}
-            placeholder="Left forearm, inner"
+            placeholder="Inner wrist, wrapping toward the elbow"
             leadingIcon={<Icon name="map-pin" size={16} />}
           />
         </FormField>
@@ -863,7 +885,13 @@ function StepReview({
       />
       <Card padding="lg" className="flex flex-col gap-4">
         <ReviewRow label="Service" value={service?.name ?? "Custom project"} />
-        {form.placement && <ReviewRow label="Placement" value={form.placement} />}
+        {form.placementValue && (
+          <ReviewRow
+            label="Placement"
+            value={placementLabel(form.placementValue, { withView: form.placementValue.view })}
+          />
+        )}
+        {form.placement && <ReviewRow label="Placement details" value={form.placement} />}
         {form.sizeDescription && <ReviewRow label="Size" value={form.sizeDescription} />}
         {form.description && <ReviewRow label="Idea" value={form.description} />}
         {(form.budgetMin || form.budgetMax) && (

@@ -31,6 +31,7 @@ import {
 import {
   Avatar,
   Badge,
+  BodyMap,
   Button,
   Card,
   Chip,
@@ -44,7 +45,10 @@ import {
   TextArea,
   Toggle,
   ToastProvider,
+  placementLabel,
+  serializePlacement,
   useToast,
+  type PlacementValue,
 } from "@inkd/ui/native";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -67,6 +71,7 @@ const CUSTOM = "__custom__";
 
 interface FormState {
   serviceId: string | null;
+  placementValue: PlacementValue | null;
   placement: string;
   sizeDescription: string;
   description: string;
@@ -82,6 +87,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   serviceId: CUSTOM,
+  placementValue: null,
   placement: "",
   sizeDescription: "",
   description: "",
@@ -270,6 +276,7 @@ function BookLoaded({
         service_id: selectedService?.id ?? null,
         location_id: primaryLocation?.id ?? null,
         placement: form.placement || null,
+        ...serializePlacement(form.placementValue),
         size_description: form.sizeDescription || null,
         description: form.description || null,
         reference_uploads: form.references as unknown as Record<string, unknown>[],
@@ -301,7 +308,7 @@ function BookLoaded({
     step.id === "service"
       ? form.serviceId !== null
       : step.id === "details"
-        ? form.description.trim().length > 0 || form.placement.trim().length > 0
+        ? form.description.trim().length > 0 || form.placementValue !== null
         : true;
 
   return (
@@ -522,11 +529,16 @@ function StepDetails({
             : "Describe the tattoo you want — the more detail, the better the quote."
         }
       />
-      <FormField label="Placement">
+      <FormField label="Placement" description="Tap where the piece goes.">
+        <View className="rounded-xl border border-border-subtle bg-surface-raised/50 p-4">
+          <BodyMap value={form.placementValue} onChange={(v) => patch({ placementValue: v })} />
+        </View>
+      </FormField>
+      <FormField label="Placement details" description="Optional — the specifics.">
         <Input
           value={form.placement}
           onChangeText={(v) => patch({ placement: v })}
-          placeholder="Left forearm, inner"
+          placeholder="Inner wrist, wrapping toward the elbow"
           leadingIcon={<Icon name="map-pin" size={16} color="#A1A1AA" />}
         />
       </FormField>
@@ -829,7 +841,13 @@ function StepReview({
       <StepHeading eyebrow="Step 5" title="Review & send" subtitle="One last look before it lands in the artist's inbox." />
       <Card padding="lg" className="gap-4">
         <ReviewRow label="Service" value={service?.name ?? "Custom project"} />
-        {form.placement && <ReviewRow label="Placement" value={form.placement} />}
+        {form.placementValue && (
+          <ReviewRow
+            label="Placement"
+            value={placementLabel(form.placementValue, { withView: form.placementValue.view })}
+          />
+        )}
+        {form.placement && <ReviewRow label="Placement details" value={form.placement} />}
         {form.sizeDescription && <ReviewRow label="Size" value={form.sizeDescription} />}
         {form.description && <ReviewRow label="Idea" value={form.description} />}
         {(form.budgetMin || form.budgetMax) && (
