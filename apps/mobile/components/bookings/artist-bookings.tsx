@@ -15,6 +15,14 @@ import {
   bookingStage,
   isRequestOpen,
   formatBudget,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  addWeeks,
+  addMonths,
+  weekRangeLabel,
+  monthLabel,
   type BookingRequest,
   type Booking,
   type Session,
@@ -279,14 +287,25 @@ const TONE_DOT: Record<StatusTone, string> = {
   danger: "bg-danger-500",
 };
 
-const AGENDA_DAYS = 60;
+type CalendarMode = "week" | "month";
 
+/**
+ * Mobile keeps the agenda list (right for a phone), but adopts the same
+ * period-scoped header navigation as web: a ‹ label › row where the label is
+ * the exact week range ("July 12 – 18, 2026") or month ("July 2026"), a
+ * week/month toggle that keeps its date anchor, and the agenda scoped to the
+ * selected period.
+ */
 function CalendarView({ artistId }: { artistId: string }) {
+  const [anchor, setAnchor] = useState(() => new Date());
+  const [mode, setMode] = useState<CalendarMode>("week");
+
   const range = useMemo(() => {
-    const from = new Date();
-    const to = new Date(from.getTime() + AGENDA_DAYS * 24 * 60 * 60 * 1000);
+    const from = mode === "week" ? startOfWeek(anchor) : startOfMonth(anchor);
+    const to = mode === "week" ? endOfWeek(anchor) : endOfMonth(anchor);
     return { from: from.toISOString(), to: to.toISOString() };
-  }, []);
+  }, [anchor, mode]);
+
   const sessionsQ = useArtistSessions(artistId, range);
 
   const byDay = useMemo(() => {
@@ -301,20 +320,44 @@ function CalendarView({ artistId }: { artistId: string }) {
     );
   }, [sessionsQ.data]);
 
-  if (!sessionsQ.isLoading && byDay.length === 0) {
-    return (
-      <Card padding="none" className="overflow-hidden">
-        <EmptyState
-          icon={<Icon name="calendar" size={26} color="#71717A" />}
-          title="Nothing on the calendar"
-          description="Sessions you schedule over the next 60 days will show up here, grouped by day."
-        />
-      </Card>
-    );
-  }
+  const label = mode === "week" ? weekRangeLabel(anchor) : monthLabel(anchor);
+  const step = (delta: number) =>
+    setAnchor((d) => (mode === "week" ? addWeeks(d, delta) : addMonths(d, delta)));
 
   return (
     <View className="gap-4">
+      <View className="gap-3">
+        <View className="flex-row items-center justify-between">
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={mode === "week" ? "Previous week" : "Previous month"}
+            className="h-9 w-9 items-center justify-center rounded-lg bg-surface-overlay"
+            onPress={() => step(-1)}
+          >
+            <Icon name="chevron-left" size={18} color="#A1A1AA" />
+          </Pressable>
+          <Text className="flex-1 text-center font-display text-lg text-content-primary">
+            {label}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={mode === "week" ? "Next week" : "Next month"}
+            className="h-9 w-9 items-center justify-center rounded-lg bg-surface-overlay"
+            onPress={() => step(1)}
+          >
+            <Icon name="chevron-right" size={18} color="#A1A1AA" />
+          </Pressable>
+        </View>
+        <Tabs
+          value={mode}
+          onValueChange={(v) => setMode(v as CalendarMode)}
+          items={[
+            { value: "week", label: "Week" },
+            { value: "month", label: "Month" },
+          ]}
+        />
+      </View>
+
       <View className="flex-row flex-wrap gap-3">
         {(["scheduled", "confirmed", "completed", "cancelled"] as const).map((s) => (
           <View key={s} className="flex-row items-center gap-1.5">
@@ -324,29 +367,39 @@ function CalendarView({ artistId }: { artistId: string }) {
         ))}
       </View>
 
-      <View className="gap-3">
-        {byDay.map(([dayKey, sessions]) => {
-          const d = new Date(dayKey);
-          return (
-            <View
-              key={dayKey}
-              className="flex-row gap-4 rounded-lg border border-border-subtle bg-surface-raised px-4 py-3"
-            >
-              <View className="w-14 shrink-0">
-                <Text className="font-mono text-[10px] uppercase tracking-widest text-content-muted">
-                  {d.toLocaleDateString("en-US", { weekday: "short" })}
-                </Text>
-                <Text className="font-display text-xl text-content-primary">{d.getDate()}</Text>
+      {byDay.length === 0 ? (
+        <Card padding="none" className="overflow-hidden">
+          <EmptyState
+            icon={<Icon name="calendar" size={26} color="#71717A" />}
+            title={mode === "week" ? "Nothing this week" : "Nothing this month"}
+            description="Sessions you schedule in this period show up here, grouped by day. Use ‹ › to move between periods."
+          />
+        </Card>
+      ) : (
+        <View className="gap-3">
+          {byDay.map(([dayKey, sessions]) => {
+            const d = new Date(dayKey);
+            return (
+              <View
+                key={dayKey}
+                className="flex-row gap-4 rounded-lg border border-border-subtle bg-surface-raised px-4 py-3"
+              >
+                <View className="w-14 shrink-0">
+                  <Text className="font-mono text-[10px] uppercase tracking-widest text-content-muted">
+                    {d.toLocaleDateString("en-US", { weekday: "short" })}
+                  </Text>
+                  <Text className="font-display text-xl text-content-primary">{d.getDate()}</Text>
+                </View>
+                <View className="flex-1 gap-1.5">
+                  {sessions.map((s) => (
+                    <SessionPill key={s.id} session={s} />
+                  ))}
+                </View>
               </View>
-              <View className="flex-1 gap-1.5">
-                {sessions.map((s) => (
-                  <SessionPill key={s.id} session={s} />
-                ))}
-              </View>
-            </View>
-          );
-        })}
-      </View>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 }
