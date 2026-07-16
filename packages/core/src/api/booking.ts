@@ -85,6 +85,11 @@ const createRequestSchema = z.object({
   service_id: z.string().uuid().nullable().optional(),
   location_id: z.string().uuid().nullable().optional(),
   placement: z.string().max(200).nullable().optional(),
+  // Structured body-map placement (mirrors the visual picker). `placement`
+  // above is kept as the free-text specifics note / back-compat.
+  placement_region: z.string().max(40).nullable().optional(),
+  placement_side: z.enum(["left", "right"]).nullable().optional(),
+  placement_view: z.enum(["front", "back"]).nullable().optional(),
   size_description: z.string().max(200).nullable().optional(),
   description: z.string().max(4000).nullable().optional(),
   reference_uploads: z.array(z.record(z.unknown())).optional(),
