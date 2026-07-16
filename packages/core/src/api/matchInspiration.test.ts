@@ -19,7 +19,6 @@ import {
   hasAnyDiscoverFilter,
   STYLE_CLARITY_THRESHOLD,
   type ArtistBrief,
-  type InspirationSummary,
 } from "./matchInspiration.ts";
 import type { ImageTagResult, SimilarWork } from "./similarWorks.ts";
 
@@ -194,12 +193,6 @@ test("workHref deep-links to the right profile section, null without handle", ()
 });
 
 // --- classifyMatchOutcome ---------------------------------------------------
-function summary(over: Partial<InspirationSummary> = {}): InspirationSummary {
-  return describeInspiration(
-    tags(over.hasClearStyle === false ? { styles: [] } : {}),
-  );
-}
-
 test("outcome: no_style when the image has no readable aesthetic", () => {
   const s = describeInspiration(tags({ styles: [] }));
   assert.equal(classifyMatchOutcome(s, []), "no_style");

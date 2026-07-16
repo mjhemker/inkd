@@ -81,8 +81,29 @@ export async function matchInspirationFromUrl(
     };
   }
 
-  const rows = await findSimilarWorks(client, {
+  const groups = await rankMatchesForEmbedding(client, inline.embedding, summary, opts);
+  return {
+    summary,
+    groups,
+    outcome: classifyMatchOutcome(summary, groups),
     embedding: inline.embedding,
+    modelVersion: inline.model_version,
+  };
+}
+
+/**
+ * Rank + group matches for an ALREADY-computed query embedding (no tag step).
+ * Reused when the client re-runs with tweaked discover filters or refine chips
+ * — the inspiration image was tagged once; only the neighbor search re-runs.
+ */
+export async function rankMatchesForEmbedding(
+  client: InkdSupabaseClient,
+  embedding: number[],
+  summary: InspirationSummary,
+  opts: Omit<MatchInspirationOptions, "endpoint" | "accessToken"> = {},
+): Promise<MatchArtistGroup[]> {
+  const rows = await findSimilarWorks(client, {
+    embedding,
     limit: opts.limit,
     excludeArtistId: opts.excludeArtistId,
     styleSlugs: opts.styleSlugs,
@@ -98,17 +119,9 @@ export async function matchInspirationFromUrl(
 
   const artistIds = filtered.map((r) => r.artist_id).filter(Boolean) as string[];
   const artists = await enrichMatchArtists(client, artistIds);
-  const groups = groupSimilarWorks(filtered, artists, {
+  return groupSimilarWorks(filtered, artists, {
     inspirationStyleSlugs: summary.styles.map((s) => s.slug),
     inspirationColorLabel: summary.colorLabel,
     maxWorksPerArtist: opts.maxWorksPerArtist,
   });
-
-  return {
-    summary,
-    groups,
-    outcome: classifyMatchOutcome(summary, groups),
-    embedding: inline.embedding,
-    modelVersion: inline.model_version,
-  };
 }
