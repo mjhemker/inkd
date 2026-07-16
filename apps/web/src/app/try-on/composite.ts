@@ -5,6 +5,8 @@
 import {
   INK_BLEND,
   TRYON_PLACARD_LABEL,
+  TRYON_WRAP_STRIPS_WEB,
+  cylindricalWarpStrips,
   fitDimensions,
   inkFilter,
   type TryOnTransform,
@@ -74,6 +76,81 @@ function baseDesignScale(stageW: number, design: LoadedImage): number {
 export interface DrawOptions {
   /** When false, only the body photo is drawn (the "before" view). */
   showDesign: boolean;
+  /**
+   * Offscreen-canvas cache for the cylindrical wrap remap. Pass the SAME
+   * instance across frames (e.g. a `useRef`) so the strip slicing only
+   * reruns when the wrap amount or source design changes — every other
+   * control (position/scale/rotation/opacity/ink-blend) redraws against the
+   * already-warped bitmap, keeping the stage 60fps-usable while dragging.
+   * If omitted, a throwaway cache is built for this call only (fine for a
+   * one-off export, wasteful for a live redraw loop).
+   */
+  warpCache?: WarpCache;
+}
+
+/**
+ * Slices `design` into `stripCount` vertical strips and remaps each one via
+ * `cylindricalWarpStrip` onto a same-size offscreen canvas — this is the
+ * actual "wrap around a limb" effect (see packages/core/src/tryon/index.ts
+ * for the math). Strips draw with a hairline overlap to avoid seams from
+ * subpixel rounding between adjacent slices.
+ */
+function buildWarpedDesign(
+  design: LoadedImage,
+  wrapDeg: number,
+  stripCount: number,
+): HTMLCanvasElement {
+  const w = Math.max(1, design.width);
+  const h = Math.max(1, design.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
+
+  const strips = cylindricalWarpStrips(stripCount, wrapDeg);
+  const overlap = 0.75; // px of destination overdraw per strip edge, hides seams
+  for (const strip of strips) {
+    const sx = strip.uStart * w;
+    const sw = Math.max(0.5, (strip.uEnd - strip.uStart) * w);
+    const dx = strip.xStart * w - overlap / 2;
+    const dw = Math.max(0.75, strip.width * w + overlap);
+
+    ctx.save();
+    ctx.globalAlpha = strip.opacity;
+    if (strip.brightness < 1) ctx.filter = `brightness(${strip.brightness})`;
+    ctx.drawImage(design.el, sx, 0, sw, h, dx, 0, dw, h);
+    ctx.restore();
+  }
+  return canvas;
+}
+
+/**
+ * Single-slot cache: remembers the last `(source, stripCount, wrapDeg)` it
+ * warped and reuses that offscreen canvas until one of those actually
+ * changes. `wrapDeg <= 0` skips the canvas entirely and hands back the raw
+ * `<img>` element (the flat/identity fast path costs nothing).
+ */
+export class WarpCache {
+  private key: string | null = null;
+  private canvas: HTMLCanvasElement | null = null;
+
+  get(design: LoadedImage, wrapDeg: number, stripCount: number = TRYON_WRAP_STRIPS_WEB): CanvasImageSource {
+    if (wrapDeg <= 0) {
+      this.key = null;
+      this.canvas = null;
+      return design.el;
+    }
+    const key = `${design.el.src}|${design.width}x${design.height}|${stripCount}|${Math.round(wrapDeg)}`;
+    if (this.key === key && this.canvas) return this.canvas;
+    this.canvas = buildWarpedDesign(design, wrapDeg, stripCount);
+    this.key = key;
+    return this.canvas;
+  }
+}
+
+export function createWarpCache(): WarpCache {
+  return new WarpCache();
 }
 
 /** Draw body + transformed design onto a 2D context sized to the stage. */
@@ -98,6 +175,12 @@ export function drawComposite(
   const w = design.width * base * t.scale;
   const h = design.height * base * t.scale;
 
+  // Cylindrical remap happens in the design's own local space (around its
+  // vertical axis) BEFORE the on-stage scale/rotate/position transform is
+  // applied, so wrapping composes correctly at any size/angle/placement.
+  const cache = opts.warpCache ?? new WarpCache();
+  const source = cache.get(design, t.wrap, TRYON_WRAP_STRIPS_WEB);
+
   ctx.save();
   ctx.globalAlpha = t.opacity;
   if (t.inkBlend) {
@@ -106,9 +189,7 @@ export function drawComposite(
   }
   ctx.translate(t.x * stageW, t.y * stageH);
   ctx.rotate((t.rotation * Math.PI) / 180);
-  // Horizontal skew fakes wrapping around a limb.
-  ctx.transform(1, 0, Math.tan((t.skewX * Math.PI) / 180), 1, 0, 0);
-  ctx.drawImage(design.el, -w / 2, -h / 2, w, h);
+  ctx.drawImage(source, -w / 2, -h / 2, w, h);
   ctx.restore();
 
   // Reset shared state for the next frame.

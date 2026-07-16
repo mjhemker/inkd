@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Image,
   PanResponder,
@@ -17,7 +17,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import * as Sharing from "expo-sharing";
 import { captureRef } from "react-native-view-shot";
-import { Feather } from "@expo/vector-icons";
 import { Button, Eyebrow, Icon, Slider, Toggle } from "@inkd/ui/native";
 import {
   DEFAULT_TRYON_TRANSFORM,
@@ -27,6 +26,9 @@ import {
   TRYON_TAGLINE,
   TRYON_TITLE,
   TRYON_LIMITS,
+  TRYON_WRAP_STRIPS_MOBILE,
+  cylindricalWarpStrips,
+  type WarpStrip,
 } from "@inkd/core";
 
 const SURFACE_BASE = "#0A0A0B";
@@ -43,6 +45,8 @@ interface Xf {
   scale: number;
   rotation: number;
   opacity: number;
+  /** Total cylindrical wrap angle in degrees — see TryOnTransform.wrap in @inkd/core. */
+  wrap: number;
   inkBlend: boolean;
 }
 
@@ -52,6 +56,7 @@ const INITIAL: Xf = {
   scale: 1,
   rotation: 0,
   opacity: DEFAULT_TRYON_TRANSFORM.opacity,
+  wrap: DEFAULT_TRYON_TRANSFORM.wrap,
   inkBlend: true,
 };
 
@@ -63,6 +68,22 @@ function dist(a: { pageX: number; pageY: number }, b: { pageX: number; pageY: nu
 }
 function angleDeg(a: { pageX: number; pageY: number }, b: { pageX: number; pageY: number }) {
   return (Math.atan2(b.pageY - a.pageY, b.pageX - a.pageX) * 180) / Math.PI;
+}
+
+/**
+ * Fit a `srcW`×`srcH` image inside a `boxW`×`boxH` box, letterboxed/centered
+ * (same behavior as RN's `resizeMode="contain"`) — needed so the wrap strips'
+ * source-pixel fractions line up with where the design is actually rendered,
+ * not the full (possibly non-square) box.
+ */
+function containFit(srcW: number, srcH: number, boxW: number, boxH: number) {
+  if (srcW <= 0 || srcH <= 0 || boxW <= 0 || boxH <= 0) {
+    return { width: boxW, height: boxH, offsetX: 0, offsetY: 0 };
+  }
+  const scale = Math.min(boxW / srcW, boxH / srcH);
+  const width = srcW * scale;
+  const height = srcH * scale;
+  return { width, height, offsetX: (boxW - width) / 2, offsetY: (boxH - height) / 2 };
 }
 
 /**
@@ -85,6 +106,39 @@ export default function TryOnScreen() {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [stage, setStage] = useState({ w: 0, h: 0 });
+  const [designSize, setDesignSize] = useState<{ w: number; h: number } | null>(null);
+
+  // Real history-back so a "Try it on" launched from a post's sheet lands
+  // back on that same post — Expo Router keeps the previous screen mounted
+  // underneath, so its state (an open post sheet) survives this navigation.
+  // Falls back to the feed tab when there's no history (e.g. a deep link
+  // opened this screen directly).
+  const onBack = useCallback(() => {
+    if (router.canGoBack()) router.back();
+    else router.replace("/(tabs)" as never);
+  }, [router]);
+
+  // Cylindrical wrap needs the design's own pixel aspect ratio to line strip
+  // fractions up with where `resizeMode="contain"` actually renders it.
+  useEffect(() => {
+    if (!designUri) {
+      setDesignSize(null);
+      return;
+    }
+    let alive = true;
+    Image.getSize(
+      designUri,
+      (w, h) => {
+        if (alive) setDesignSize({ w, h });
+      },
+      () => {
+        if (alive) setDesignSize(null);
+      },
+    );
+    return () => {
+      alive = false;
+    };
+  }, [designUri]);
 
   const stageRef = useRef<View>(null);
   const tRef = useRef(t);
@@ -200,6 +254,23 @@ export default function TryOnScreen() {
   }, [bodyUri]);
 
   const box = stage.w > 0 ? Math.min(stage.w, stage.h) * 0.5 : 160;
+
+  // Cylindrical wrap strips — only recomputed when the wrap slider or the
+  // design's own aspect ratio changes, never on drag/pinch/rotate (those
+  // only touch the outer wrapper's transform below). Mobile has no
+  // canvas/Skia image-warp primitive available in this app, so it uses a
+  // coarser strip count (TRYON_WRAP_STRIPS_MOBILE) built from plain
+  // absolutely-positioned, cropped <Image> slices rather than web's 80-strip
+  // offscreen-canvas remap.
+  const wrapStrips: WarpStrip[] | null = useMemo(
+    () => (t.wrap > 0 ? cylindricalWarpStrips(TRYON_WRAP_STRIPS_MOBILE, t.wrap) : null),
+    [t.wrap],
+  );
+  const designFit = useMemo(
+    () => (designSize ? containFit(designSize.w, designSize.h, box, box) : null),
+    [designSize, box],
+  );
+
   const designStyle: ViewStyle = {
     position: "absolute",
     width: box,
@@ -221,11 +292,11 @@ export default function TryOnScreen() {
     <View style={[styles.root, { paddingTop: insets.top }]}>
       {/* Top bar */}
       <View style={styles.topbar}>
-        <Pressable onPress={() => router.back()} accessibilityLabel="Close" hitSlop={10}>
-          <Feather name="x" size={22} color={INK} />
+        <Pressable onPress={onBack} accessibilityLabel="Back" hitSlop={10}>
+          <Icon name="chevron-left" size={24} color={INK} />
         </Pressable>
         <Text style={styles.topTitle}>{TRYON_TITLE}</Text>
-        <View style={{ width: 22 }} />
+        <View style={{ width: 24 }} />
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
@@ -259,11 +330,22 @@ export default function TryOnScreen() {
 
             {bodyUri && designUri && !showBefore ? (
               <View style={designStyle}>
-                <Image
-                  source={{ uri: designUri }}
-                  style={styles.designImage}
-                  resizeMode="contain"
-                />
+                {wrapStrips && designFit ? (
+                  wrapStrips.map((strip) => (
+                    <WrapStripView
+                      key={strip.index}
+                      strip={strip}
+                      designUri={designUri}
+                      fit={designFit}
+                    />
+                  ))
+                ) : (
+                  <Image
+                    source={{ uri: designUri }}
+                    style={styles.designImage}
+                    resizeMode="contain"
+                  />
+                )}
               </View>
             ) : null}
 
@@ -322,6 +404,15 @@ export default function TryOnScreen() {
             disabled={!bodyUri || !designUri}
           />
           <Slider
+            label="Wrap (limb curve)"
+            value={t.wrap}
+            onValueChange={(v) => setT((p) => ({ ...p, wrap: v }))}
+            min={TRYON_LIMITS.wrapMin}
+            max={TRYON_LIMITS.wrapMax}
+            step={1}
+            disabled={!bodyUri || !designUri}
+          />
+          <Slider
             label="Opacity"
             value={t.opacity}
             onValueChange={(v) => setT((p) => ({ ...p, opacity: v }))}
@@ -336,8 +427,9 @@ export default function TryOnScreen() {
             label="Ink blend (multiply)"
           />
           <Text style={styles.hint}>
-            Drag to move · pinch to size · twist to rotate. Ink blend sinks the
-            design into the skin; on very dark skin, turn it off and use opacity.
+            Drag to move · pinch to size · twist to rotate. Wrap curves it
+            around the limb. Ink blend sinks the design into the skin; on very
+            dark skin, turn it off and use opacity.
           </Text>
         </View>
 
@@ -383,6 +475,66 @@ function PickTile({
       <Icon name={icon} size={18} color={filled ? EMBER : INK} />
       <Text style={styles.pickTileLabel}>{label}</Text>
     </Pressable>
+  );
+}
+
+/**
+ * One cylindrical-wrap strip: a clipped container sized/positioned per
+ * `strip.xStart/width` (within the rendered, letterboxed design area), with
+ * the full design `<Image>` shifted left by `strip.uStart` so only that
+ * slice shows through — the RN equivalent of the web canvas's per-strip
+ * `drawImage(sx, sw, ... dx, dw)` crop. `strip.opacity` fades the outermost
+ * sliver of a strong wrap; the black overlay approximates the brightness
+ * falloff (no true multiply-per-strip primitive without a canvas/Skia).
+ */
+function WrapStripView({
+  strip,
+  designUri,
+  fit,
+}: {
+  strip: WarpStrip;
+  designUri: string;
+  fit: { width: number; height: number; offsetX: number; offsetY: number };
+}) {
+  return (
+    <View
+      pointerEvents="none"
+      style={{
+        position: "absolute",
+        left: fit.offsetX + strip.xStart * fit.width,
+        top: fit.offsetY,
+        width: Math.max(1, strip.width * fit.width + 1),
+        height: fit.height,
+        overflow: "hidden",
+        opacity: strip.opacity,
+      }}
+    >
+      <Image
+        source={{ uri: designUri }}
+        resizeMode="stretch"
+        style={{
+          position: "absolute",
+          left: -strip.uStart * fit.width,
+          top: 0,
+          width: fit.width,
+          height: fit.height,
+        }}
+      />
+      {strip.brightness < 1 ? (
+        <View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            backgroundColor: "#000",
+            opacity: 1 - strip.brightness,
+          }}
+        />
+      ) : null}
+    </View>
   );
 }
 
