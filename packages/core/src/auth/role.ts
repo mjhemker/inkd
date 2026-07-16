@@ -139,6 +139,43 @@ export async function becomeArtist(
   return data;
 }
 
+/**
+ * Downgrade the current artist back to a client-only account (artist → client
+ * only; there is no client → artist self-serve path during the pilot).
+ *
+ * Consequences, by design (see docs/account-lifecycle.md):
+ *  - `profiles.is_artist` → false, so the nav/role flips to the client view.
+ *  - `artist_profiles.is_published` → false, so the public profile is
+ *    unpublished and undiscoverable.
+ *  - ALL studio data (artist_profiles row, bookings, portfolio, waivers, …) is
+ *    RETAINED, just frozen. Nothing is deleted — signed waivers in particular
+ *    carry a legal retention requirement. Re-upgrading later restores it.
+ *
+ * Idempotent + RLS-safe (only touches the caller's own rows). A no-op for a
+ * user who is already client-only.
+ */
+export async function downgradeToClient(
+  client: InkdSupabaseClient,
+): Promise<void> {
+  const user = await getUser(client);
+  if (!user) throw new Error("downgradeToClient: no authenticated user");
+
+  const artist = await getCurrentArtistProfile(client);
+  if (artist && artist.is_published) {
+    const { error } = await client
+      .from("artist_profiles")
+      .update({ is_published: false })
+      .eq("id", artist.id);
+    if (error) throw error;
+  }
+
+  const { error: flagError } = await client
+    .from("profiles")
+    .update({ is_artist: false })
+    .eq("id", user.id);
+  if (flagError) throw flagError;
+}
+
 /** Advance / set the artist onboarding step (SPEC §3 progress bar). */
 export async function setOnboardingStep(
   client: InkdSupabaseClient,

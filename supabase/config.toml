@@ -8,6 +8,12 @@ project_id = "khlpidflnvkqafkvkpfy"
 [functions.connect-onboarding-link]
 verify_jwt = true
 
+# Permanent account deletion. A normal authenticated user call — the gateway
+# verifies the JWT; the function re-verifies and then service-role-deletes the
+# caller's own auth user (which cascades their DB rows). Needs no external keys.
+[functions.delete-account]
+verify_jwt = true
+
 [functions.create-deposit-checkout]
 verify_jwt = true
 

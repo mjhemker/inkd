@@ -22,6 +22,7 @@ import {
 } from "@inkd/core";
 
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { ArtistOnly } from "@/components/ArtistOnly";
 import { ApprovalCard } from "@/components/ai-staff/ApprovalCard";
 import { ActivityRow } from "@/components/ai-staff/ActivityRow";
 import { PlaybookSection } from "@/components/ai-staff/PlaybookSection";
@@ -35,9 +36,11 @@ const TAB_ITEMS = [
 
 export default function AiStaffScreen() {
   return (
-    <ToastProvider>
-      <AiStaffScreenContent />
-    </ToastProvider>
+    <ArtistOnly requireOnboarding>
+      <ToastProvider>
+        <AiStaffScreenContent />
+      </ToastProvider>
+    </ArtistOnly>
   );
 }
 

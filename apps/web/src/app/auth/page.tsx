@@ -25,6 +25,7 @@ import {
   Button,
   Card,
   CardContent,
+  cx,
   Eyebrow,
   FormField,
   Icon,
@@ -101,6 +102,7 @@ function AuthForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [accountType, setAccountType] = useState<"client" | "artist">("client");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(
     params.get("error") ? "Authentication failed. Please try again." : null,
@@ -123,7 +125,7 @@ function AuthForm() {
       if (mode === "sign-up") {
         const { error } = await signUpWithPassword(
           supabase,
-          { email, password, displayName: displayName || undefined },
+          { email, password, displayName: displayName || undefined, accountType },
           { emailRedirectTo: callbackUrl },
         );
         if (error) throw error;
@@ -184,6 +186,52 @@ function AuthForm() {
       <CardContent>
         <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-5">
           {mode === "sign-up" && (
+            <fieldset className="flex flex-col gap-2">
+              <legend className="mb-1 text-sm font-medium text-content-primary">
+                I&apos;m joining as
+              </legend>
+              <div className="grid grid-cols-2 gap-2.5" role="radiogroup" aria-label="Account type">
+                {(
+                  [
+                    { value: "client", title: "I'm getting tattooed", icon: "user" },
+                    { value: "artist", title: "I'm a tattoo artist", icon: "sparkles" },
+                  ] as const
+                ).map((opt) => {
+                  const selected = accountType === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => setAccountType(opt.value)}
+                      className={cx(
+                        "flex flex-col items-start gap-2 rounded-xl border p-3.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base",
+                        selected
+                          ? "border-border-accent bg-surface-overlay"
+                          : "border-border-subtle hover:border-border-strong hover:bg-surface-raised",
+                      )}
+                    >
+                      <span
+                        className={cx(
+                          "grid h-8 w-8 place-items-center rounded-lg",
+                          selected
+                            ? "bg-brand text-brand-on"
+                            : "bg-surface-raised text-content-muted",
+                        )}
+                      >
+                        <Icon name={opt.icon} size={16} />
+                      </span>
+                      <span className="text-sm font-semibold text-content-primary">
+                        {opt.title}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+          )}
+          {mode === "sign-up" && (
             <FormField label="Name" htmlFor="auth-name">
               <Input
                 id="auth-name"
@@ -191,7 +239,7 @@ function AuthForm() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 autoComplete="name"
-                placeholder="Jayden Cole"
+                placeholder="Your name"
                 leadingIcon={<Icon name="user" size={16} />}
               />
             </FormField>

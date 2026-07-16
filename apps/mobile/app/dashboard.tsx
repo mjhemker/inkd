@@ -5,8 +5,17 @@ import { Button, EmptyState, Icon } from "@inkd/ui/native";
 
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { AiStaffDashboardCard } from "@/components/ai-staff/DashboardCard";
+import { ArtistOnly } from "@/components/ArtistOnly";
 
 export default function DashboardScreen() {
+  return (
+    <ArtistOnly requireOnboarding>
+      <DashboardContent />
+    </ArtistOnly>
+  );
+}
+
+function DashboardContent() {
   return (
     <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
       <ScrollView className="flex-1" contentContainerClassName="gap-6 px-6 py-8">

@@ -9,9 +9,10 @@
  */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { becomeArtist, setOnboardingStep } from "../auth/role";
+import { becomeArtist, downgradeToClient, setOnboardingStep } from "../auth/role";
 import type { ArtistProfile } from "../types/rows";
 import { useInkdClient } from "./context";
+import { queryKeys } from "./queryKeys";
 
 const currentArtistKey = ["currentArtistProfile"] as const;
 
@@ -24,6 +25,23 @@ export function useEnsureArtist() {
       becomeArtist(client, input),
     onSuccess: (artist: ArtistProfile) =>
       qc.setQueryData(currentArtistKey, artist),
+  });
+}
+
+/**
+ * Downgrade the current artist to a client-only account. Unpublishes the artist
+ * profile and flips `is_artist` off; all studio data is retained but frozen.
+ * Invalidates the profile + artist-profile caches so the UI/nav re-reads role.
+ */
+export function useDowngradeToClient() {
+  const client = useInkdClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => downgradeToClient(client),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: currentArtistKey });
+      qc.invalidateQueries({ queryKey: queryKeys.currentProfile() });
+    },
   });
 }
 

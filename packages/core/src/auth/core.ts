@@ -23,20 +23,27 @@ export interface AuthResult {
   error: AuthError | null;
 }
 
-/** Email + password sign-up. `displayName` is stored in user metadata and picked
- * up by the `handle_new_user` trigger to seed `profiles.display_name`. */
+/** Email + password sign-up. `displayName` and `accountType` are stored in user
+ * metadata and picked up by the `handle_new_user` trigger to seed
+ * `profiles.display_name` and `profiles.is_artist` respectively — so the choice
+ * survives the email-confirmation round-trip. */
 export async function signUpWithPassword(
   client: InkdSupabaseClient,
   input: SignUpInput,
   opts: { emailRedirectTo?: string } = {},
 ): Promise<AuthResult> {
-  const { email, password, displayName } = signUpSchema.parse(input);
+  const { email, password, displayName, accountType } = signUpSchema.parse(input);
+  const metadata: Record<string, string> = {};
+  if (displayName) metadata.display_name = displayName;
+  // Always stamp an explicit account_type so the trigger is deterministic;
+  // default to "client" when the caller doesn't specify one.
+  metadata.account_type = accountType ?? "client";
   const { data, error } = await client.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: opts.emailRedirectTo,
-      data: displayName ? { display_name: displayName } : undefined,
+      data: metadata,
     },
   });
   return { user: data.user, session: data.session, error };

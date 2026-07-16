@@ -15,10 +15,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import {
   signInWithPassword,
   signUpWithPassword,
   signInWithMagicLink,
+  getCurrentProfile,
+  getCurrentArtistProfile,
 } from "@inkd/core/auth";
 import {
   Button,
@@ -53,6 +56,7 @@ function AuthForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [accountType, setAccountType] = useState<"client" | "artist">("client");
   const [pending, setPending] = useState(false);
 
   async function submit() {
@@ -63,6 +67,7 @@ function AuthForm() {
           email,
           password,
           displayName: displayName || undefined,
+          accountType,
         });
         if (error) throw error;
         toast({
@@ -74,7 +79,23 @@ function AuthForm() {
       } else {
         const { error } = await signInWithPassword(supabase, { email, password });
         if (error) throw error;
-        // Navigation is handled by the session provider / route guards.
+        // Route by role + onboarding state, mirroring the web auth callback:
+        // artist mid-onboarding → onboarding; everyone else → the shared feed.
+        try {
+          const profile = await getCurrentProfile(supabase);
+          if (profile?.is_artist) {
+            const artist = await getCurrentArtistProfile(supabase);
+            if (!artist || !artist.onboarding_completed_at) {
+              router.replace("/onboarding");
+            } else {
+              router.replace("/dashboard");
+            }
+          } else {
+            router.replace("/(tabs)");
+          }
+        } catch {
+          router.replace("/(tabs)");
+        }
       }
     } catch (err) {
       toast({
@@ -150,9 +171,51 @@ function AuthForm() {
 
             <CardContent className="gap-5">
               {mode === "sign-up" && (
+                <FormField label="I'm joining as">
+                  <View className="flex-row gap-2.5">
+                    {(
+                      [
+                        { value: "client", title: "I'm getting tattooed", icon: "user" },
+                        { value: "artist", title: "I'm a tattoo artist", icon: "sparkles" },
+                      ] as const
+                    ).map((opt) => {
+                      const selected = accountType === opt.value;
+                      return (
+                        <Pressable
+                          key={opt.value}
+                          onPress={() => setAccountType(opt.value)}
+                          accessibilityRole="radio"
+                          accessibilityState={{ selected }}
+                          className={`flex-1 gap-2 rounded-xl border p-3 ${
+                            selected
+                              ? "border-border-accent bg-surface-overlay"
+                              : "border-border-subtle"
+                          }`}
+                        >
+                          <View
+                            className={`h-8 w-8 items-center justify-center rounded-lg ${
+                              selected ? "bg-brand" : "bg-surface-raised"
+                            }`}
+                          >
+                            <Icon
+                              name={opt.icon}
+                              size={16}
+                              color={selected ? "#0A0A0B" : "#71717A"}
+                            />
+                          </View>
+                          <Text className="text-sm font-sans-semibold text-content-primary">
+                            {opt.title}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </FormField>
+              )}
+              {mode === "sign-up" && (
                 <FormField label="Name">
                   <Input
-                    placeholder="Jayden Cole"
+                    placeholder="Your name"
                     value={displayName}
                     onChangeText={setDisplayName}
                     autoComplete="name"

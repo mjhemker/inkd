@@ -14,7 +14,11 @@ import {
   ToastProvider,
   type TabItem,
 } from "@inkd/ui/native";
-import { useCurrentArtistProfile, useCurrentProfile } from "@inkd/core";
+import {
+  useCurrentArtistProfile,
+  useCurrentProfile,
+  useClientReviews,
+} from "@inkd/core";
 
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { NotificationBellButton } from "@/components/notifications/NotificationBellButton";
@@ -174,20 +178,93 @@ function ProfileScreenContent() {
             {tab === "flash" && <FlashPanel artistId={artist.id} userId={profile.id} />}
           </View>
         ) : (
-          <EmptyState
-            icon={<Icon name="sparkles" size={28} color="#71717A" />}
-            title="Set up your artist tools"
-            description="Turn on your studio to publish a portfolio, post flash, and open bookings."
-            action={
-              <Button size="md" onPress={() => router.push("/onboarding")}>
-                Become an artist
-              </Button>
-            }
-          />
+          <ClientSections clientId={profile.id} />
         )}
       </ScrollView>
 
       <EditProfileSheet open={editOpen} onClose={() => setEditOpen(false)} profile={profile} artist={artist ?? null} />
     </SafeAreaView>
+  );
+}
+
+/** Minimal client profile body — saves, reviews, and bookings. */
+function ClientSections({ clientId }: { clientId: string }) {
+  const { data: reviews, isLoading } = useClientReviews(clientId);
+
+  return (
+    <View className="gap-6">
+      <View className="gap-3">
+        <Card
+          variant="interactive"
+          onPress={() => router.push("/bookings")}
+          className="flex-row items-center gap-4"
+        >
+          <View className="h-11 w-11 items-center justify-center rounded-xl bg-surface-overlay">
+            <Icon name="calendar" size={20} color="#A78BFA" />
+          </View>
+          <View className="flex-1">
+            <Text className="text-sm font-sans-semibold text-content-primary">
+              Your bookings
+            </Text>
+            <Text className="text-xs text-content-muted">
+              Requests, upcoming sessions, and past work.
+            </Text>
+          </View>
+          <Icon name="arrow-right" size={16} color="#71717A" />
+        </Card>
+
+        <Card
+          variant="interactive"
+          onPress={() => router.push("/(tabs)/discover")}
+          className="flex-row items-center gap-4"
+        >
+          <View className="h-11 w-11 items-center justify-center rounded-xl bg-surface-overlay">
+            <Icon name="compass" size={20} color="#A78BFA" />
+          </View>
+          <View className="flex-1">
+            <Text className="text-sm font-sans-semibold text-content-primary">
+              Saved artists & work
+            </Text>
+            <Text className="text-xs text-content-muted">
+              Everything you&apos;ve saved while browsing.
+            </Text>
+          </View>
+          <Icon name="arrow-right" size={16} color="#71717A" />
+        </Card>
+      </View>
+
+      <View className="gap-3">
+        <Text className="font-display text-lg text-content-primary">Your reviews</Text>
+        {isLoading ? (
+          <Skeleton className="h-24 w-full" />
+        ) : !reviews || reviews.length === 0 ? (
+          <EmptyState
+            icon={<Icon name="star" size={26} color="#71717A" />}
+            title="No reviews yet"
+            description="After a session, you can leave a review for your artist — it'll show up here."
+          />
+        ) : (
+          <View className="gap-3">
+            {reviews.map((review) => (
+              <Card key={review.id} className="gap-2">
+                <View className="flex-row items-center gap-1">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Icon
+                      key={i}
+                      name="star"
+                      size={15}
+                      color={i < review.rating ? "#A78BFA" : "#3F3F46"}
+                    />
+                  ))}
+                </View>
+                {review.body ? (
+                  <Text className="text-sm text-content-secondary">{review.body}</Text>
+                ) : null}
+              </Card>
+            ))}
+          </View>
+        )}
+      </View>
+    </View>
   );
 }
