@@ -23,4 +23,5 @@ export const queryKeys = {
   sessionPayments: (sessionId: string) =>
     ["payments", "session", sessionId] as const,
   connectStatus: (artistId: string) => ["connectStatus", artistId] as const,
+  dashboardStats: (artistId: string) => ["dashboardStats", artistId] as const,
 } as const;

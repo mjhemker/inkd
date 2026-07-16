@@ -127,9 +127,31 @@ export function SettingsView() {
         </p>
       </div>
 
-      <Tabs value={tab} onValueChange={setTab} items={TABS} className="overflow-x-auto" />
+      {/* `overflow-x-auto` alone makes browsers auto-compute `overflow-y:
+          auto` too (CSS overflow §3: "if one axis is a non-visible value and
+          the other is visible, visible is set to auto"). The selected tab's
+          underline (`Tabs` renders it `-bottom-px`) sits 1px below the
+          tablist's border box, so that computed overflow-y saw 1px of
+          "content" to scroll — a permanently visible vertical scrollbar with
+          nothing meaningful behind it. `overflow-y-hidden` pins that axis so
+          only the intended horizontal scroll applies. */}
+      <Tabs
+        value={tab}
+        onValueChange={setTab}
+        items={TABS}
+        className="overflow-x-auto overflow-y-hidden"
+      />
 
-      <div className={tab === "grow" ? "max-w-3xl" : "max-w-2xl"}>
+      {/* Content column: wide enough on desktop for forms to breathe and for
+          each tab's own two-column field groups (services, locations) to lay
+          out side by side, without stretching narrow single-column tabs
+          edge-to-edge. Unconstrained below the breakpoint, so mobile is
+          unaffected. */}
+      <div
+        className={
+          tab === "grow" ? "max-w-4xl xl:max-w-5xl" : "max-w-3xl xl:max-w-4xl"
+        }
+      >
         {tab === "profile" && (
           <IdentityEditor profile={profile} artist={artist} variant="settings" />
         )}

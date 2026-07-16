@@ -31,3 +31,4 @@ export * from "./useFeed";
 export * from "./useReviews";
 export * from "./useNotifications";
 export * from "./useInstagram";
+export * from "./useDashboardStats";

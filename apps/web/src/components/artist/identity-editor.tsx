@@ -60,6 +60,11 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
     const [handle, setHandle] = useState(profile.handle ?? "");
     const [bio, setBio] = useState(artist.bio ?? profile.bio ?? "");
     const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url ?? "");
+    // Local object URL for the file the user just picked — shown immediately
+    // so the avatar never regresses to the (enlarged, at this size) initials
+    // fallback while the upload is in flight. Cleared once the real
+    // `avatarUrl` (the uploaded public URL) takes over.
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [selectedStyles, setSelectedStyles] = useState<string[]>(
       artist.styles ?? [],
     );
@@ -102,6 +107,10 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
     }, [handle, originalHandle, client]);
 
     async function handleAvatarFile(file: File) {
+      // Show the picked file immediately via a local object URL — the actual
+      // upload + public-URL round trip happens in the background below.
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
       setUploadingAvatar(true);
       try {
         const { publicUrl } = await uploadMedia.mutateAsync({
@@ -119,6 +128,8 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
         });
       } finally {
         setUploadingAvatar(false);
+        URL.revokeObjectURL(objectUrl);
+        setPreviewUrl(null);
       }
     }
 
@@ -193,7 +204,11 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
         {/* Avatar + name */}
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
           <div className="relative">
-            <Avatar src={avatarUrl || undefined} name={displayName || "You"} size="xl" />
+            <Avatar
+              src={previewUrl ?? (avatarUrl || undefined)}
+              name={displayName || "You"}
+              size="xl"
+            />
             <button
               type="button"
               onClick={() => avatarInput.current?.click()}
