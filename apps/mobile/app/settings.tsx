@@ -7,7 +7,7 @@
 import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   Avatar,
   Badge,
@@ -73,9 +73,15 @@ export default function SettingsScreen() {
 
 function SettingsView() {
   const router = useRouter();
+  // Honour the ?tab= deep link (from notifications / cross-links), mirroring
+  // web settings-view.tsx which reads searchParams.get("tab").
+  const params = useLocalSearchParams<{ tab?: string }>();
   const { data: profile, isLoading: pLoading } = useCurrentProfile();
   const { data: artist, isLoading: aLoading } = useCurrentArtistProfile();
-  const [tab, setTab] = useState("profile");
+  const initialTab = TABS.some((t) => t.value === params.tab)
+    ? (params.tab as string)
+    : "profile";
+  const [tab, setTab] = useState(initialTab);
 
   if (pLoading || aLoading) {
     return (
