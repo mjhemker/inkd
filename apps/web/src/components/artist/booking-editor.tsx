@@ -12,7 +12,6 @@ import {
   DateField,
   Icon,
   RadioGroup,
-  TimeField,
   Toggle,
   useToast,
 } from "@inkd/ui/web";
@@ -20,7 +19,9 @@ import type {
   ArtistProfile,
   AvailabilityRule,
   BookingWindow,
+  WeeklyBlock,
 } from "@inkd/core";
+import { rulesToBlocks } from "@inkd/core";
 import {
   useAvailabilityRules,
   useAvailabilityBlocks,
@@ -28,22 +29,52 @@ import {
   useBookingPolicy,
 } from "@inkd/core/hooks";
 
-import { BOOKING_WINDOWS, WEEKDAYS } from "./constants";
+import { BOOKING_WINDOWS } from "./constants";
 import type { EditorHandle } from "./types";
+import { WeeklyHoursGrid, type TimeOffSpan } from "../availability/WeeklyHoursGrid";
 
-interface DayState {
-  open: boolean;
-  start: string;
-  end: string;
+/** Default starter week for a brand-new artist: Tue–Sat, 11:00–19:00. */
+function defaultBlocks(): WeeklyBlock[] {
+  return [2, 3, 4, 5, 6].map((weekday) => ({
+    weekday,
+    start: "11:00",
+    end: "19:00",
+  }));
 }
 
-function defaultDay(weekday: number): DayState {
-  const openByDefault = weekday >= 2 && weekday <= 6; // Tue–Sat
-  return { open: openByDefault, start: "11:00", end: "19:00" };
-}
-
-function normalizeTime(t: string): string {
-  return t.length >= 5 ? t.slice(0, 5) : t;
+/**
+ * Project date-range time-off blocks onto the weekly grid: any weekday whose
+ * next occurrence (within `horizonDays`) is covered by a blocking span gets a
+ * read-only shaded column labelled with that date.
+ */
+function timeOffSpans(
+  blocks: { starts_at: string; ends_at: string; is_available: boolean }[] | undefined,
+  horizonDays = 21,
+): TimeOffSpan[] {
+  if (!blocks || blocks.length === 0) return [];
+  const out = new Map<number, string>();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  for (let i = 0; i < horizonDays; i++) {
+    const day = new Date(today.getTime() + i * 86400000);
+    const weekday = day.getDay();
+    if (out.has(weekday)) continue;
+    const dayStart = day.getTime();
+    const dayEnd = dayStart + 86400000;
+    const covered = blocks.some((b) => {
+      if (b.is_available) return false;
+      const bs = new Date(b.starts_at).getTime();
+      const be = new Date(b.ends_at).getTime();
+      return bs < dayEnd && be > dayStart;
+    });
+    if (covered) {
+      out.set(
+        weekday,
+        `Off ${day.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`,
+      );
+    }
+  }
+  return [...out.entries()].map(([weekday, label]) => ({ weekday, label }));
 }
 
 export interface BookingEditorProps {
@@ -55,19 +86,12 @@ export const BookingEditor = forwardRef<EditorHandle, BookingEditorProps>(
   function BookingEditor({ artist, variant = "onboarding" }, ref) {
     const { toast } = useToast();
     const { data: rules } = useAvailabilityRules(artist.id);
-    const { data: blocks } = useAvailabilityBlocks(artist.id);
+    const { data: timeOffBlocks } = useAvailabilityBlocks(artist.id);
     const { data: policy } = useBookingPolicy(artist.id);
-    const {
-      createRule,
-      deleteRule,
-      createBlock,
-      deleteBlock,
-      upsertPolicy,
-    } = useAvailabilityMutations(artist.id);
+    const { reconcileRules, createBlock, deleteBlock, upsertPolicy } =
+      useAvailabilityMutations(artist.id);
 
-    const [days, setDays] = useState<Record<number, DayState>>(() =>
-      Object.fromEntries(WEEKDAYS.map((d) => [d.value, defaultDay(d.value)])),
-    );
+    const [blocks, setBlocks] = useState<WeeklyBlock[]>(() => defaultBlocks());
     const seededRules = useRef(false);
 
     const [bookingWindow, setBookingWindow] = useState<BookingWindow>("2_3mo");
@@ -78,22 +102,12 @@ export const BookingEditor = forwardRef<EditorHandle, BookingEditorProps>(
     const [vacFrom, setVacFrom] = useState("");
     const [vacTo, setVacTo] = useState("");
 
-    // Seed weekly hours from existing rules once.
+    // Seed weekly hours from existing rules once (empty = keep the starter week).
     useEffect(() => {
       if (seededRules.current || !rules) return;
       seededRules.current = true;
       if (rules.length === 0) return;
-      const next: Record<number, DayState> = Object.fromEntries(
-        WEEKDAYS.map((d) => [d.value, { ...defaultDay(d.value), open: false }]),
-      );
-      for (const r of rules as AvailabilityRule[]) {
-        next[r.weekday] = {
-          open: r.is_open,
-          start: normalizeTime(r.start_time),
-          end: normalizeTime(r.end_time),
-        };
-      }
-      setDays(next);
+      setBlocks(rulesToBlocks(rules as AvailabilityRule[]));
     }, [rules]);
 
     // Seed booking policy once.
@@ -106,13 +120,6 @@ export const BookingEditor = forwardRef<EditorHandle, BookingEditorProps>(
         setAllowDocuments(policy.allow_document_uploads);
       }
     }, [policy]);
-
-    function setDay(weekday: number, patch: Partial<DayState>) {
-      setDays((prev) => {
-        const cur = prev[weekday] ?? defaultDay(weekday);
-        return { ...prev, [weekday]: { ...cur, ...patch } };
-      });
-    }
 
     async function addVacation() {
       if (!vacFrom || !vacTo) {
@@ -145,23 +152,12 @@ export const BookingEditor = forwardRef<EditorHandle, BookingEditorProps>(
           allow_image_uploads: allowImages,
           allow_document_uploads: allowDocuments,
         });
-        // Rebuild weekly rules from local state.
-        if (rules) {
-          for (const r of rules as AvailabilityRule[]) {
-            await deleteRule.mutateAsync(r.id);
-          }
-        }
-        for (const d of WEEKDAYS) {
-          const day = days[d.value];
-          if (day?.open) {
-            await createRule.mutateAsync({
-              weekday: d.value,
-              start_time: day.start,
-              end_time: day.end,
-              is_open: true,
-            });
-          }
-        }
+        // Set-reconcile weekly rules: diff desired blocks against persisted rows
+        // (insert new, update moved/resized, delete removed) — no blind rebuild.
+        await reconcileRules.mutateAsync({
+          existing: (rules ?? []) as AvailabilityRule[],
+          desired: blocks,
+        });
         return true;
       } catch (err) {
         toast({
@@ -177,57 +173,39 @@ export const BookingEditor = forwardRef<EditorHandle, BookingEditorProps>(
 
     return (
       <div className="flex flex-col gap-8">
-        {/* Weekly hours */}
+        {/* Weekly hours grid */}
         <div className="flex flex-col gap-3">
-          <span className="text-sm font-medium text-content-primary">
-            Business hours
-          </span>
-          <div className="flex flex-col divide-y divide-border-subtle rounded-xl border border-border-subtle">
-            {WEEKDAYS.map((d) => {
-              const day = days[d.value];
-              return (
-                <div
-                  key={d.value}
-                  className="flex items-center gap-3 px-4 py-2.5"
-                >
-                  <div className="w-24">
-                    <Toggle
-                      checked={day?.open ?? false}
-                      onCheckedChange={(v) => setDay(d.value, { open: v })}
-                      label={d.short}
-                    />
-                  </div>
-                  {day?.open ? (
-                    <div className="flex flex-1 items-center gap-2">
-                      <TimeField
-                        size="sm"
-                        value={day.start}
-                        onChange={(e) => setDay(d.value, { start: e.target.value })}
-                      />
-                      <span className="text-content-muted">–</span>
-                      <TimeField
-                        size="sm"
-                        value={day.end}
-                        onChange={(e) => setDay(d.value, { end: e.target.value })}
-                      />
-                    </div>
-                  ) : (
-                    <span className="flex-1 text-sm text-content-muted">Closed</span>
-                  )}
-                </div>
-              );
-            })}
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-medium text-content-primary">
+              Business hours
+            </span>
+            <span className="text-xs text-content-muted">
+              Paint your open hours. Drag on a day to add a block; add several
+              per day for split shifts. An empty day is closed.
+            </span>
           </div>
+          <WeeklyHoursGrid
+            blocks={blocks}
+            onChange={setBlocks}
+            timeOff={timeOffSpans(timeOffBlocks)}
+          />
         </div>
 
         {/* Vacation blocks */}
         <div className="flex flex-col gap-3">
-          <span className="text-sm font-medium text-content-primary">
-            Planned time off
-          </span>
-          {blocks && blocks.length > 0 && (
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-medium text-content-primary">
+              Planned time off
+            </span>
+            <span className="text-xs text-content-muted">
+              Optional — with flexible weekly hours you only need this for
+              vacations or one-off closures. It shades those days on the grid
+              above.
+            </span>
+          </div>
+          {timeOffBlocks && timeOffBlocks.length > 0 && (
             <div className="flex flex-col gap-2">
-              {blocks.map((b) => (
+              {timeOffBlocks.map((b) => (
                 <div
                   key={b.id}
                   className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-raised/40 px-3.5 py-2.5"

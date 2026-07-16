@@ -28,6 +28,12 @@ const DEV_ROUTES: { href: string; title: string; description: string }[] = [
     description: "Full artist onboarding wizard driven by an offline fake client.",
   },
   {
+    href: "/dev/hours-preview",
+    title: "Weekly hours grid",
+    description:
+      "The Calendly-style WeeklyHoursGrid availability editor: empty grid, drag-created multi-block week, block popover, and time-off shading — plus the full BookingEditor it lives in.",
+  },
+  {
     href: "/dev/feed-preview",
     title: "Discovery feed",
     description:
