@@ -124,3 +124,15 @@ export type ReviewUpdate = TablesUpdate<"reviews">;
 export type ShopUpdate = TablesUpdate<"shops">;
 export type ShopMemberUpdate = TablesUpdate<"shop_members">;
 export type AftercareCheckinUpdate = TablesUpdate<"aftercare_checkins">;
+
+// --- Waitlist (Wave 2) ------------------------------------------------------
+export type WaitlistEntryStatus = Enums<"waitlist_entry_status">;
+export type WaitlistOfferStatus = Enums<"waitlist_offer_status">;
+export type WaitlistOpeningStatus = Enums<"waitlist_opening_status">;
+
+export type WaitlistEntry = Tables<"waitlist_entries">;
+export type WaitlistOpening = Tables<"waitlist_openings">;
+export type WaitlistOffer = Tables<"waitlist_offers">;
+
+export type WaitlistEntryInsert = TablesInsert<"waitlist_entries">;
+export type WaitlistEntryUpdate = TablesUpdate<"waitlist_entries">;

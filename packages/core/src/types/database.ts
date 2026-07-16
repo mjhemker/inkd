@@ -469,6 +469,7 @@ export type Database = {
           travel_fly_out: boolean
           travel_house_calls: boolean
           updated_at: string
+          waitlist_enabled: boolean
           years_experience: number | null
         }
         Insert: {
@@ -498,6 +499,7 @@ export type Database = {
           travel_fly_out?: boolean
           travel_house_calls?: boolean
           updated_at?: string
+          waitlist_enabled?: boolean
           years_experience?: number | null
         }
         Update: {
@@ -527,6 +529,7 @@ export type Database = {
           travel_fly_out?: boolean
           travel_house_calls?: boolean
           updated_at?: string
+          waitlist_enabled?: boolean
           years_experience?: number | null
         }
         Relationships: [
@@ -904,6 +907,78 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_drops: {
+        Row: {
+          artist_id: string | null
+          clicked_at: string | null
+          created_at: string
+          drop_date: string
+          generated_at: string
+          id: string
+          is_cold_start: boolean
+          reacted_at: string | null
+          reason: string
+          reason_style: string | null
+          score: number | null
+          seen_at: string | null
+          subject_id: string
+          subject_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          artist_id?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          drop_date: string
+          generated_at?: string
+          id?: string
+          is_cold_start?: boolean
+          reacted_at?: string | null
+          reason: string
+          reason_style?: string | null
+          score?: number | null
+          seen_at?: string | null
+          subject_id: string
+          subject_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          artist_id?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          drop_date?: string
+          generated_at?: string
+          id?: string
+          is_cold_start?: boolean
+          reacted_at?: string | null
+          reason?: string
+          reason_style?: string | null
+          score?: number | null
+          seen_at?: string | null
+          subject_id?: string
+          subject_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_drops_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_drops_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2585,6 +2660,247 @@ export type Database = {
           },
         ]
       }
+      waitlist_entries: {
+        Row: {
+          artist_id: string
+          client_id: string
+          created_at: string
+          earliest_date: string | null
+          id: string
+          latest_date: string | null
+          note: string | null
+          preferred_time_end: string | null
+          preferred_time_start: string | null
+          preferred_weekdays: number[] | null
+          priority: number
+          service_id: string | null
+          status: Database["public"]["Enums"]["waitlist_entry_status"]
+          updated_at: string
+        }
+        Insert: {
+          artist_id: string
+          client_id: string
+          created_at?: string
+          earliest_date?: string | null
+          id?: string
+          latest_date?: string | null
+          note?: string | null
+          preferred_time_end?: string | null
+          preferred_time_start?: string | null
+          preferred_weekdays?: number[] | null
+          priority?: number
+          service_id?: string | null
+          status?: Database["public"]["Enums"]["waitlist_entry_status"]
+          updated_at?: string
+        }
+        Update: {
+          artist_id?: string
+          client_id?: string
+          created_at?: string
+          earliest_date?: string | null
+          id?: string
+          latest_date?: string | null
+          note?: string | null
+          preferred_time_end?: string | null
+          preferred_time_start?: string | null
+          preferred_weekdays?: number[] | null
+          priority?: number
+          service_id?: string | null
+          status?: Database["public"]["Enums"]["waitlist_entry_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_entries_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_entries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_entries_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      waitlist_offers: {
+        Row: {
+          artist_id: string
+          booking_id: string | null
+          client_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          offered_at: string
+          opening_id: string
+          responded_at: string | null
+          service_id: string | null
+          session_id: string | null
+          slot_end: string | null
+          slot_start: string
+          status: Database["public"]["Enums"]["waitlist_offer_status"]
+          updated_at: string
+          waitlist_entry_id: string
+        }
+        Insert: {
+          artist_id: string
+          booking_id?: string | null
+          client_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          offered_at?: string
+          opening_id: string
+          responded_at?: string | null
+          service_id?: string | null
+          session_id?: string | null
+          slot_end?: string | null
+          slot_start: string
+          status?: Database["public"]["Enums"]["waitlist_offer_status"]
+          updated_at?: string
+          waitlist_entry_id: string
+        }
+        Update: {
+          artist_id?: string
+          booking_id?: string | null
+          client_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          offered_at?: string
+          opening_id?: string
+          responded_at?: string | null
+          service_id?: string | null
+          session_id?: string | null
+          slot_end?: string | null
+          slot_start?: string
+          status?: Database["public"]["Enums"]["waitlist_offer_status"]
+          updated_at?: string
+          waitlist_entry_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_offers_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_offers_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_offers_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_offers_opening_id_fkey"
+            columns: ["opening_id"]
+            isOneToOne: false
+            referencedRelation: "waitlist_openings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_offers_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_offers_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_offers_waitlist_entry_id_fkey"
+            columns: ["waitlist_entry_id"]
+            isOneToOne: false
+            referencedRelation: "waitlist_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      waitlist_openings: {
+        Row: {
+          artist_id: string
+          created_at: string
+          id: string
+          service_id: string | null
+          session_id: string | null
+          slot_end: string | null
+          slot_start: string
+          source: string
+          status: Database["public"]["Enums"]["waitlist_opening_status"]
+          updated_at: string
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string
+          id?: string
+          service_id?: string | null
+          session_id?: string | null
+          slot_end?: string | null
+          slot_start: string
+          source?: string
+          status?: Database["public"]["Enums"]["waitlist_opening_status"]
+          updated_at?: string
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string
+          id?: string
+          service_id?: string | null
+          session_id?: string | null
+          slot_end?: string | null
+          slot_start?: string
+          source?: string
+          status?: Database["public"]["Enums"]["waitlist_opening_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_openings_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_openings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_openings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       waiver_templates: {
         Row: {
           artist_id: string | null
@@ -2667,8 +2983,14 @@ export type Database = {
       agent_run_tick: { Args: never; Returns: undefined }
       agent_scheduled_enqueue: { Args: never; Returns: undefined }
       agent_scheduled_tick: { Args: never; Returns: undefined }
+      claim_waitlist_offer: { Args: { p_offer_id: string }; Returns: string }
       current_artist_id: { Args: never; Returns: string }
       current_owned_shop_id: { Args: never; Returns: string }
+      daily_drop_tick: { Args: never; Returns: undefined }
+      decline_waitlist_offer: {
+        Args: { p_offer_id: string }
+        Returns: undefined
+      }
       enqueue_untagged_images: { Args: never; Returns: number }
       image_tag_jobs_lease: {
         Args: { p_limit?: number }
@@ -2816,6 +3138,36 @@ export type Database = {
           subject_type: Database["public"]["Enums"]["image_subject_type"]
         }[]
       }
+      user_style_affinity: {
+        Args: { p_user_id: string }
+        Returns: {
+          style_slug: string
+          top_source: string
+          weight: number
+        }[]
+      }
+      waitlist_artist_open_session: {
+        Args: { p_session_id: string }
+        Returns: string
+      }
+      waitlist_cascade: { Args: { p_opening_id: string }; Returns: undefined }
+      waitlist_create_offer: {
+        Args: { p_entry_id: string; p_opening_id: string }
+        Returns: string
+      }
+      waitlist_match_next: { Args: { p_opening_id: string }; Returns: string }
+      waitlist_open_slot: {
+        Args: {
+          p_artist_id: string
+          p_service_id: string
+          p_session_id: string
+          p_slot_end: string
+          p_slot_start: string
+          p_source: string
+        }
+        Returns: string
+      }
+      waitlist_tick: { Args: never; Returns: undefined }
     }
     Enums: {
       aftercare_checkin_kind: "day_3" | "week_1" | "week_3"
@@ -2897,6 +3249,19 @@ export type Database = {
       shop_membership_mode: "promotional" | "managed"
       thread_status: "active" | "archived" | "closed"
       us_state: "MD" | "PA"
+      waitlist_entry_status:
+        | "active"
+        | "offered"
+        | "claimed"
+        | "expired"
+        | "cancelled"
+      waitlist_offer_status: "pending" | "accepted" | "declined" | "expired"
+      waitlist_opening_status:
+        | "open"
+        | "filled"
+        | "exhausted"
+        | "expired"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3112,6 +3477,21 @@ export const Constants = {
       shop_membership_mode: ["promotional", "managed"],
       thread_status: ["active", "archived", "closed"],
       us_state: ["MD", "PA"],
+      waitlist_entry_status: [
+        "active",
+        "offered",
+        "claimed",
+        "expired",
+        "cancelled",
+      ],
+      waitlist_offer_status: ["pending", "accepted", "declined", "expired"],
+      waitlist_opening_status: [
+        "open",
+        "filled",
+        "exhausted",
+        "expired",
+        "cancelled",
+      ],
     },
   },
 } as const

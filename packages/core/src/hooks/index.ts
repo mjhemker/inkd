@@ -37,3 +37,4 @@ export * from "./useShops";
 export * from "./useAftercare";
 export * from "./queryKeysDailyDrop";
 export * from "./useDailyDrop";
+export * from "./useWaitlist";

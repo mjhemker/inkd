@@ -40,3 +40,4 @@ export * from "./aftercare";
 export * from "./dailyDrop";
 export * from "./matchInspiration";
 export * from "./matchInspirationRun";
+export * from "./waitlist";

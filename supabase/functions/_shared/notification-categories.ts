@@ -23,6 +23,7 @@ export const NOTIFICATION_CATEGORIES = [
   "review_response",
   "ai_approval",
   "aftercare",
+  "waitlist",
 ] as const;
 
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
@@ -51,6 +52,8 @@ export function categoryForType(type: string): NotificationCategory | null {
       return "ai_approval";
     case "aftercare_check_in":
       return "aftercare";
+    case "waitlist_offer_new":
+      return "waitlist";
     default:
       return null;
   }

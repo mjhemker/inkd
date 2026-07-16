@@ -19,6 +19,7 @@ export const NOTIFICATION_CATEGORIES = [
   "review_response",
   "ai_approval",
   "aftercare",
+  "waitlist",
 ] as const;
 
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
@@ -96,6 +97,10 @@ export const NOTIFICATION_CATEGORY_META: NotificationCategoryMeta[] =
         label: "Aftercare",
         description: "Aftercare check-ins after a session.",
       },
+      waitlist: {
+        label: "Waitlist offers",
+        description: "A spot opens up on a waitlist you joined.",
+      },
     };
     return { category, ...meta[category], defaults: defaultChannels(category) };
   });
@@ -123,6 +128,8 @@ export function categoryForType(type: string): NotificationCategory | null {
       return "ai_approval";
     case "aftercare_check_in":
       return "aftercare";
+    case "waitlist_offer_new":
+      return "waitlist";
     default:
       return null;
   }

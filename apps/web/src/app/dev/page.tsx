@@ -115,6 +115,30 @@ const DEV_ROUTES: { href: string; title: string; description: string }[] = [
     description:
       "The premium tier scaffold: the 'INKD Pro — coming soon' placard and the autonomy slider's pilot note + PRO stamp, rendered against a mock Supabase client.",
   },
+  {
+    href: "/dev/shop-preview",
+    title: "Shops — public page & roster",
+    description:
+      "Wave 2: the /s/[handle] public shop profile and the owner dashboard roster (managed / promotional / pending members), rendered against a mock shop client.",
+  },
+  {
+    href: "/dev/daily-drop-preview",
+    title: "Daily Drop",
+    description:
+      "Wave 2: the personalized Daily Drop card + dedicated surface, driven by the offline selection algorithm.",
+  },
+  {
+    href: "/dev/match-inspiration",
+    title: "Match my inspiration",
+    description:
+      "Wave 2: upload-a-tattoo image match experience over similar_works, with the discover/feed entry points.",
+  },
+  {
+    href: "/dev/waitlist-preview",
+    title: "Waitlist — join, offer & claim",
+    description:
+      "Wave 2: client join/manage + offer/claim flow and the artist-side waitlist view. Supports ?only= for per-surface screenshots.",
+  },
 ];
 
 export default function DevIndexPage() {
