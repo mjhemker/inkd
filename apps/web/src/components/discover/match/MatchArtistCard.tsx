@@ -102,6 +102,7 @@ function WorkThumb({ handle, work }: { handle: string | null; work: MatchWork })
           alt={work.styles.map(titleCase).join(", ") || "Matched tattoo"}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           loading="lazy"
+          decoding="async"
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-content-muted">

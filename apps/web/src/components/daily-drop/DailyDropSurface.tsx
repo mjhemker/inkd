@@ -79,7 +79,13 @@ function HistoryTile({ card }: { card: DailyDropCardData }) {
         >
           {image && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={image} alt={card.reason} className="absolute inset-0 h-full w-full object-cover" />
+            <img
+              src={image}
+              alt={card.reason}
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
           )}
           <span
             className={cx(

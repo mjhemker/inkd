@@ -53,7 +53,13 @@ export function Avatar({
       {...props}
     >
       {src ? (
-        <img src={src} alt={name ?? ""} className="h-full w-full object-cover" />
+        <img
+          src={src}
+          alt={name ?? ""}
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover"
+        />
       ) : name ? (
         <span aria-hidden="true">{initials(name)}</span>
       ) : null}

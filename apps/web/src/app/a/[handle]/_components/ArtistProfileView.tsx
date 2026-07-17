@@ -255,6 +255,8 @@ function PortfolioGrid({
           <img
             src={piece.image_url as string}
             alt={piece.title ?? ""}
+            loading="lazy"
+            decoding="async"
             className="w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
           {piece.title && (
@@ -282,7 +284,13 @@ function PostsGrid({ posts }: { posts: PublicArtistData["posts"] }) {
             <div className="aspect-square bg-surface-overlay">
               {cover ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={cover} alt="" className="h-full w-full object-cover" />
+                <img
+                  src={cover}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <div className="flex h-full items-center justify-center text-content-muted">
                   <Icon name="image" size={20} />
@@ -318,7 +326,13 @@ function FlashSection({ sheets }: { sheets: PublicArtistData["flashSheets"] }) {
                 <div className="relative aspect-square bg-surface-overlay">
                   {item.image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.image_url} alt={item.title ?? ""} className="h-full w-full object-cover" />
+                    <img
+                      src={item.image_url}
+                      alt={item.title ?? ""}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <div className="flex h-full items-center justify-center text-content-muted">
                       <Icon name="sparkles" size={20} />

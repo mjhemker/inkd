@@ -60,7 +60,13 @@ function PostCard({ post }: { post: Post }) {
       <div className="relative aspect-square bg-surface-overlay">
         {cover ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={cover} alt="" className="h-full w-full object-cover" />
+          <img
+            src={cover}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
         ) : (
           <div className="flex h-full items-center justify-center text-content-muted">
             <Icon name="image" size={22} />
