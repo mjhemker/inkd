@@ -78,7 +78,13 @@ export function MessageBubble({
               >
                 {url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={url} alt="Chat attachment" className="h-full w-full object-cover" />
+                  <img
+                    src={url}
+                    alt="Chat attachment"
+                    loading="lazy"
+                    decoding="async"
+                    className="h-full w-full object-cover"
+                  />
                 ) : urlsQuery.isError ? (
                   <Icon name="x" size={18} className="text-content-muted" />
                 ) : (

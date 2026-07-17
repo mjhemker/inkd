@@ -65,6 +65,8 @@ export function Avatar({
         <img
           src={src}
           alt={name ?? ""}
+          loading="lazy"
+          decoding="async"
           className="h-full w-full object-cover"
           onError={() => setFailed(true)}
         />

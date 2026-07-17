@@ -144,7 +144,13 @@ function PieceCard({
       <div className="relative aspect-square bg-surface-overlay">
         {piece.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={piece.image_url} alt={piece.title ?? ""} className="h-full w-full object-cover" />
+          <img
+            src={piece.image_url}
+            alt={piece.title ?? ""}
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
         ) : (
           <div className="flex h-full items-center justify-center text-content-muted">
             <Icon name="image" size={22} />

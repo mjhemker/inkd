@@ -9,6 +9,7 @@
  * regardless.) Not linked from product nav.
  */
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   formatMinPrice,
   usdToCents,
@@ -19,10 +20,26 @@ import {
   type DiscoverFilterState,
 } from "@inkd/core/api";
 import type { Style } from "@inkd/core/types";
+import { Spinner } from "@inkd/ui/web";
 
 import { FilterBar } from "@/components/discover/FilterBar";
 import { ArtistPlacard } from "@/components/discover/ArtistPlacard";
-import { DiscoverMap } from "@/components/discover/DiscoverMap";
+
+// Same pattern as the real /discover (DiscoverView): MapLibre touches
+// `window`, so it's loaded client-only and only when the map actually renders
+// — this dev harness was pulling the ~190kB maplibre-gl chunk into its
+// synchronous bundle for no reason (not linked from product nav, but built).
+const DiscoverMap = dynamic(
+  () => import("@/components/discover/DiscoverMap").then((m) => m.DiscoverMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full w-full items-center justify-center bg-surface-raised">
+        <Spinner />
+      </div>
+    ),
+  },
+);
 
 const STYLE_SEED: [string, string][] = [
   ["american-traditional", "American Traditional"],

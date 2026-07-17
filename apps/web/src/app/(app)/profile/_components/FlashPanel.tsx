@@ -96,7 +96,13 @@ function SheetCard({ sheet, onManage }: { sheet: FlashSheet; onManage: () => voi
       <div className="relative aspect-[4/3] bg-surface-overlay">
         {sheet.cover_url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={sheet.cover_url} alt="" className="h-full w-full object-cover" />
+          <img
+            src={sheet.cover_url}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
         ) : (
           <div className="flex h-full items-center justify-center text-content-muted">
             <Icon name="sparkles" size={22} />
@@ -309,7 +315,13 @@ function FlashItemRow({
       <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface-raised">
         {item.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.image_url} alt="" className="h-full w-full object-cover" />
+          <img
+            src={item.image_url}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
         ) : (
           <div className="flex h-full items-center justify-center text-content-muted">
             <Icon name="image" size={18} />

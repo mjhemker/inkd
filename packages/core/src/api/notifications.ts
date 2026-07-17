@@ -8,11 +8,10 @@
  * directly (the `notifications_insert` RLS policy only lets a caller write
  * their own row, which the SECURITY DEFINER triggers bypass).
  */
-import type { RealtimeChannel } from "@supabase/supabase-js";
-
 import type { InkdSupabaseClient } from "../supabase/client";
 import type { Notification } from "../types/rows";
 import { unwrapList, clampLimit } from "./helpers";
+import { subscribeShared } from "./realtimeShare";
 
 export interface ListNotificationsOpts {
   unreadOnly?: boolean;
@@ -79,31 +78,40 @@ export async function markAllNotificationsRead(
 
 /**
  * Subscribe to newly-inserted notifications for a profile over Realtime.
- * Returns the channel; call `client.removeChannel(channel)` to tear down.
- * Mirrors `subscribeToThreadMessages` in `./messaging.ts` — RLS still scopes
- * delivery to the recipient's own rows even though this filters by
- * `profile_id` for efficiency.
+ * Returns an unsubscribe function. Mirrors `subscribeToThreadMessages` in
+ * `./messaging.ts` — RLS still scopes delivery to the recipient's own rows
+ * even though this filters by `profile_id` for efficiency.
+ *
+ * Shared per `profileId` via `subscribeShared` — e.g. `NotificationBell`
+ * mounts both `useUnreadNotificationCount` and `useNotifications` for the
+ * same profile at once, and they now fan out from one underlying channel
+ * instead of each opening their own.
  *
  * @example
- *   const channel = subscribeToNotifications(supabase, profileId, (n) => {...});
- *   // later: supabase.removeChannel(channel);
+ *   const unsubscribe = subscribeToNotifications(supabase, profileId, (n) => {...});
+ *   // later: unsubscribe();
  */
 export function subscribeToNotifications(
   client: InkdSupabaseClient,
   profileId: string,
   onInsert: (notification: Notification) => void,
-): RealtimeChannel {
-  return client
-    .channel(`notifications:${profileId}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "notifications",
-        filter: `profile_id=eq.${profileId}`,
-      },
-      (payload) => onInsert(payload.new as Notification),
-    )
-    .subscribe();
+): () => void {
+  return subscribeShared<Notification>(
+    client,
+    `notifications:${profileId}`,
+    (channel, dispatch) =>
+      channel
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "notifications",
+            filter: `profile_id=eq.${profileId}`,
+          },
+          (payload) => dispatch(payload.new as Notification),
+        )
+        .subscribe(),
+    onInsert,
+  );
 }

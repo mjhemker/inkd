@@ -70,7 +70,16 @@ export function DailyDropCard({ card, variant = "feed", signedIn = true }: Daily
         <div className={cx("relative", full ? "aspect-[4/5] sm:h-full sm:aspect-auto" : "aspect-[16/10]")}>
           {image && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={image} alt={card.reason} className="absolute inset-0 h-full w-full object-cover" />
+            <img
+              src={image}
+              alt={card.reason}
+              // The "full" surface variant is the hero of /daily-drop (LCP
+              // candidate) — keep it eager. The compact "feed" variant is one
+              // of many cards in a scroll, so defer it like other feed media.
+              loading={full ? "eager" : "lazy"}
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
           )}
           <div className="absolute left-3 top-3 flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-sm bg-brand px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-brand-on">

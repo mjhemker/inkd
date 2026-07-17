@@ -51,6 +51,7 @@ function Artwork({
           src={src}
           alt={alt}
           loading="lazy"
+          decoding="async"
           onError={() => setBroken(true)}
           className="absolute inset-0 h-full w-full object-cover"
         />

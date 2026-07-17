@@ -276,6 +276,8 @@ function PortfolioTile({
           <img
             src={piece.image_url as string}
             alt={piece.title ?? ""}
+            loading="lazy"
+            decoding="async"
             onError={() => setBroken(true)}
             className="w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
@@ -314,6 +316,8 @@ function SquareCover({
     <img
       src={src}
       alt={alt}
+      loading="lazy"
+      decoding="async"
       onError={() => setBroken(true)}
       className="h-full w-full object-cover"
     />
