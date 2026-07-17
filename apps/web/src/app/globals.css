@@ -76,6 +76,45 @@
   --color-status-info: 37 99 235;
 }
 
+/* --- Always-dark surface island -------------------------------------------
+   For panels whose background is a FIXED dark matte in BOTH themes (the public
+   artist hero, the portfolio lightbox). Re-declares the dark token ramp locally
+   so every descendant's theme-backed utility (text-content-*, border-*,
+   bg-surface-*, Badge variants) resolves to on-dark values — i.e. text stays
+   light-on-dark even when <html data-theme="light">. Mirrors the `:root` dark
+   values above; keep in sync. */
+.surface-dark-fixed {
+  color-scheme: dark;
+  --color-surface-base: 10 10 11;
+  --color-surface-raised: 17 17 19;
+  --color-surface-overlay: 26 26 29;
+  --color-surface-inverse: 250 250 250;
+  --color-surface-plate: 124 58 237;
+  --color-surface-plate-active: 109 40 217;
+  --color-surface-plate-ink: 46 16 101;
+  --color-surface-ember: 232 161 92;
+  --color-content-primary: 250 250 250;
+  --color-content-secondary: 161 161 170;
+  --color-content-muted: 113 113 122;
+  --color-content-inverse: 10 10 11;
+  --color-content-accent: 167 139 250;
+  --color-content-ember: 232 161 92;
+  --color-border-subtle: 26 26 29;
+  --color-border-default: 39 39 42;
+  --color-border-strong: 63 63 70;
+  --color-border-accent: 124 58 237;
+  --color-border-ember: 211 129 63;
+  --color-brand: 124 58 237;
+  --color-brand-hover: 139 92 246;
+  --color-brand-active: 109 40 217;
+  --color-brand-on: 250 250 250;
+  --color-brand-on-ember: 10 10 11;
+  --color-status-success: 34 197 94;
+  --color-status-warning: 245 158 11;
+  --color-status-danger: 239 68 68;
+  --color-status-info: 59 130 246;
+}
+
 html,
 body {
   height: 100%;

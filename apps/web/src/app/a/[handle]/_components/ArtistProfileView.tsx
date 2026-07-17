@@ -88,9 +88,12 @@ export function ArtistProfileView({ data }: { data: PublicArtistData }) {
         </div>
       )}
 
-      {/* Hero */}
+      {/* Hero — a FIXED dark matte in both themes. `surface-dark-fixed` pins the
+          whole panel to the dark token ramp so the name, handle, tagline, chips
+          and badges stay light-on-dark even under the light theme (otherwise
+          theme tokens flip to dark ink and vanish against the dark gradient). */}
       <section
-        className="relative overflow-hidden border-b border-border-subtle"
+        className="surface-dark-fixed relative overflow-hidden border-b border-border-subtle text-content-primary"
         style={{ background: gradientFor(profile.handle ?? profile.id) }}
       >
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-12 md:px-8 md:py-16">
@@ -102,7 +105,7 @@ export function ArtistProfileView({ data }: { data: PublicArtistData }) {
               className="border-4 border-surface-base"
             />
             <div className="flex flex-1 flex-col gap-2">
-              <h1 className="font-display text-4xl font-extrabold tracking-tight sm:text-5xl">
+              <h1 className="font-display text-4xl font-extrabold tracking-tight text-content-primary sm:text-5xl">
                 {displayName}
               </h1>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-content-secondary">
@@ -245,25 +248,89 @@ function PortfolioGrid({
   return (
     <div className="[column-fill:balance] columns-2 gap-3 sm:columns-3 [&>*]:mb-3">
       {withImages.map((piece, index) => (
-        <button
-          key={piece.id}
-          type="button"
-          onClick={() => onOpen(index)}
-          className="group relative block w-full overflow-hidden rounded-xl border border-border-subtle bg-surface-overlay text-left outline-none focus-visible:ring-2 focus-visible:ring-brand"
-        >
+        <PortfolioTile key={piece.id} piece={piece} onOpen={() => onOpen(index)} />
+      ))}
+    </div>
+  );
+}
+
+function PortfolioTile({
+  piece,
+  onOpen,
+}: {
+  piece: PublicArtistData["portfolioPieces"][number];
+  onOpen: () => void;
+}) {
+  const [broken, setBroken] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group relative block w-full overflow-hidden rounded-xl border border-border-subtle bg-surface-overlay text-left outline-none focus-visible:ring-2 focus-visible:ring-brand"
+    >
+      {broken ? (
+        <BrokenPiecePlacard title={piece.title} />
+      ) : (
+        <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={piece.image_url as string}
             alt={piece.title ?? ""}
+            onError={() => setBroken(true)}
             className="w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
           {piece.title && (
-            <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-sm font-medium text-content-primary opacity-0 transition-opacity group-hover:opacity-100">
+            <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-sm font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
               {piece.title}
             </span>
           )}
-        </button>
-      ))}
+        </>
+      )}
+    </button>
+  );
+}
+
+/** A fixed-square cover image (posts, flash) that degrades to a centered icon
+ * placeholder both when there's no URL and when the image 404s. */
+function SquareCover({
+  src,
+  icon,
+  alt = "",
+}: {
+  src: string | null;
+  icon: IconName;
+  alt?: string;
+}) {
+  const [broken, setBroken] = useState(false);
+  if (!src || broken) {
+    return (
+      <div className="flex h-full items-center justify-center text-content-muted">
+        <Icon name={icon} size={20} />
+      </div>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={alt}
+      onError={() => setBroken(true)}
+      className="h-full w-full object-cover"
+    />
+  );
+}
+
+/** Graceful placeholder for a portfolio/post image that fails to load — a
+ * styled placard with the piece title, never a raw broken-image icon. */
+function BrokenPiecePlacard({ title }: { title?: string | null }) {
+  return (
+    <div className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-2 bg-surface-raised px-4 text-center">
+      <span className="grid h-10 w-10 place-items-center rounded-full bg-surface-overlay text-content-muted">
+        <Icon name="image" size={18} />
+      </span>
+      <span className="line-clamp-2 text-xs font-medium text-content-secondary">
+        {title || "Artwork"}
+      </span>
     </div>
   );
 }
@@ -280,14 +347,7 @@ function PostsGrid({ posts }: { posts: PublicArtistData["posts"] }) {
         return (
           <Card key={post.id} padding="none" className="overflow-hidden">
             <div className="aspect-square bg-surface-overlay">
-              {cover ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={cover} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full items-center justify-center text-content-muted">
-                  <Icon name="image" size={20} />
-                </div>
-              )}
+              <SquareCover src={cover || null} icon="image" />
             </div>
             {post.caption && (
               <p className="line-clamp-2 p-2.5 text-xs text-content-secondary">{post.caption}</p>
@@ -316,14 +376,7 @@ function FlashSection({ sheets }: { sheets: PublicArtistData["flashSheets"] }) {
             {sheet.items.map((item) => (
               <Card key={item.id} padding="none" className="overflow-hidden">
                 <div className="relative aspect-square bg-surface-overlay">
-                  {item.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.image_url} alt={item.title ?? ""} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-content-muted">
-                      <Icon name="sparkles" size={20} />
-                    </div>
-                  )}
+                  <SquareCover src={item.image_url ?? null} icon="sparkles" alt={item.title ?? ""} />
                   <Badge
                     variant={item.is_available ? "success" : "neutral"}
                     size="sm"

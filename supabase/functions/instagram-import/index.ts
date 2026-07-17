@@ -29,7 +29,10 @@ import {
   mapInstagramMedia,
 } from "../_shared/instagram-mapper.ts";
 
-const MEDIA_BUCKET = "media";
+// Public bucket — IG-imported portfolio pieces are public-facing and served via
+// getPublicUrl(), which only resolves for a public bucket (see migration
+// 20260718010000_public_media_bucket).
+const MEDIA_BUCKET = "media-public";
 const MAX_PAGES = 3;
 const PAGE_LIMIT = 25;
 

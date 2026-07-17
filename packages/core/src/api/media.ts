@@ -1,25 +1,36 @@
 /**
  * Media upload helper against Supabase Storage.
  *
- * Convention (SPEC — wave 2 portfolio/profile build): a single private
- * `media` bucket, objects keyed by `{user_id}/{folder}/{uuid}.{ext}`, with
- * storage policies granting public read on portfolio/avatar paths
- * (owner-only write everywhere else).
+ * Convention (SPEC — wave 2 portfolio/profile build): objects keyed by
+ * `{user_id}/{folder}/{uuid}.{ext}`, owner-scoped writes anchored on the first
+ * path segment (`storage.foldername(name)[1] = auth.uid()`).
  *
- * Bucket confirmed against the merged media_storage_bucket migration and the
- * live `media` bucket (project khlpidflnvkqafkvkpfy,
- * created by the onboarding agent's parallel branch): the bucket is private,
- * writes are owner-scoped by the first path segment (`storage.foldername(name)[1]
- * = auth.uid()`), and `media_public_read` only grants anonymous SELECT when the
- * *second* path segment is exactly `avatar` or `portfolio` — no public-read grant
- * exists for `posts`/`flash`. Since the policy only inspects that one segment (not
- * the full depth), `posts` and `flash` uploads are nested under a `portfolio/`
- * prefix below so every public-facing folder round-trips through a working public
- * URL without needing a migration change.
+ * Buckets (project khlpidflnvkqafkvkpfy):
+ *  - `media-public` (PUBLIC) — avatar / portfolio / posts / flash. Public-facing
+ *    profile media served with durable `getPublicUrl()` links to anonymous
+ *    discovery visitors. Uploads here.
+ *  - `media` (PRIVATE) — chat attachments only (see chatAttachments.ts), served
+ *    via short-lived signed URLs, never public.
+ *
+ * ROOT-CAUSE HISTORY (round 4): public media originally lived in the private
+ * `media` bucket with an anon RLS SELECT policy, on the assumption that the
+ * policy made avatar/portfolio paths publicly readable. It did not — Supabase's
+ * public download endpoint (`/object/public/...`, what `getPublicUrl` returns)
+ * keys off the BUCKET's `public` flag, not RLS, so every avatar/portfolio public
+ * URL 404'd. The dedicated public bucket (migration 20260718010000) fixes this;
+ * chat stays private in `media`.
+ *
+ * `posts` and `flash` are nested under a `portfolio/` prefix (historical: the old
+ * per-path RLS only inspected the second segment). Harmless in the public bucket
+ * — kept so existing stored URLs and the path convention stay stable.
  */
 import type { InkdSupabaseClient } from "../supabase/client";
 
+/** Private bucket — chat attachments (signed-URL access only). */
 export const MEDIA_BUCKET = "media";
+
+/** Public bucket — avatar / portfolio / posts / flash (durable public URLs). */
+export const PUBLIC_MEDIA_BUCKET = "media-public";
 
 /** Folders the app organizes uploads into. `posts` and `flash` are stored
  * under a `portfolio/` prefix (see file header) so they land in the bucket's
@@ -84,22 +95,22 @@ export async function uploadMedia(
   const ext = inferExtension(file.name, file.contentType);
   const path = `${userId}/${FOLDER_PATH[folder]}/${randomId()}.${ext}`;
 
-  const { error } = await client.storage.from(MEDIA_BUCKET).upload(path, file.data, {
+  const { error } = await client.storage.from(PUBLIC_MEDIA_BUCKET).upload(path, file.data, {
     contentType: file.contentType,
     upsert: false,
   });
   if (error) throw error;
 
-  const { data } = client.storage.from(MEDIA_BUCKET).getPublicUrl(path);
+  const { data } = client.storage.from(PUBLIC_MEDIA_BUCKET).getPublicUrl(path);
   return { path, publicUrl: data.publicUrl };
 }
 
-/** Remove an uploaded object by its storage path. */
+/** Remove an uploaded public-media object by its storage path. */
 export async function deleteMedia(
   client: InkdSupabaseClient,
   path: string,
 ): Promise<void> {
-  const { error } = await client.storage.from(MEDIA_BUCKET).remove([path]);
+  const { error } = await client.storage.from(PUBLIC_MEDIA_BUCKET).remove([path]);
   if (error) throw error;
 }
 
@@ -109,8 +120,12 @@ export async function deleteMedia(
  * look like a `media` bucket public URL. */
 export function mediaPathFromPublicUrl(url: string | null | undefined): string | null {
   if (!url) return null;
-  const marker = `/object/public/${MEDIA_BUCKET}/`;
-  const idx = url.indexOf(marker);
-  if (idx === -1) return null;
-  return decodeURIComponent(url.slice(idx + marker.length));
+  // Match the current public bucket first, then the legacy `media` public-URL
+  // shape (pre-round-4 stored URLs) so old rows still clean up.
+  for (const bucket of [PUBLIC_MEDIA_BUCKET, MEDIA_BUCKET]) {
+    const marker = `/object/public/${bucket}/`;
+    const idx = url.indexOf(marker);
+    if (idx !== -1) return decodeURIComponent(url.slice(idx + marker.length));
+  }
+  return null;
 }

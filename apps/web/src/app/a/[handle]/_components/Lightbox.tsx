@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "@inkd/ui/web";
 
 export interface LightboxImage {
@@ -23,6 +23,8 @@ export function Lightbox({
   onClose: () => void;
 }) {
   const image = images[index];
+  const [broken, setBroken] = useState(false);
+  useEffect(() => setBroken(false), [image?.src]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -47,7 +49,7 @@ export function Lightbox({
       role="dialog"
       aria-modal="true"
       aria-label={image.title ?? "Portfolio image"}
-      className="fixed inset-0 z-[90] flex flex-col bg-black/95 backdrop-blur-sm"
+      className="surface-dark-fixed fixed inset-0 z-[90] flex flex-col bg-black/95 backdrop-blur-sm"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -73,12 +75,24 @@ export function Lightbox({
             onClick={() => onIndexChange((index - 1 + images.length) % images.length)}
           />
         )}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={image.src}
-          alt={image.title ?? ""}
-          className="max-h-[78vh] max-w-full rounded-lg object-contain shadow-lg"
-        />
+        {broken ? (
+          <div className="flex h-[60vh] w-full max-w-md flex-col items-center justify-center gap-3 rounded-lg bg-surface-raised text-center">
+            <span className="grid h-14 w-14 place-items-center rounded-full bg-surface-overlay text-content-muted">
+              <Icon name="image" size={26} />
+            </span>
+            <p className="px-6 text-sm font-medium text-content-secondary">
+              {image.title || "This image couldn't be loaded"}
+            </p>
+          </div>
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={image.src}
+            alt={image.title ?? ""}
+            onError={() => setBroken(true)}
+            className="max-h-[78vh] max-w-full rounded-lg object-contain shadow-lg"
+          />
+        )}
         {images.length > 1 && (
           <NavButton
             direction="right"

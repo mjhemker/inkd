@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Image, Text, View } from "react-native";
 import { cx } from "../cx";
 
@@ -48,11 +49,17 @@ export function Avatar({
   shape = "circle",
   className,
 }: AvatarProps) {
-  if (src) {
+  // A stored avatar URL that fails to load must fall back to initials rather
+  // than rendering an empty box. Reset on src change so new uploads retry.
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [src]);
+
+  if (src && !failed) {
     return (
       <Image
         source={{ uri: src }}
         accessibilityLabel={name || "Avatar"}
+        onError={() => setFailed(true)}
         className={cx(dimension[size], shapeClass[shape], className)}
       />
     );

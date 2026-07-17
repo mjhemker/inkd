@@ -203,7 +203,7 @@ function PortfolioGrid({ data }: { data: PublicArtistProfileData }) {
     <View className="flex-row flex-wrap gap-2.5">
       {pieces.map((piece) => (
         <View key={piece.id} className="aspect-square w-[31%] overflow-hidden rounded-xl bg-surface-overlay">
-          <Image source={{ uri: piece.image_url as string }} className="h-full w-full" resizeMode="cover" />
+          <TileImage uri={piece.image_url as string} title={piece.title} icon="image" />
         </View>
       ))}
     </View>
@@ -221,7 +221,7 @@ function PostsGrid({ data }: { data: PublicArtistProfileData }) {
         return (
           <View key={post.id} className="aspect-square w-[31%] overflow-hidden rounded-xl bg-surface-overlay">
             {cover ? (
-              <Image source={{ uri: cover }} className="h-full w-full" resizeMode="cover" />
+              <TileImage uri={cover} icon="image" />
             ) : (
               <View className="h-full w-full items-center justify-center">
                 <Icon name="image" size={16} color={colors.text.muted} />
@@ -248,7 +248,7 @@ function FlashList({ data }: { data: PublicArtistProfileData }) {
               <View key={item.id} className="w-[31%] overflow-hidden rounded-xl border border-border-subtle bg-surface-raised">
                 <View className="aspect-square bg-surface-overlay">
                   {item.image_url ? (
-                    <Image source={{ uri: item.image_url }} className="h-full w-full" resizeMode="cover" />
+                    <TileImage uri={item.image_url} title={item.title} icon="sparkles" />
                   ) : (
                     <View className="h-full w-full items-center justify-center">
                       <Icon name="sparkles" size={16} color={colors.text.muted} />
@@ -341,6 +341,33 @@ function InfoTab({ data }: { data: PublicArtistProfileData }) {
         </Card>
       )}
     </View>
+  );
+}
+
+/** An image tile that degrades to a titled icon placard when the source fails
+ * to load — never an empty box. */
+function TileImage({ uri, title, icon = "image" }: { uri: string; title?: string | null; icon?: IconName }) {
+  const { colors } = useTheme();
+  const [broken, setBroken] = useState(false);
+  if (broken) {
+    return (
+      <View className="h-full w-full items-center justify-center gap-1 bg-surface-raised px-2">
+        <Icon name={icon} size={16} color={colors.text.muted} />
+        {title ? (
+          <Text className="text-center text-[10px] font-medium text-content-secondary" numberOfLines={2}>
+            {title}
+          </Text>
+        ) : null}
+      </View>
+    );
+  }
+  return (
+    <Image
+      source={{ uri }}
+      onError={() => setBroken(true)}
+      className="h-full w-full"
+      resizeMode="cover"
+    />
   );
 }
 
