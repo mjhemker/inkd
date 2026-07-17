@@ -45,12 +45,10 @@ function useAgentActionsRealtime(artistId: string | undefined) {
   const qc = useQueryClient();
   useEffect(() => {
     if (!artistId) return;
-    const channel = subscribeToAgentActions(client, artistId, () => {
+    const unsubscribe = subscribeToAgentActions(client, artistId, () => {
       void qc.invalidateQueries({ queryKey: agentActionsKey(artistId) });
     });
-    return () => {
-      void client.removeChannel(channel);
-    };
+    return unsubscribe;
     // `qc` is stable; re-subscribe only when client or artist changes.
   }, [client, artistId]);
 }

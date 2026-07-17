@@ -16,9 +16,9 @@
  * decoupled from where a field physically lives.
  */
 import { z } from "zod";
-import type { RealtimeChannel } from "@supabase/supabase-js";
 
 import type { InkdSupabaseClient } from "../supabase/client";
+import { subscribeShared } from "./realtimeShare";
 import type {
   AgentAction,
   AgentActionStatus,
@@ -336,24 +336,33 @@ export async function rejectAgentAction(
  * Subscribe to agent_actions changes for an artist (new proposals, and status
  * transitions as they're approved/rejected). Mirrors
  * `subscribeToNotifications` — RLS still scopes delivery to the owning artist.
- * Returns the channel; call `client.removeChannel(channel)` to tear down.
+ * Returns an unsubscribe function.
+ *
+ * Shared per `artistId` via `subscribeShared` — `AiStaffView` calls
+ * `useAgentActions` twice (proposed queue + activity feed), and both now fan
+ * out from one underlying channel instead of each opening their own.
  */
 export function subscribeToAgentActions(
   client: InkdSupabaseClient,
   artistId: string,
   onChange: () => void,
-): RealtimeChannel {
-  return client
-    .channel(`agent_actions:${artistId}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "agent_actions",
-        filter: `artist_id=eq.${artistId}`,
-      },
-      () => onChange(),
-    )
-    .subscribe();
+): () => void {
+  return subscribeShared<void>(
+    client,
+    `agent_actions:${artistId}`,
+    (channel, dispatch) =>
+      channel
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "agent_actions",
+            filter: `artist_id=eq.${artistId}`,
+          },
+          () => dispatch(undefined),
+        )
+        .subscribe(),
+    () => onChange(),
+  );
 }

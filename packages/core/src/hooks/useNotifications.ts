@@ -37,14 +37,12 @@ export function useUnreadNotificationCount(profileId: string | undefined) {
 
   useEffect(() => {
     if (!profileId) return;
-    const channel = subscribeToNotifications(client, profileId, () => {
+    const unsubscribe = subscribeToNotifications(client, profileId, () => {
       qc.setQueryData<number>(key, (prev) => (prev ?? 0) + 1);
       // Also invalidate the list so an open dropdown/page picks up the row.
       void qc.invalidateQueries({ queryKey: queryKeys.notifications(profileId) });
     });
-    return () => {
-      void client.removeChannel(channel);
-    };
+    return unsubscribe;
     // `key`/`qc` are stable for a given profileId; re-subscribe only when the
     // client or profile changes (intentionally omitting `key`/`qc` below).
   }, [client, profileId]);
@@ -77,7 +75,7 @@ export function useNotifications(
 
   useEffect(() => {
     if (!profileId) return;
-    const channel = subscribeToNotifications(client, profileId, (incoming) => {
+    const unsubscribe = subscribeToNotifications(client, profileId, (incoming) => {
       qc.setQueryData<Notification[]>(key, (prev) => {
         if (!prev) return prev;
         if (prev.some((n) => n.id === incoming.id)) return prev;
@@ -88,9 +86,7 @@ export function useNotifications(
         return [incoming, ...prev];
       });
     });
-    return () => {
-      void client.removeChannel(channel);
-    };
+    return unsubscribe;
     // `key`/`qc` are stable for given args; re-subscribe only when the
     // client, profile, or filter identity changes.
   }, [client, profileId, type, offset]);
