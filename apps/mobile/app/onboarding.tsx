@@ -149,7 +149,7 @@ function OnboardingFlow() {
   }
 
   if (done) {
-    return <CongratsScreen onFinish={() => router.replace("/dashboard")} />;
+    return <CongratsScreen onFinish={() => router.replace("/studio")} />;
   }
 
   const progress = ((step + 1) / 5) * 100;

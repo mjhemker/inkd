@@ -101,7 +101,10 @@ function AuthForm() {
             if (!artist || !artist.onboarding_completed_at) {
               router.replace("/onboarding");
             } else {
-              router.replace("/dashboard");
+              // Land artists on the Studio tab (dashboard) so the bottom tab bar
+              // is present from the first screen after sign-in. /studio resolves
+              // to app/(tabs)/studio/index.tsx inside the tab tree.
+              router.replace("/studio");
             }
           } else {
             router.replace("/(tabs)");
