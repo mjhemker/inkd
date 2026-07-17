@@ -44,6 +44,7 @@ export const Chip = forwardRef<View, ChipProps>(function Chip(
       {leadingIcon}
       {typeof children === "string" ? (
         <Text
+          numberOfLines={1}
           className={cx(
             "font-sans-medium text-sm",
             selected ? "text-brand-on" : "text-content-secondary",
