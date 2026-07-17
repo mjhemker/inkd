@@ -1,4 +1,6 @@
-import type { HTMLAttributes } from "react";
+"use client";
+
+import { useEffect, useState, type HTMLAttributes } from "react";
 import { cx } from "../cx";
 
 export type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
@@ -42,6 +44,13 @@ export function Avatar({
   className,
   ...props
 }: AvatarProps) {
+  // A stored avatar URL that 404s (e.g. a deleted object, or a bad public URL)
+  // must degrade to initials — never a browser broken-image icon. Reset the
+  // failure flag whenever the src changes so a new upload gets a fresh try.
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [src]);
+  const showImage = Boolean(src) && !failed;
+
   return (
     <div
       className={cx(
@@ -52,8 +61,13 @@ export function Avatar({
       )}
       {...props}
     >
-      {src ? (
-        <img src={src} alt={name ?? ""} className="h-full w-full object-cover" />
+      {showImage ? (
+        <img
+          src={src}
+          alt={name ?? ""}
+          className="h-full w-full object-cover"
+          onError={() => setFailed(true)}
+        />
       ) : name ? (
         <span aria-hidden="true">{initials(name)}</span>
       ) : null}
