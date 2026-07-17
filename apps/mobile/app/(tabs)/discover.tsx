@@ -15,7 +15,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import * as Location from "expo-location";
 import { Avatar, Chip, Icon, Input, RangeSlider, Slider, Spinner, Toggle } from "@inkd/ui/native";
 import { useDiscover, useStyles } from "@inkd/core/hooks";
@@ -29,6 +29,7 @@ import {
   formatPriceUsd,
   formatDistanceSliderMi,
   discoverFilterToParams,
+  queryToDiscoverFilter,
   formatMinPrice,
   PRICE_SLIDER_MIN_USD,
   PRICE_SLIDER_MAX_USD,
@@ -135,7 +136,15 @@ function ArtistPlacardCard({ card }: { card: ArtistCard }) {
 
 export default function DiscoverScreen() {
   const { colors } = useTheme();
-  const [filter, setFilter] = useState<DiscoverFilterState>(EMPTY_FILTER_STATE);
+  // Seed from deep-link params (global search "style"/"city" hits route here,
+  // e.g. /discover?styles=fine-line or /discover?city=baltimore).
+  const routeParams = useLocalSearchParams<{ styles?: string; city?: string; state?: string; q?: string }>();
+  const [filter, setFilter] = useState<DiscoverFilterState>(() =>
+    queryToDiscoverFilter((k) => {
+      const v = (routeParams as Record<string, string | string[] | undefined>)[k];
+      return typeof v === "string" ? v : Array.isArray(v) ? v[0] ?? null : null;
+    }),
+  );
   const [stylesOpen, setStylesOpen] = useState(false);
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState<string | null>(null);
@@ -227,9 +236,20 @@ export default function DiscoverScreen() {
 
   const header = (
     <View className="gap-4 pb-2">
-      <View className="gap-1">
-        <Text className="font-mono text-xs uppercase tracking-widest text-content-muted">Discover</Text>
-        <Text className="font-display text-3xl text-content-primary">Find your artist</Text>
+      <View className="flex-row items-start justify-between gap-3">
+        <View className="flex-1 gap-1">
+          <Text className="font-mono text-xs uppercase tracking-widest text-content-muted">Discover</Text>
+          <Text className="font-display text-3xl text-content-primary">Find your artist</Text>
+        </View>
+        <Pressable
+          onPress={() => router.push("/search")}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Search INKD"
+          className="h-10 w-10 items-center justify-center rounded-lg border border-border-subtle bg-surface-raised active:opacity-80"
+        >
+          <Icon name="search" size={18} color={colors.text.secondary} />
+        </Pressable>
       </View>
 
       <Pressable

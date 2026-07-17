@@ -200,6 +200,21 @@ export function createFeedMockClient(seed: FeedMockSeed): InkdSupabaseClient {
     from(table: string) {
       return new MockBuilder(db, table);
     },
+    // Minimal RPC shim for the feed filter panel. `feed_filter_artist_ids`
+    // returns the seeded published-artist ids (optionally narrowed by the
+    // books-open flag) so applying a filter in the preview doesn't crash and
+    // still shows a populated wall. Real narrowing is proven against the live DB.
+    async rpc(fn: string, args?: Record<string, unknown>) {
+      if (fn === "feed_filter_artist_ids") {
+        const booksOpen = args?.p_books_open === true;
+        const ids = db
+          .get("artist_profiles")
+          .filter((ap) => !booksOpen || ap.accepts_new_clients === true)
+          .map((ap) => ap.id as string);
+        return { data: ids, error: null };
+      }
+      return { data: [], error: null };
+    },
     auth: {
       async getUser() {
         return { data: { user }, error: null };

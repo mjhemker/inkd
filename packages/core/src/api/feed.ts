@@ -22,8 +22,39 @@ import type {
   Post,
   Profile,
   Style,
+  UsState,
 } from "../types/rows";
 import { clampLimit, unwrapList } from "./helpers";
+
+/**
+ * Artist-level feed filters (the filter panel's location / price / books-open /
+ * state). Resolved server-side to a set of eligible published-artist ids by the
+ * `feed_filter_artist_ids` RPC, which the feed then intersects with its
+ * candidate posts. Styles are NOT here — they filter at the POST level (see
+ * `styleSlugs`) so the panel stays in sync with the style chip row.
+ */
+export interface FeedArtistFilters {
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
+  priceMinCents?: number;
+  priceMaxCents?: number;
+  booksOpen?: boolean;
+  state?: UsState;
+}
+
+/** True when any artist-level filter is set (i.e. the RPC prefilter must run). */
+export function hasFeedArtistFilters(f: FeedArtistFilters | undefined): boolean {
+  if (!f) return false;
+  return (
+    f.lat != null ||
+    f.lng != null ||
+    f.priceMinCents != null ||
+    f.priceMaxCents != null ||
+    f.booksOpen === true ||
+    f.state != null
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Public feed types (the assembled card shapes the UI renders).
@@ -314,12 +345,18 @@ const feedParamsSchema = z.object({
   // The viewer id is whatever auth.uid() returns (a uuid in prod); we only
   // require a non-empty string so tests/preview harnesses can use readable ids.
   viewerId: z.string().min(1).nullable().optional(),
+  // Single style chip (legacy/quick filter) and the panel's multi-select. Both
+  // filter posts by post_styles; when both are present they union.
   styleSlug: z.string().optional(),
+  styleSlugs: z.array(z.string().min(1)).optional(),
   limit: z.number().int().positive().optional(),
   offset: z.number().int().nonnegative().optional(),
 });
 
-export type ListFeedParams = z.input<typeof feedParamsSchema>;
+export type ListFeedParams = z.input<typeof feedParamsSchema> & {
+  /** Artist-level filters (resolved via `feed_filter_artist_ids`). */
+  artistFilters?: FeedArtistFilters;
+};
 
 /**
  * One page of the assembled feed. Posts paginate through `offset`/`limit`;
@@ -330,10 +367,19 @@ export async function listFeedItems(
   client: InkdSupabaseClient,
   params: ListFeedParams = {},
 ): Promise<FeedItem[]> {
-  const { scope, viewerId, styleSlug, limit, offset } = feedParamsSchema.parse(params);
+  const { artistFilters } = params;
+  const { scope, viewerId, styleSlug, styleSlugs, limit, offset } =
+    feedParamsSchema.parse(params);
   const pageSize = clampLimit(limit, 12);
   const pageOffset = offset ?? 0;
   const viewer = viewerId ?? null;
+
+  // The effective post-style filter is the union of the single chip + the
+  // panel's multi-select (deduped). Empty => no style filter (fast path).
+  const effectiveStyleSlugs = [
+    ...new Set([...(styleSlug ? [styleSlug] : []), ...(styleSlugs ?? [])]),
+  ];
+  const styleActive = effectiveStyleSlugs.length > 0;
 
   // Resolve the follow graph once — needed for scope filtering, the follow
   // pills, and (for discover) the affinity boost.
@@ -341,34 +387,67 @@ export async function listFeedItems(
   const followedSet = new Set(followedIds);
 
   if (scope === "following" && followedIds.length === 0) return [];
-  const scopedArtistIds = scope === "following" ? followedIds : undefined;
 
-  // Optional style-chip filter → restrict candidate post ids up front.
+  // Restrict-by-artist set: the following graph (following scope) intersected
+  // with the artist-level filter result (city/price/books/state). When neither
+  // is active this stays undefined — the default feed path is untouched/fast.
+  let restrictArtistIds: string[] | undefined =
+    scope === "following" ? followedIds : undefined;
+
+  if (hasFeedArtistFilters(artistFilters)) {
+    const { data, error } = await client.rpc("feed_filter_artist_ids", {
+      p_lat: artistFilters!.lat ?? undefined,
+      p_lng: artistFilters!.lng ?? undefined,
+      p_radius_km: artistFilters!.radiusKm ?? undefined,
+      p_price_min: artistFilters!.priceMinCents ?? undefined,
+      p_price_max: artistFilters!.priceMaxCents ?? undefined,
+      p_books_open: artistFilters!.booksOpen ?? undefined,
+      p_state: artistFilters!.state ?? undefined,
+    });
+    if (error) throw error;
+    const eligibleIds = (data ?? []) as string[];
+    if (restrictArtistIds) {
+      const eligible = new Set(eligibleIds);
+      restrictArtistIds = restrictArtistIds.filter((id) => eligible.has(id));
+    } else {
+      restrictArtistIds = eligibleIds;
+    }
+    if (restrictArtistIds.length === 0) return [];
+  }
+
+  // Optional style filter → restrict candidate post ids up front (union across
+  // every selected style's post_styles links).
   let stylePostIds: string[] | undefined;
-  if (styleSlug) {
-    const style = (unwrapList(
-      await client.from("styles").select("id").eq("slug", styleSlug),
-    ) as { id: string }[])[0];
-    if (!style) return [];
+  if (styleActive) {
+    const styleRows = unwrapList(
+      await client.from("styles").select("id").in("slug", effectiveStyleSlugs),
+    ) as { id: string }[];
+    if (styleRows.length === 0) return [];
     const links = unwrapList(
-      await client.from("post_styles").select("post_id").eq("style_id", style.id),
+      await client
+        .from("post_styles")
+        .select("post_id")
+        .in(
+          "style_id",
+          styleRows.map((s) => s.id),
+        ),
     ) as { post_id: string }[];
     stylePostIds = [...new Set(links.map((l) => l.post_id))];
-    if (stylePostIds.length === 0) return scope === "following" ? [] : [];
+    if (stylePostIds.length === 0) return [];
   }
 
   const posts = await listCandidatePosts(client, {
-    artistIds: scopedArtistIds,
+    artistIds: restrictArtistIds,
     postIds: stylePostIds,
     limit: pageSize,
     offset: pageOffset,
   });
 
   // Flash only on page one, and only when no style filter is active (flash
-  // items carry no post_styles rows, so a style chip filters them out).
+  // items carry no post_styles rows, so a style filter excludes them).
   const flashItems =
-    pageOffset === 0 && !styleSlug
-      ? await listCandidateFlashItems(client, { artistIds: scopedArtistIds, limit: 12 })
+    pageOffset === 0 && !styleActive
+      ? await listCandidateFlashItems(client, { artistIds: restrictArtistIds, limit: 12 })
       : [];
 
   const artistIds = [

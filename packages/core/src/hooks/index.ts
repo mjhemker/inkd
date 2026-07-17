@@ -14,6 +14,7 @@ export * from "./useMessages";
 export * from "./useArtist";
 export * from "./useStudioLocations";
 export * from "./useDiscover";
+export * from "./useGlobalSearch";
 export * from "./useAgentSettings";
 export * from "./useAgentStaff";
 export * from "./useThreads";

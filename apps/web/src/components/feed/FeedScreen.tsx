@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Eyebrow, Icon, LogoDropMark, Skeleton, cx } from "@inkd/ui/web";
 import {
   useCurrentProfile,
@@ -11,12 +12,22 @@ import {
   useToggleSave,
   useTodayDropLive,
   todayDropDate,
+  queryToDiscoverFilter,
+  discoverFilterToQuery,
+  EMPTY_FEED_FILTER,
+  feedArtistFilterParams,
+  describeFeedFilters,
+  clearFeedFilterChip,
+  hasActiveFeedFilters,
+  activeFeedFilterCount,
+  type FeedFilterState,
   type FeedItem,
   type FeedPostItem,
   type FeedScope,
 } from "@inkd/core";
 import { FeedCard } from "./FeedCard";
 import { StyleFilterChips } from "./StyleFilterChips";
+import { FeedFilterPanel } from "./FeedFilterPanel";
 import { PostDetailOverlay } from "./PostDetailOverlay";
 import { DailyDropCard } from "@/components/daily-drop/DailyDropCard";
 import {
@@ -37,16 +48,34 @@ const SCOPES: { value: FeedScope; label: string }[] = [
  * light style-affinity boost; Following is your own wall.
  */
 export function FeedScreen() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [scope, setScope] = useState<FeedScope>("discover");
-  const [styleSlug, setStyleSlug] = useState<string | null>(null);
   const [openKey, setOpenKey] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Filter state lives in the URL (shareable / back-button-safe), reusing the
+  // discover (de)serializers. The style chip row and the filter panel both edit
+  // this one state so they stay in sync.
+  const filter = useMemo(
+    () => queryToDiscoverFilter((k) => searchParams.get(k)) as FeedFilterState,
+    [searchParams],
+  );
+  const setFilter = (next: FeedFilterState) => {
+    const qs = discoverFilterToQuery(next);
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
 
   const { data: profile, isLoading: profileLoading } = useCurrentProfile();
   const signedIn = Boolean(profile);
 
   const { data: styles } = useStyleFilters();
   const drop = useTodayDropLive();
-  const feed = useFeedItems(scope, { styleSlug });
+
+  const artistFilters = useMemo(() => feedArtistFilterParams(filter), [filter]);
+  const feed = useFeedItems(scope, { styleSlugs: filter.styles, artistFilters });
 
   // First feed visit of the day → the full-screen reveal takeover (once, then it
   // lives on as the highlighted card below). Gated by a localStorage date stamp.
@@ -60,6 +89,17 @@ export function FeedScreen() {
   const like = useToggleLike();
   const save = useToggleSave();
   const follow = useToggleFollow();
+
+  // The chip row is a quick SINGLE-style filter; it reflects the selection only
+  // when exactly one style is active (the panel handles multi-select).
+  const chipSelected = filter.styles.length === 1 ? filter.styles[0] ?? null : null;
+  const selectStyleChip = (slug: string | null) =>
+    setFilter({ ...filter, styles: slug ? [slug] : [] });
+
+  const activeChips = useMemo(
+    () => describeFeedFilters(filter, styles ?? []),
+    [filter, styles],
+  );
 
   const items = feed.items;
   const openItem = useMemo(
@@ -123,8 +163,81 @@ export function FeedScreen() {
             })}
           </div>
 
-          {styles && styles.length > 0 && (
-            <StyleFilterChips styles={styles} selected={styleSlug} onSelect={setStyleSlug} />
+          {/* Style chip row (quick single-style) + Filters popover trigger */}
+          <div className="flex items-center gap-2">
+            {styles && styles.length > 0 && (
+              <div className="min-w-0 flex-1">
+                <StyleFilterChips
+                  styles={styles}
+                  selected={chipSelected}
+                  onSelect={selectStyleChip}
+                />
+              </div>
+            )}
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                aria-haspopup="dialog"
+                aria-expanded={filtersOpen}
+                onClick={() => setFiltersOpen((v) => !v)}
+                className={cx(
+                  "inline-flex items-center gap-1.5 rounded-sm border px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand",
+                  hasActiveFeedFilters(filter)
+                    ? "border-brand bg-brand/10 text-content-primary"
+                    : "border-border-subtle bg-surface-raised text-content-secondary hover:border-border-strong hover:text-content-primary",
+                )}
+              >
+                <Icon name="settings" size={13} />
+                Filters
+                {activeFeedFilterCount(filter) > 0 && (
+                  <span className="grid h-4 min-w-4 place-items-center rounded-full bg-brand px-1 text-[10px] font-bold text-brand-on">
+                    {activeFeedFilterCount(filter)}
+                  </span>
+                )}
+              </button>
+              {filtersOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    aria-hidden
+                    onClick={() => setFiltersOpen(false)}
+                  />
+                  <div className="absolute right-0 top-full z-50 mt-2">
+                    <FeedFilterPanel
+                      filter={filter}
+                      styles={styles ?? []}
+                      onChange={setFilter}
+                      onReset={() => setFilter(EMPTY_FEED_FILTER)}
+                      onClose={() => setFiltersOpen(false)}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Active-filter chips (inline, with clear-all) */}
+          {activeChips.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {activeChips.map((chip) => (
+                <button
+                  key={chip.key}
+                  type="button"
+                  onClick={() => setFilter(clearFeedFilterChip(filter, chip))}
+                  className="inline-flex items-center gap-1 rounded-sm border border-brand/40 bg-brand/10 px-2 py-1 text-xs font-medium text-content-primary outline-none transition-colors hover:border-brand focus-visible:ring-2 focus-visible:ring-brand"
+                >
+                  {chip.label}
+                  <Icon name="x" size={12} className="text-content-muted" />
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setFilter(EMPTY_FEED_FILTER)}
+                className="ml-1 font-mono text-[11px] uppercase tracking-wider text-content-muted outline-none hover:text-content-primary focus-visible:ring-2 focus-visible:ring-brand"
+              >
+                Clear all
+              </button>
+            </div>
           )}
         </div>
       </header>
@@ -165,7 +278,11 @@ export function FeedScreen() {
       {loading ? (
         <FeedSkeletonGrid />
       ) : items.length === 0 ? (
-        <FeedEmptyState scope={scope} styleActive={styleSlug !== null} onClearStyle={() => setStyleSlug(null)} />
+        <FeedEmptyState
+          scope={scope}
+          styleActive={hasActiveFeedFilters(filter)}
+          onClearStyle={() => setFilter(EMPTY_FEED_FILTER)}
+        />
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

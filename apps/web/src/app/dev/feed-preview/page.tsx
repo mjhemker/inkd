@@ -9,7 +9,7 @@
  * The nested `InkdProvider` shadows the root one for this subtree only.
  * Never linked from product nav. Not for production use.
  */
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import { InkdProvider } from "@inkd/core/hooks";
 import { FeedScreen } from "@/components/feed/FeedScreen";
 import { createFeedMockClient } from "./feedMockClient";
@@ -22,7 +22,10 @@ export default function FeedPreviewPage() {
     <InkdProvider client={client}>
       <div className="min-h-dvh bg-surface-base">
         <div className="mx-auto w-full max-w-6xl px-5 py-10 md:px-8">
-          <FeedScreen />
+          {/* FeedScreen reads useSearchParams (URL-persisted filters). */}
+          <Suspense fallback={null}>
+            <FeedScreen />
+          </Suspense>
         </div>
       </div>
     </InkdProvider>
