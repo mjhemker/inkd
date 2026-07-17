@@ -48,6 +48,9 @@ export function MatchResultsGallery({
     );
   }
 
+  // `no_match` only reaches here when even the style-affinity fallback found no
+  // artists at all (empty pool) — a true dead end. Otherwise the run layer
+  // substitutes fallback groups and sets outcome "fallback" (handled below).
   if (outcome === "no_match") {
     return (
       <Fallback
@@ -66,18 +69,40 @@ export function MatchResultsGallery({
     );
   }
 
+  const isFallback = outcome === "fallback";
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-baseline justify-between gap-2">
         <p className="font-mono text-xs uppercase tracking-wider text-content-secondary">
-          {groups.length} {groups.length === 1 ? "artist" : "artists"} match your inspiration
+          {isFallback
+            ? `${groups.length} ${groups.length === 1 ? "artist" : "artists"} nearby`
+            : `${groups.length} ${groups.length === 1 ? "artist" : "artists"} match your inspiration`}
         </p>
-        {outcome === "low_match" && (
+        {(outcome === "low_match" || isFallback) && (
           <span className="font-mono text-[10px] uppercase tracking-widest text-content-muted">
-            Closest we found
+            {isFallback ? "Who's nearby" : "Closest we found"}
           </span>
         )}
       </div>
+
+      {isFallback && (
+        <p className="rounded-sm border border-border-subtle bg-surface-overlay px-3 py-2 text-xs text-content-secondary">
+          No close visual match yet — here are the closest artists by style. Try{" "}
+          <button
+            type="button"
+            onClick={onTryAnother}
+            className="text-content-ember underline"
+          >
+            another image
+          </button>{" "}
+          or{" "}
+          <Link href={browseStylesHref(summary)} className="text-content-ember underline">
+            browse by style
+          </Link>
+          .
+        </p>
+      )}
 
       {outcome === "low_match" && (
         <p className="rounded-sm border border-border-subtle bg-surface-overlay px-3 py-2 text-xs text-content-secondary">

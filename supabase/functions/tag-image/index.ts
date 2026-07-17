@@ -13,15 +13,21 @@
 //                                               (for the match-inspiration wave's
 //                                                query images)
 //
-// AUTH: verify_jwt = false at the gateway (config.toml); this function requires
-// the AI-runtime bearer token (pg_cron sends it — see _shared/agent-auth.ts).
-// Prefers AGENT_RUNNER_TOKEN, falls back to the service-role key — identical to
-// agent-run / agent-scheduled.
+// AUTH: verify_jwt = false at the gateway (config.toml). The persisting modes
+// (`batch` drain, `single` tag+persist) require the AI-runtime bearer token
+// (pg_cron sends it — see _shared/agent-auth.ts; prefers AGENT_RUNNER_TOKEN,
+// falls back to the service-role key). The read-only `inline` mode (classify a
+// transient query image, return tags + embedding, persist NOTHING) additionally
+// accepts an ordinary signed-in USER JWT, so the match-my-inspiration proxy
+// needs NO server-side runner secret on localhost — it just forwards the user's
+// own session token. Inline touches no rows, so a signed-in user calling it is
+// safe (same cost surface the proxy already gated).
 //
 // NOTE (no key yet): needs ANTHROPIC_API_KEY. Absent → 503, nothing is leased.
 // The heavy tag→slug + vector logic lives in _shared/image-tagging.ts and is
 // unit-tested offline; this file is I/O + orchestration only.
 import { isAuthorizedRunner } from "../_shared/agent-auth.ts";
+import { tryResolveUser } from "../_shared/auth.ts";
 import { getAdminClient, type SupabaseClient } from "../_shared/supabaseAdmin.ts";
 import { handlePreflight } from "../_shared/cors.ts";
 import { errorResponse, jsonResponse } from "../_shared/errors.ts";
@@ -57,8 +63,17 @@ Deno.serve(async (req) => {
   if (preflight) return preflight;
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
 
-  if (!isAuthorizedRunner(req)) {
-    return new Response("Unauthorized", { status: 401 });
+  // Read the body first so auth can depend on the mode: `inline` (read-only)
+  // accepts a signed-in user JWT; the persisting modes require the runner bearer.
+  const body = await readBody(req);
+  const runner = isAuthorizedRunner(req);
+  if (!runner) {
+    if (body.mode === "inline") {
+      const uid = await tryResolveUser(req);
+      if (!uid) return new Response("Unauthorized", { status: 401 });
+    } else {
+      return new Response("Unauthorized", { status: 401 });
+    }
   }
 
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
@@ -70,7 +85,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const body = await readBody(req);
     const { model, maxTokens } = resolveTagModelConfig((k) => Deno.env.get(k));
     const vision = new AnthropicVisionClient({ apiKey, model, maxTokens });
     const admin = getAdminClient();

@@ -11,12 +11,19 @@
 // Like agent-scheduled, this makes NO Anthropic call — the AI signal is the
 // already-computed image_tags. It runs identically before/after the LLM key.
 //
-// AUTH: verify_jwt = false at the gateway (config.toml); the function enforces
-// the AI-runtime bearer itself (AGENT_RUNNER_TOKEN, service-key fallback).
+// AUTH: verify_jwt = false at the gateway (config.toml). Two accepted callers:
+//   1. The AI-runtime bearer (AGENT_RUNNER_TOKEN / service-key) — the pg_cron
+//      tick, which may generate for ALL users or a specified user_id/date.
+//   2. An ordinary signed-in USER JWT — "self" mode: generates ONLY that user's
+//      drop for TODAY, idempotently. This is the on-demand path the app calls
+//      when a user opens the feed before the daily cron has run for them, so
+//      nobody ever sees a blank where their drop should be.
 import { isAuthorizedRunner } from "../_shared/agent-auth.ts";
+import { tryResolveUser } from "../_shared/auth.ts";
 import { getAdminClient, type SupabaseClient } from "../_shared/supabaseAdmin.ts";
 import { errorResponse, jsonResponse } from "../_shared/errors.ts";
 import {
+  resolveDropTargets,
   selectDailyDrop,
   type DropCandidate,
   type PriorDrop,
@@ -46,16 +53,33 @@ const MAX_CANDIDATES = 400;
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
-  if (!isAuthorizedRunner(req)) return new Response("Unauthorized", { status: 401 });
+
+  // A privileged runner may act on any/all users; otherwise fall back to a
+  // signed-in user acting on their own drop only ("self" mode).
+  const runner = isAuthorizedRunner(req);
+  let selfUserId: string | null = null;
+  if (!runner) {
+    selfUserId = await tryResolveUser(req);
+    if (!selfUserId) return new Response("Unauthorized", { status: 401 });
+  }
 
   try {
     const body = await readBody(req);
-    const dropDate = body.drop_date ?? utcDate(new Date());
+    // Self mode is pinned to TODAY for the caller — no arbitrary user_id/date
+    // (see resolveDropTargets, unit-tested in _shared/daily-drop.test.ts).
+    const plan = resolveDropTargets({
+      runner,
+      selfUserId,
+      body,
+      today: utcDate(new Date()),
+    });
+    const dropDate = plan.dropDate;
     const admin = getAdminClient();
 
-    const userIds = body.user_id
-      ? [body.user_id]
-      : await listActiveUserIds(admin, body.batch_size ?? 200, body.offset ?? 0);
+    const userIds =
+      plan.scope === "all"
+        ? await listActiveUserIds(admin, plan.batchSize, plan.offset)
+        : [plan.userId as string];
 
     const summary: Summary = { drop_date: dropDate, processed: 0, created: 0, skipped: 0, failed: 0 };
     for (const userId of userIds) {

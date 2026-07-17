@@ -19,8 +19,7 @@ import {
   uploadInspirationImage,
   deleteInspirationImage,
   matchInspirationFromUrl,
-  rankMatchesForEmbedding,
-  classifyMatchOutcome,
+  rankMatchesWithOutcome,
   discoverFilterToParams,
   InspirationTagError,
   EMPTY_FILTER_STATE,
@@ -131,16 +130,17 @@ export function MatchInspirationView() {
     if (!loaded) return;
     setReSearching(true);
     try {
-      const groups = await rankMatchesForEmbedding(client, loaded.embedding, loaded.summary, {
-        limit: RESULT_LIMIT,
-        styleSlugs: nextRefine.length ? nextRefine : undefined,
-        discoverFilters: discoverFilterToParams(nextFilter),
-      });
-      setLoaded({
-        ...loaded,
-        groups,
-        outcome: classifyMatchOutcome(loaded.summary, groups),
-      });
+      const { groups, outcome } = await rankMatchesWithOutcome(
+        client,
+        loaded.embedding,
+        loaded.summary,
+        {
+          limit: RESULT_LIMIT,
+          styleSlugs: nextRefine.length ? nextRefine : undefined,
+          discoverFilters: discoverFilterToParams(nextFilter),
+        },
+      );
+      setLoaded({ ...loaded, groups, outcome });
     } catch {
       // keep prior results on a transient re-search failure
     } finally {

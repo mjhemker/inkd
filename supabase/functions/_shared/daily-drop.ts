@@ -290,3 +290,58 @@ export function selectDailyDrop(opts: SelectDailyDropOptions): DropSelection | n
 
   return best;
 }
+
+// ---------------------------------------------------------------------------
+// On-demand vs. cron target resolution (pure — unit-tested; imported by the
+// daily-drop edge function). This encodes the SAFETY + IDEMPOTENCY contract of
+// "self" mode: an ordinary signed-in user may only ever (re)generate THEIR OWN
+// drop for TODAY. They cannot target another user or backfill an arbitrary date
+// via the request body, so the on-demand path can never create a second row for
+// a different (user, day) than the caller/today — the DB `unique(user_id,
+// drop_date)` then makes repeat calls a no-op.
+// ---------------------------------------------------------------------------
+export interface DropRequestBody {
+  drop_date?: string;
+  user_id?: string;
+  batch_size?: number;
+  offset?: number;
+}
+
+export interface DropTargetPlan {
+  /** The UTC drop day to generate for. */
+  dropDate: string;
+  /** "self" = one signed-in user (today only); "single" = a runner-named user;
+   *  "all" = the paged sweep of every active user (the cron). */
+  scope: "self" | "single" | "all";
+  /** Present for "self" and "single". */
+  userId?: string;
+  batchSize: number;
+  offset: number;
+}
+
+export function resolveDropTargets(opts: {
+  runner: boolean;
+  selfUserId: string | null;
+  body: DropRequestBody;
+  today: string;
+}): DropTargetPlan {
+  const { runner, selfUserId, body, today } = opts;
+
+  // Self mode: pinned to the caller + today. Body overrides are IGNORED so a
+  // user can neither target someone else nor backfill a different date.
+  if (!runner) {
+    if (!selfUserId) throw new Error("self mode requires an authenticated user");
+    return { dropDate: today, scope: "self", userId: selfUserId, batchSize: 1, offset: 0 };
+  }
+
+  const dropDate = body.drop_date ?? today;
+  if (body.user_id) {
+    return { dropDate, scope: "single", userId: body.user_id, batchSize: 1, offset: 0 };
+  }
+  return {
+    dropDate,
+    scope: "all",
+    batchSize: body.batch_size ?? 200,
+    offset: body.offset ?? 0,
+  };
+}

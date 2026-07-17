@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Eyebrow, Icon, Skeleton, cx } from "@inkd/ui/web";
+import { useEffect, useMemo, useState } from "react";
+import { Eyebrow, Icon, LogoDropMark, Skeleton, cx } from "@inkd/ui/web";
 import {
   useCurrentProfile,
   useFeedItems,
@@ -9,7 +9,8 @@ import {
   useToggleFollow,
   useToggleLike,
   useToggleSave,
-  useTodayDrop,
+  useTodayDropLive,
+  todayDropDate,
   type FeedItem,
   type FeedPostItem,
   type FeedScope,
@@ -18,6 +19,11 @@ import { FeedCard } from "./FeedCard";
 import { StyleFilterChips } from "./StyleFilterChips";
 import { PostDetailOverlay } from "./PostDetailOverlay";
 import { DailyDropCard } from "@/components/daily-drop/DailyDropCard";
+import {
+  DailyDropReveal,
+  hasRevealedDailyDrop,
+  markDailyDropRevealed,
+} from "@/components/daily-drop/DailyDropReveal";
 
 const SCOPES: { value: FeedScope; label: string }[] = [
   { value: "discover", label: "Discover" },
@@ -39,8 +45,18 @@ export function FeedScreen() {
   const signedIn = Boolean(profile);
 
   const { data: styles } = useStyleFilters();
-  const todayDrop = useTodayDrop();
+  const drop = useTodayDropLive();
   const feed = useFeedItems(scope, { styleSlug });
+
+  // First feed visit of the day → the full-screen reveal takeover (once, then it
+  // lives on as the highlighted card below). Gated by a localStorage date stamp.
+  const dropDate = todayDropDate();
+  const [revealDismissed, setRevealDismissed] = useState(true);
+  useEffect(() => {
+    // Read localStorage on the client only (avoids an SSR/hydration mismatch).
+    setRevealDismissed(hasRevealedDailyDrop(dropDate));
+  }, [dropDate]);
+  const showReveal = scope === "discover" && drop.status === "ready" && !!drop.card && !revealDismissed;
   const like = useToggleLike();
   const save = useToggleSave();
   const follow = useToggleFollow();
@@ -113,20 +129,36 @@ export function FeedScreen() {
         </div>
       </header>
 
-      {scope === "discover" && todayDrop.data && (
+      {showReveal && drop.card && (
+        <DailyDropReveal
+          card={drop.card}
+          onDismiss={() => {
+            markDailyDropRevealed(dropDate);
+            setRevealDismissed(true);
+          }}
+        />
+      )}
+
+      {scope === "discover" && (drop.card || drop.status === "generating") && (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-3">
             <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-content-ember">
               Today&apos;s drop
             </span>
-            <a
-              href="/daily-drop"
-              className="font-mono text-[11px] uppercase tracking-[0.16em] text-content-muted underline-offset-2 outline-none hover:text-content-primary hover:underline focus-visible:ring-2 focus-visible:ring-brand"
-            >
-              See all
-            </a>
+            {drop.card && (
+              <a
+                href="/daily-drop"
+                className="font-mono text-[11px] uppercase tracking-[0.16em] text-content-muted underline-offset-2 outline-none hover:text-content-primary hover:underline focus-visible:ring-2 focus-visible:ring-brand"
+              >
+                See all
+              </a>
+            )}
           </div>
-          <DailyDropCard card={todayDrop.data} variant="feed" signedIn={signedIn} />
+          {drop.card ? (
+            <DailyDropCard card={drop.card} variant="feed" signedIn={signedIn} />
+          ) : (
+            <DailyDropGeneratingCard />
+          )}
         </div>
       )}
 
@@ -174,6 +206,31 @@ export function FeedScreen() {
           onToggleFollow={toggleFollow}
         />
       )}
+    </div>
+  );
+}
+
+/** The "we're picking your drop" progression, shown while on-demand generation
+ *  runs for a user who opened the app before their drop existed. */
+function DailyDropGeneratingCard() {
+  return (
+    <div className="flex items-center gap-4 overflow-hidden rounded-sm border border-border-accent bg-surface-base p-4 sm:p-5">
+      <span className="grid h-14 w-14 shrink-0 place-items-center rounded-sm bg-surface-ember/15">
+        <LogoDropMark size={40} />
+      </span>
+      <div className="flex min-w-0 flex-col gap-1">
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-content-ember">
+          Picking your drop
+        </span>
+        <p className="font-hand text-xl leading-tight text-content-primary">
+          Finding today&apos;s piece for you…
+        </p>
+        <div className="mt-1 flex gap-1.5" aria-hidden>
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-content-ember [animation-delay:0ms]" />
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-content-ember [animation-delay:150ms]" />
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-content-ember [animation-delay:300ms]" />
+        </div>
+      </div>
     </div>
   );
 }

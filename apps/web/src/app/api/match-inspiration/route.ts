@@ -1,18 +1,20 @@
 /**
- * POST /api/match-inspiration — the authenticated proxy for the bearer-gated
- * `tag-image` edge function (inline mode).
+ * POST /api/match-inspiration — the authenticated proxy for the `tag-image`
+ * edge function's read-only `inline` mode.
  *
- * The `tag-image` function is gated by the AI-runtime bearer (AGENT_RUNNER_TOKEN
- * or the service-role key) — NOT a user JWT — so a browser/app can't call it
- * directly (see docs/ai-image-tagging.md + packages/core/api/similarWorks.ts).
- * This route authenticates the caller (cookie session on web, or a forwarded
- * Supabase access token on mobile), then calls `tag-image` with the runner
- * bearer and returns the query image's inline tags + embedding. Nothing is
- * persisted — the inspiration image is transient.
+ * ZERO-CONFIG on localhost. `tag-image` `inline` now accepts an ordinary
+ * signed-in USER JWT (it persists nothing — see supabase/functions/tag-image),
+ * so this route can simply forward the caller's own Supabase access token. No
+ * server-side runner secret is required to run image search locally: if the
+ * user is signed in and NEXT_PUBLIC_SUPABASE_URL is set (it always is — the app
+ * can't boot otherwise), the feature works.
  *
- * Env (server-only): AGENT_RUNNER_TOKEN (preferred) or SUPABASE_SERVICE_ROLE_KEY
- * for the tag-image bearer. Absent → 503 not_configured (the UI degrades to
- * "browse by style"). NEXT_PUBLIC_SUPABASE_URL locates the function.
+ * A privileged runner token (AGENT_RUNNER_TOKEN / SUPABASE_SERVICE_ROLE_KEY) is
+ * still used IN PREFERENCE when present (e.g. production), but is now OPTIONAL.
+ * `not_configured` (503) is therefore reserved for the case the pipeline is
+ * genuinely unreachable — the tag-image function itself lacks ANTHROPIC_API_KEY,
+ * whose 503 is passed straight through — never merely "the operator didn't set a
+ * proxy env locally".
  */
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
@@ -28,32 +30,44 @@ interface Body {
   image_url?: unknown;
 }
 
+interface ResolvedAuth {
+  userId: string;
+  /** The caller's own Supabase access token, to forward as a zero-config bearer. */
+  accessToken: string | null;
+}
+
 function err(code: string, message: string, status: number) {
   return NextResponse.json({ error: { code, message } }, { status });
 }
 
-async function resolveUserId(req: Request): Promise<string | null> {
-  // Mobile / cross-origin: a forwarded Supabase access token.
+async function resolveAuth(req: Request): Promise<ResolvedAuth | null> {
+  // Mobile / cross-origin: a forwarded Supabase access token IS the bearer.
   const auth = req.headers.get("authorization") ?? "";
   const bearer = auth.replace(/^Bearer\s+/i, "").trim();
   if (bearer) {
     try {
       const client = createBrowserSupabaseClient();
       const { data } = await client.auth.getUser(bearer);
-      if (data.user?.id) return data.user.id;
+      if (data.user?.id) return { userId: data.user.id, accessToken: bearer };
     } catch {
       // fall through to cookie session
     }
   }
-  // Web / same-origin: the cookie session.
+  // Web / same-origin: the cookie session. Pull both the user and the live
+  // access token (to forward to tag-image inline as the user's own bearer).
   try {
     const cookieStore = await cookies();
     const client = createServerSupabaseClient({
       getAll: () => cookieStore.getAll(),
       setAll: () => {},
     });
-    const { data } = await client.auth.getUser();
-    return data.user?.id ?? null;
+    const { data: userData } = await client.auth.getUser();
+    if (!userData.user?.id) return null;
+    const { data: sessionData } = await client.auth.getSession();
+    return {
+      userId: userData.user.id,
+      accessToken: sessionData.session?.access_token ?? null,
+    };
   } catch {
     return null;
   }
@@ -71,15 +85,18 @@ export async function POST(req: Request) {
     return err("bad_request", "A valid image_url is required", 400);
   }
 
-  const userId = await resolveUserId(req);
-  if (!userId) return err("unauthorized", "Sign in to search by image", 401);
+  const resolved = await resolveAuth(req);
+  if (!resolved) return err("unauthorized", "Sign in to search by image", 401);
 
+  // Prefer a configured runner token (production); otherwise forward the user's
+  // own access token — inline mode accepts it, so no server env is needed.
   const runnerToken =
     process.env.AGENT_RUNNER_TOKEN?.trim() ||
     process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
     "";
+  const bearer = runnerToken || resolved.accessToken || "";
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || "";
-  if (!runnerToken || !supabaseUrl) {
+  if (!bearer || !supabaseUrl) {
     return err(
       "not_configured",
       "Image search isn't switched on yet — browse by style meanwhile.",
@@ -93,7 +110,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${runnerToken}`,
+        Authorization: `Bearer ${bearer}`,
       },
       body: JSON.stringify({ mode: "inline", image_url: imageUrl }),
     });

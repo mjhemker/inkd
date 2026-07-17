@@ -169,6 +169,12 @@ export interface MatchArtistGroup {
   matchReason: string;
   /** Which of the inspiration's styles this artist shares (labels). */
   sharedStyleLabels: string[];
+  /**
+   * True when this group is NOT a visual-similarity match but a style-affinity
+   * fallback ("closest artists by style, since no piece matched closely"). The
+   * UI hides the similarity meter for these and frames them as "who's nearby".
+   */
+  isAffinityFallback?: boolean;
 }
 
 /** A per-piece deep link within an artist profile (styles anchor the section). */
@@ -303,9 +309,78 @@ export function groupSimilarWorks(
 }
 
 // ---------------------------------------------------------------------------
+// Style-affinity fallback — "always return something." When the visual search
+// finds no artists, we present the closest artists BY STYLE instead of a dead
+// end. This pure builder shapes discovery artist cards (+ a few preview works)
+// into fallback `MatchArtistGroup`s; the impure fetch lives in matchInspirationRun.
+// ---------------------------------------------------------------------------
+export interface FallbackArtist {
+  artistId: string;
+  handle: string | null;
+  displayName: string;
+  avatarUrl: string | null;
+  /** Canonical style slugs the artist works in (from search_artists). */
+  styles: string[];
+}
+
+export interface FallbackOptions {
+  /** The inspiration's detected style slugs (drives shared-style ranking). */
+  detectedSlugs?: string[];
+  /** The inspiration's color label, for the generic reason fallback. */
+  colorLabel?: string;
+  /** Exclude one artist (e.g. the viewer's own profile). */
+  excludeArtistId?: string;
+}
+
+/**
+ * Turn discovery artist cards into fallback groups: flagged `isAffinityFallback`
+ * (no similarity meter), reasoned by shared/own styles, and sorted so artists
+ * who share a detected style come first, then those with a visible preview.
+ * Pure — the caller supplies the artists + their preview works.
+ */
+export function buildAffinityFallbackGroups(
+  artists: FallbackArtist[],
+  worksByArtist: Map<string, MatchWork[]>,
+  opts: FallbackOptions = {},
+): MatchArtistGroup[] {
+  const detected = opts.detectedSlugs ?? [];
+  const detectedSet = new Set(detected);
+  const colorLabel = opts.colorLabel ?? "";
+
+  const groups: MatchArtistGroup[] = [];
+  for (const a of artists) {
+    if (opts.excludeArtistId && a.artistId === opts.excludeArtistId) continue;
+    const styles = a.styles ?? [];
+    const sharedLabels = styles.filter((s) => detectedSet.has(s)).map(formatStyleLabel);
+    const ownLabels = styles.filter((s) => !detectedSet.has(s)).map(formatStyleLabel);
+    groups.push({
+      artistId: a.artistId,
+      handle: a.handle,
+      displayName: a.displayName || "INKD artist",
+      avatarUrl: a.avatarUrl,
+      profileHref: a.handle ? `/a/${a.handle}` : null,
+      works: worksByArtist.get(a.artistId) ?? [],
+      topSimilarity: 0,
+      topSimilarityPercent: 0,
+      matchLabel: "Nearby",
+      matchReason: buildMatchReason(sharedLabels, ownLabels, colorLabel),
+      sharedStyleLabels: sharedLabels,
+      isAffinityFallback: true,
+    });
+  }
+
+  groups.sort((a, b) => {
+    const shared = (b.sharedStyleLabels.length ? 1 : 0) - (a.sharedStyleLabels.length ? 1 : 0);
+    if (shared !== 0) return shared;
+    return (b.works.length ? 1 : 0) - (a.works.length ? 1 : 0);
+  });
+  return groups;
+}
+
+// ---------------------------------------------------------------------------
 // Outcome classification — the graceful-degradation decision.
 // ---------------------------------------------------------------------------
-export type MatchOutcome = "ok" | "no_style" | "no_match" | "low_match";
+export type MatchOutcome = "ok" | "no_style" | "no_match" | "low_match" | "fallback";
 
 /**
  * Decide how the UI should present a run:
