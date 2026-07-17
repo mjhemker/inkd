@@ -564,7 +564,7 @@ function StepDetails({
             leadingIcon={<Icon name="map-pin" size={16} />}
           />
         </FormField>
-        <FormField label="Approx. size" htmlFor="bk-size">
+        <FormField label="Approx. size" htmlFor="bk-size" reserveDescriptionSpace>
           <Input
             id="bk-size"
             value={form.sizeDescription}
