@@ -14,7 +14,12 @@ import {
   type InfiniteData,
 } from "@tanstack/react-query";
 
-import { listFeedItems, type FeedItem, type FeedScope } from "../api/feed";
+import {
+  listFeedItems,
+  type FeedArtistFilters,
+  type FeedItem,
+  type FeedScope,
+} from "../api/feed";
 import { listStyles } from "../api/artistProfiles";
 import {
   setArtistFollowed,
@@ -39,23 +44,30 @@ function useViewerId(): { viewerId: string | null; isLoading: boolean } {
 }
 
 export interface UseFeedOptions {
+  /** Single style chip (quick filter). */
   styleSlug?: string | null;
+  /** Filter-panel multi-select styles (post_styles). */
+  styleSlugs?: string[];
+  /** Filter-panel artist-level filters (location / price / books / state). */
+  artistFilters?: FeedArtistFilters;
   /** Skip the query (e.g. while auth is still resolving). */
   enabled?: boolean;
 }
 
 /**
  * Infinite feed for a scope. Pages are `FeedItem[]`; a page shorter than
- * `PAGE_SIZE` ends the stream. The style chip filter and the viewer id are part
- * of the key so switching either refetches cleanly.
+ * `PAGE_SIZE` ends the stream. The style chip filter, the panel filters, and
+ * the viewer id are all part of the key so switching any refetches cleanly.
  */
 export function useFeed(scope: FeedScope, options: UseFeedOptions = {}) {
   const client = useInkdClient();
   const { viewerId, isLoading: viewerLoading } = useViewerId();
   const styleSlug = options.styleSlug ?? null;
+  const styleSlugs = options.styleSlugs ?? [];
+  const artistFilters = options.artistFilters;
 
   return useInfiniteQuery({
-    queryKey: feedQueryKeys.list(scope, styleSlug, viewerId),
+    queryKey: feedQueryKeys.list(scope, styleSlug, viewerId, { styleSlugs, artistFilters }),
     enabled: (options.enabled ?? true) && !viewerLoading,
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
@@ -63,6 +75,8 @@ export function useFeed(scope: FeedScope, options: UseFeedOptions = {}) {
         scope,
         viewerId,
         styleSlug: styleSlug ?? undefined,
+        styleSlugs: styleSlugs.length ? styleSlugs : undefined,
+        artistFilters,
         limit: PAGE_SIZE,
         offset: pageParam,
       }),

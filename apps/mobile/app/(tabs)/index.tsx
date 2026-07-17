@@ -18,6 +18,13 @@ import {
   useFeedItems,
   useStyleFilters,
   useTodayDrop,
+  feedArtistFilterParams,
+  describeFeedFilters,
+  clearFeedFilterChip,
+  hasActiveFeedFilters,
+  activeFeedFilterCount,
+  EMPTY_FEED_FILTER,
+  type FeedFilterState,
   type FeedItem,
   type FeedScope,
 } from "@inkd/core";
@@ -25,6 +32,7 @@ import {
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { DailyDropCard } from "@/components/daily-drop/DailyDropCard";
 import { FeedCard } from "@/components/feed/FeedCard";
+import { FeedFilterSheet } from "@/components/feed/FeedFilterSheet";
 import { PostDetailSheet } from "@/components/feed/PostDetailSheet";
 import { StyleFilterRow } from "@/components/feed/StyleFilterRow";
 import { useTheme } from "@/providers/theme";
@@ -38,7 +46,8 @@ export default function HomeScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const [scope, setScope] = useState<FeedScope>("discover");
-  const [styleSlug, setStyleSlug] = useState<string | null>(null);
+  const [filter, setFilter] = useState<FeedFilterState>(EMPTY_FEED_FILTER);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [selected, setSelected] = useState<FeedItem | null>(null);
 
   const { data: profile } = useCurrentProfile();
@@ -46,6 +55,13 @@ export default function HomeScreen() {
   const { data: styleData } = useStyleFilters();
   const styles = styleData ?? [];
   const { data: drop } = useTodayDrop();
+
+  // The chip row is a quick SINGLE-style filter; the sheet handles multi-select.
+  const chipSelected = filter.styles.length === 1 ? filter.styles[0] ?? null : null;
+  const selectStyleChip = (slug: string | null) =>
+    setFilter({ ...filter, styles: slug ? [slug] : [] });
+  const artistFilters = feedArtistFilterParams(filter);
+  const activeChips = describeFeedFilters(filter, styles);
 
   const {
     items,
@@ -55,7 +71,7 @@ export default function HomeScreen() {
     isFetchingNextPage,
     fetchNextPage,
     refetch,
-  } = useFeedItems(scope, { styleSlug });
+  } = useFeedItems(scope, { styleSlugs: filter.styles, artistFilters });
 
   const header = (
     <View className="gap-5 pb-4">
@@ -69,6 +85,17 @@ export default function HomeScreen() {
               <Text className="font-display text-base text-content-primary">INKD</Text>
             </View>
           }
+          action={
+            <Pressable
+              onPress={() => router.push("/search")}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Search INKD"
+              className="h-10 w-10 items-center justify-center rounded-lg border border-border-subtle bg-surface-raised active:opacity-80"
+            >
+              <Icon name="search" size={18} color={colors.text.secondary} />
+            </Pressable>
+          }
         />
         <Tabs
           value={scope}
@@ -76,7 +103,50 @@ export default function HomeScreen() {
           items={SCOPE_TABS}
         />
       </View>
-      <StyleFilterRow styles={styles} selectedSlug={styleSlug} onSelect={setStyleSlug} />
+      <View className="flex-row items-center gap-2 pr-6">
+        <View className="min-w-0 flex-1">
+          <StyleFilterRow styles={styles} selectedSlug={chipSelected} onSelect={selectStyleChip} />
+        </View>
+        <Pressable
+          onPress={() => setFiltersOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Open filters"
+          className={
+            hasActiveFeedFilters(filter)
+              ? "flex-row items-center gap-1.5 rounded-sm border border-brand bg-brand/10 px-3 py-1.5"
+              : "flex-row items-center gap-1.5 rounded-sm border border-border-subtle bg-surface-raised px-3 py-1.5"
+          }
+        >
+          <Icon name="settings" size={13} color={colors.text.secondary} />
+          <Text className="font-mono text-[11px] font-semibold uppercase tracking-widest text-content-secondary">
+            Filters
+          </Text>
+          {activeFeedFilterCount(filter) > 0 ? (
+            <View className="h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1">
+              <Text className="text-[10px] font-bold text-brand-on">{activeFeedFilterCount(filter)}</Text>
+            </View>
+          ) : null}
+        </Pressable>
+      </View>
+
+      {activeChips.length > 0 ? (
+        <View className="flex-row flex-wrap items-center gap-1.5 px-6">
+          {activeChips.map((chip) => (
+            <Pressable
+              key={chip.key}
+              onPress={() => setFilter(clearFeedFilterChip(filter, chip))}
+              className="flex-row items-center gap-1 rounded-sm border border-brand/40 bg-brand/10 px-2 py-1"
+            >
+              <Text className="text-xs text-content-primary">{chip.label}</Text>
+              <Icon name="x" size={11} color={colors.text.muted} />
+            </Pressable>
+          ))}
+          <Pressable onPress={() => setFilter(EMPTY_FEED_FILTER)} hitSlop={6}>
+            <Text className="ml-1 font-mono text-[11px] uppercase tracking-wider text-content-muted">Clear all</Text>
+          </Pressable>
+        </View>
+      ) : null}
+
       {scope === "discover" && drop && (
         <View className="gap-2 px-6">
           <View className="flex-row items-center justify-between">
@@ -175,14 +245,14 @@ export default function HomeScreen() {
                 icon={<Icon name="image" size={32} color={colors.text.muted} />}
                 title="The wall's still being hung"
                 description={
-                  styleSlug
-                    ? "Nothing matches that style yet — try another filter."
+                  hasActiveFeedFilters(filter)
+                    ? "Nothing matches these filters yet — try widening them."
                     : "New work from INKD artists drops often — check back soon."
                 }
                 action={
-                  styleSlug ? (
-                    <Button size="md" variant="secondary" onPress={() => setStyleSlug(null)}>
-                      Clear filter
+                  hasActiveFeedFilters(filter) ? (
+                    <Button size="md" variant="secondary" onPress={() => setFilter(EMPTY_FEED_FILTER)}>
+                      Clear filters
                     </Button>
                   ) : undefined
                 }
@@ -213,6 +283,15 @@ export default function HomeScreen() {
       />
 
       <PostDetailSheet item={selected} onClose={() => setSelected(null)} signedIn={signedIn} />
+
+      <FeedFilterSheet
+        open={filtersOpen}
+        filter={filter}
+        styles={styles}
+        onChange={setFilter}
+        onReset={() => setFilter(EMPTY_FEED_FILTER)}
+        onClose={() => setFiltersOpen(false)}
+      />
     </SafeAreaView>
   );
 }
