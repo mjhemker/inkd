@@ -242,41 +242,46 @@ function WeekGrid({ anchor, sessions }: { anchor: Date; sessions: Session[] }) {
 
   return (
     <div className="overflow-hidden rounded-xl border border-border-subtle bg-surface-base">
-      {/* Day header row (aligned over the hour gutter). */}
-      <div className="flex border-b border-border-subtle bg-surface-raised">
-        <div className="w-12 shrink-0 border-r border-border-subtle sm:w-14" />
-        {days.map((day) => {
-          const today = isSameDay(day, now);
-          return (
-            <div
-              key={day.toISOString()}
-              className={
-                "flex flex-1 flex-col items-center gap-0.5 py-2 " +
-                (today ? "bg-brand/10" : "")
-              }
-            >
-              <span className="font-mono text-[10px] uppercase tracking-widest text-content-muted">
-                {day.toLocaleDateString("en-US", { weekday: "short" })}
-              </span>
-              <span
-                className={
-                  "grid h-6 w-6 place-items-center rounded-full text-sm font-bold " +
-                  (today ? "bg-brand text-brand-on" : "text-content-primary")
-                }
-              >
-                {day.getDate()}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Scrollable time grid. */}
+      {/* Single scroll context. The day-header row is STICKY *inside* this
+          scroller — not a sibling above it — so the vertical scrollbar shortens
+          the header row and the body columns by the exact same amount and the
+          two stay column-aligned regardless of scrollbar width (classic or
+          overlay). `scrollbar-gutter: stable` keeps the layout from shifting
+          when the scrollbar toggles. */}
       <div
         ref={scrollRef}
-        className="max-h-[560px] overflow-y-auto"
+        className="max-h-[560px] overflow-y-auto [scrollbar-gutter:stable]"
         aria-label="Week schedule grid"
       >
+        {/* Day header row (aligned over the hour gutter). */}
+        <div className="sticky top-0 z-30 flex border-b border-border-subtle bg-surface-raised">
+          <div className="w-12 shrink-0 border-r border-border-subtle sm:w-14" />
+          {days.map((day) => {
+            const today = isSameDay(day, now);
+            return (
+              <div
+                key={day.toISOString()}
+                className={
+                  "flex flex-1 flex-col items-center gap-0.5 py-2 " +
+                  (today ? "bg-brand/10" : "")
+                }
+              >
+                <span className="font-mono text-[10px] uppercase tracking-widest text-content-muted">
+                  {day.toLocaleDateString("en-US", { weekday: "short" })}
+                </span>
+                <span
+                  className={
+                    "grid h-6 w-6 place-items-center rounded-full text-sm font-bold " +
+                    (today ? "bg-brand text-brand-on" : "text-content-primary")
+                  }
+                >
+                  {day.getDate()}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
         <div className="flex" style={{ height: 24 * HOUR_HEIGHT }}>
           {/* Hour gutter */}
           <div className="w-12 shrink-0 border-r border-border-subtle sm:w-14">
