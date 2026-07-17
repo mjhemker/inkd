@@ -9,6 +9,8 @@ export * from "./artistProfiles";
 export * from "./studioLocations";
 export * from "./services";
 export * from "./discover";
+export * from "./search";
+export * from "./feedFilters";
 export * from "./availability";
 export * from "./booking";
 export * from "./bookingFlow";

@@ -14,6 +14,7 @@ import {
   type ViewerRole,
 } from "@/lib/nav";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { SearchProvider, useGlobalSearchOverlay } from "@/components/search/search-context";
 
 /** The identity rendered in the sidebar footer. */
 export interface ShellIdentity {
@@ -66,18 +67,20 @@ export function AppShell({
   };
 
   return (
-    <div className="min-h-dvh bg-surface-base text-content-primary">
-      <Sidebar active={active} role={role} identity={identity} />
+    <SearchProvider>
+      <div className="min-h-dvh bg-surface-base text-content-primary">
+        <Sidebar active={active} role={role} identity={identity} />
 
-      <div className="md:pl-64">
-        <TopBar title={title} action={action} />
-        <main className="mx-auto w-full max-w-6xl px-5 pb-28 pt-6 md:px-8 md:pb-12">
-          {children}
-        </main>
+        <div className="md:pl-64">
+          <TopBar title={title} action={action} />
+          <main className="mx-auto w-full max-w-6xl px-5 pb-28 pt-6 md:px-8 md:pb-12">
+            {children}
+          </main>
+        </div>
+
+        <BottomTabs active={active} role={role} />
       </div>
-
-      <BottomTabs active={active} role={role} />
-    </div>
+    </SearchProvider>
   );
 }
 
@@ -192,6 +195,7 @@ function SidebarLink({ item, active }: { item: NavItem; active: string }) {
 }
 
 function TopBar({ title, action }: { title?: string; action?: ReactNode }) {
+  const search = useGlobalSearchOverlay();
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border-subtle bg-surface-base/85 px-5 backdrop-blur md:px-8">
       <div className="flex items-center gap-3 md:hidden">
@@ -205,10 +209,26 @@ function TopBar({ title, action }: { title?: string; action?: ReactNode }) {
       )}
 
       <div className="ml-auto flex items-center gap-2">
+        {/* Desktop: a wide search affordance showing the ⌘K shortcut. */}
         <button
           type="button"
-          aria-label="Search"
-          className="grid h-10 w-10 place-items-center rounded-lg text-content-muted outline-none transition-colors hover:bg-surface-raised hover:text-content-primary focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base"
+          onClick={search.open}
+          aria-label="Search INKD"
+          aria-keyshortcuts="Meta+K Control+K"
+          className="hidden h-10 items-center gap-2 rounded-lg border border-border-subtle bg-surface-raised px-3 text-content-muted outline-none transition-colors hover:border-border-strong hover:text-content-primary focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base md:flex"
+        >
+          <Icon name="search" size={16} />
+          <span className="text-sm">Search</span>
+          <kbd className="ml-6 rounded border border-border-subtle bg-surface-overlay px-1.5 py-0.5 font-mono text-[10px] text-content-secondary">
+            ⌘K
+          </kbd>
+        </button>
+        {/* Mobile: the compact icon button. */}
+        <button
+          type="button"
+          onClick={search.open}
+          aria-label="Search INKD"
+          className="grid h-10 w-10 place-items-center rounded-lg text-content-muted outline-none transition-colors hover:bg-surface-raised hover:text-content-primary focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base md:hidden"
         >
           <Icon name="search" size={20} />
         </button>

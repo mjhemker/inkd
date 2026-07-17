@@ -3055,6 +3055,18 @@ export type Database = {
         Args: { p_platform: string; p_token: string }
         Returns: string
       }
+      feed_filter_artist_ids: {
+        Args: {
+          p_books_open?: boolean
+          p_lat?: number
+          p_lng?: number
+          p_price_max?: number
+          p_price_min?: number
+          p_radius_km?: number
+          p_state?: string
+        }
+        Returns: string[]
+      }
       search_artists: {
         Args: {
           p_books_open?: boolean
