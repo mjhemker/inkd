@@ -11,6 +11,7 @@
  */
 import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { useColorScheme } from "nativewind";
 import Svg, { Circle, Ellipse, Rect } from "react-native-svg";
 import { cx } from "../cx";
 import {
@@ -33,21 +34,45 @@ export interface BodyMapProps {
   className?: string;
 }
 
-const PALETTE = {
-  base: { fill: "rgba(250,250,250,0.05)", stroke: "rgba(250,250,250,0.16)" },
-  selected: { fill: "#7C3AED", stroke: "#C4B5FD" },
+/**
+ * Theme-aware figure palette. react-native-svg takes concrete color strings (it
+ * can't read NativeWind classes), so we resolve the active scheme and pick the
+ * matching set. Dark keeps the original faint ink-on-black look; light paints a
+ * SOLID mid-tone ink silhouette that reads on the warm paper wall (the old
+ * hardcoded near-white fill was invisible in light mode). The selected marker
+ * reads on BOTH themes.
+ */
+type BodyMapTone = { fill: string; stroke: string };
+type BodyMapPalette = { base: BodyMapTone; selected: BodyMapTone };
+
+const PALETTES: Record<"dark" | "light", BodyMapPalette> = {
+  dark: {
+    base: { fill: "rgba(250,250,250,0.05)", stroke: "rgba(250,250,250,0.16)" },
+    selected: { fill: "#7C3AED", stroke: "#C4B5FD" },
+  },
+  light: {
+    base: { fill: "rgba(28,25,23,0.14)", stroke: "rgba(28,25,23,0.55)" },
+    selected: { fill: "#7C3AED", stroke: "#4C1D95" },
+  },
 };
+
+function useBodyMapPalette(): BodyMapPalette {
+  const { colorScheme } = useColorScheme();
+  return colorScheme === "light" ? PALETTES.light : PALETTES.dark;
+}
 
 function ShapeEl({
   rs,
   selected,
   onSelect,
+  palette,
 }: {
   rs: RegionShape;
   selected: boolean;
   onSelect: () => void;
+  palette: BodyMapPalette;
 }) {
-  const tone = selected ? PALETTE.selected : PALETTE.base;
+  const tone = selected ? palette.selected : palette.base;
   const shape: Shape = rs.shape;
   const common = {
     onPress: onSelect,
@@ -111,6 +136,7 @@ function ViewToggle({
 
 export function BodyMap({ value, onChange, showFallback = true, className }: BodyMapProps) {
   const [view, setView] = useState<PlacementView>(value?.view ?? "front");
+  const palette = useBodyMapPalette();
   const figure = FIGURES[view];
   const selectedLabel = value ? placementLabel(value, { withView: value.view }) : null;
   const options = placementSelectOptions(view);
@@ -148,6 +174,7 @@ export function BodyMap({ value, onChange, showFallback = true, className }: Bod
                   rs={rs}
                   selected={isSel}
                   onSelect={() => onChange({ region: rs.region, side: rs.side, view })}
+                  palette={palette}
                 />
               );
             })}
@@ -209,6 +236,7 @@ export function BodyMapThumbnail({
   value: PlacementValue;
   size?: number;
 }) {
+  const palette = useBodyMapPalette();
   const figure = FIGURES[value.view];
   return (
     <View
@@ -223,7 +251,7 @@ export function BodyMapThumbnail({
             side: rs.side,
             view: value.view,
           });
-          const tone = isSel ? PALETTE.selected : PALETTE.base;
+          const tone = isSel ? palette.selected : palette.base;
           const shape = rs.shape;
           const common = { fill: tone.fill, stroke: tone.stroke, strokeWidth: isSel ? 2 : 1 };
           const key = `${rs.region}:${rs.side ?? "-"}`;
