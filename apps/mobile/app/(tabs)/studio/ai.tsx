@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import {
@@ -23,6 +23,7 @@ import {
 
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { ArtistOnly } from "@/components/ArtistOnly";
+import { StudioSegments } from "@/components/studio/StudioSegments";
 import { ApprovalCard } from "@/components/ai-staff/ApprovalCard";
 import { ActivityRow } from "@/components/ai-staff/ActivityRow";
 import { PlaybookSection } from "@/components/ai-staff/PlaybookSection";
@@ -35,6 +36,11 @@ const TAB_ITEMS = [
   { value: "playbook", label: "Playbook" },
 ];
 
+/**
+ * Studio tab → AI staff. Inside the Studio tab's nested stack, so the bottom
+ * tab bar stays visible. Deep links (from notifications and message-thread
+ * provenance) resolve here as /studio/ai?tab=…&action=… and keep the tab bar.
+ */
 export default function AiStaffScreen() {
   return (
     <ArtistOnly requireOnboarding>
@@ -101,18 +107,13 @@ function AiStaffScreenContent() {
   return (
     <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
       <ScrollView className="flex-1" contentContainerClassName="gap-5 px-6 py-6">
-        <Text
-          onPress={() => (router.canGoBack() ? router.back() : router.push("/dashboard"))}
-          className="text-sm text-content-secondary"
-        >
-          {"< Back"}
-        </Text>
-
         <ScreenHeader
           eyebrow="Studio · AI staff"
           title="AI staff"
           subtitle="Your Front Desk and Booking Manager, working from your published info. Everything they do is here for you to see."
         />
+
+        <StudioSegments active="ai" />
 
         {artistLoading ? (
           <View className="gap-3">

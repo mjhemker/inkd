@@ -156,7 +156,7 @@ function ProfileScreenContent() {
                 variant="secondary"
                 size="sm"
                 className="flex-1"
-                onPress={() => router.push("/dashboard")}
+                onPress={() => router.push("/studio")}
               >
                 Dashboard
               </Button>
@@ -164,7 +164,7 @@ function ProfileScreenContent() {
                 variant="secondary"
                 size="sm"
                 className="flex-1"
-                onPress={() => router.push("/settings")}
+                onPress={() => router.push("/studio/settings")}
               >
                 Studio settings
               </Button>

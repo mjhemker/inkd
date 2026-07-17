@@ -26,7 +26,7 @@ export function StaffOverview({
   return (
     <View className="gap-3">
       <Pressable
-        onPress={() => router.push("/settings" as never)}
+        onPress={() => router.push("/studio/settings" as never)}
         className="flex-row items-center justify-between rounded-sm border border-border-subtle bg-surface-raised px-3 py-2.5"
         accessibilityRole="button"
       >

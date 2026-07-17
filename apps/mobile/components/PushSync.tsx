@@ -15,12 +15,15 @@ import { useRegisterPushToken, useRemovePushToken } from "@inkd/core/hooks";
 
 import { useSession } from "@/providers/session";
 import { registerForPushNotificationsAsync } from "@/lib/push";
+import { normalizeDeepLink } from "@/lib/nav";
 
 function openDeepLink(data: unknown) {
   if (!data || typeof data !== "object") return;
   const url = (data as { url?: unknown }).url;
   if (typeof url === "string" && url.length > 0) {
-    router.push(url as never);
+    // Normalize legacy paths (/dashboard, /settings) into the Studio tab so the
+    // tap lands with the bottom tab bar visible.
+    router.push(normalizeDeepLink(url) as never);
   }
 }
 

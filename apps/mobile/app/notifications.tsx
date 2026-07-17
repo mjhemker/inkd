@@ -14,6 +14,7 @@ import { Button, Chip, EmptyState, Icon, Skeleton, ToastProvider } from "@inkd/u
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { NotificationListItem } from "@/components/notifications/NotificationListItem";
 import { NOTIFICATION_FILTER_TYPES, notificationKindMeta } from "@/lib/notifications";
+import { normalizeDeepLink } from "@/lib/nav";
 import { useTheme } from "@/providers/theme";
 
 const PAGE_SIZE = 20;
@@ -49,7 +50,7 @@ function NotificationsScreenContent() {
 
   function handleSelect(notification: Notification) {
     if (!notification.is_read) markRead.mutate(notification.id);
-    if (notification.action_url) router.push(notification.action_url as never);
+    if (notification.action_url) router.push(normalizeDeepLink(notification.action_url) as never);
   }
 
   return (

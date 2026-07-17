@@ -6,7 +6,7 @@ const expoConfig = require("eslint-config-expo/flat");
 module.exports = [
   ...expoConfig,
   {
-    ignores: ["dist/**", ".expo/**", "expo-env.d.ts"],
+    ignores: ["dist/**", ".expo/**", "expo-env.d.ts", "**/*.test.ts"],
   },
   {
     // Same guard as the shared web config: a component defined inside another

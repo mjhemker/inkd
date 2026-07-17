@@ -3,10 +3,14 @@
  * Owner-only: roster + invites, the managed-members calendar read, the shop's
  * own profile editor, and its locations (shared with the owner artist's studio
  * locations). Guarded like other /studio screens via <ArtistOnly>.
+ *
+ * Lives inside the Studio tab's nested stack (app/(tabs)/studio/shop.tsx) so the
+ * bottom tab bar stays visible. Reached from Settings → Shop and the
+ * /studio/shop deep link (shop-invite-accepted notification).
  */
 import { useMemo, useState } from "react";
 import { router } from "expo-router";
-import { ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Avatar,
@@ -49,6 +53,18 @@ const TABS = [
   { value: "locations", label: "Locations" },
 ];
 
+/** Back to the Studio → Settings section (stays inside the Studio tab). */
+function BackToSettings() {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => (router.canGoBack() ? router.back() : router.replace("/studio/settings"))}
+    >
+      <Text className="text-sm text-content-secondary">{"< Studio settings"}</Text>
+    </Pressable>
+  );
+}
+
 export default function ShopDashboardScreen() {
   return (
     <ArtistOnly>
@@ -77,6 +93,7 @@ function ShopDashboardContent() {
     return (
       <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
         <ScrollView className="flex-1" contentContainerClassName="gap-6 px-6 py-8">
+          <BackToSettings />
           <ScreenHeader eyebrow="Shop" title="Shop" subtitle="Run a shop that hosts other artists." />
           <Card padding="lg" className="items-start gap-4">
             <View className="h-12 w-12 items-center justify-center rounded-xl bg-surface-overlay">
@@ -89,7 +106,7 @@ function ShopDashboardContent() {
                 showcase or a full management layer.
               </Text>
             </View>
-            <Button onPress={() => router.push("/settings")}>
+            <Button onPress={() => router.push("/studio/settings")}>
               Set up a shop
               <Icon name="arrow-right" size={16} color={colors.text.primary} />
             </Button>
@@ -102,6 +119,7 @@ function ShopDashboardContent() {
   return (
     <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
       <ScrollView className="flex-1" contentContainerClassName="gap-6 px-6 py-6">
+        <BackToSettings />
         <View className="gap-3">
           <View className="flex-row items-center gap-3">
             <Avatar src={shop.avatar_url ?? undefined} name={shop.name} size="lg" shape="square" />
