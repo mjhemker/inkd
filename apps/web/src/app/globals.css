@@ -17,6 +17,7 @@
   --color-surface-base: 10 10 11;
   --color-surface-raised: 17 17 19;
   --color-surface-overlay: 26 26 29;
+  --color-surface-chrome: 13 13 15;
   --color-surface-inverse: 250 250 250;
   --color-surface-plate: 124 58 237;
   --color-surface-plate-active: 109 40 217;
@@ -49,6 +50,7 @@
   --color-surface-base: 246 242 233;
   --color-surface-raised: 252 250 244;
   --color-surface-overlay: 255 255 255;
+  --color-surface-chrome: 239 234 221;
   --color-surface-inverse: 28 25 23;
   --color-surface-plate: 124 58 237;
   --color-surface-plate-active: 109 40 217;

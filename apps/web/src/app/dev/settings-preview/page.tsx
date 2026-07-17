@@ -32,7 +32,12 @@ function SettingsPreviewInner() {
   return (
     <InkdProvider client={mockClient}>
       <ToastProvider>
-        <AppShell currentPath={screen === "dashboard" ? "/dashboard" : "/settings"} title={screen === "dashboard" ? "Dashboard" : "Settings"}>
+        <AppShell
+          currentPath={screen === "dashboard" ? "/dashboard" : "/settings"}
+          title={screen === "dashboard" ? "Dashboard" : "Settings"}
+          forceArtistNav
+          attention={{ bookings: 2, messages: 3, aiStaff: 4, studio: 6 }}
+        >
           {screen === "dashboard" ? <DashboardPreview /> : <SettingsView />}
         </AppShell>
       </ToastProvider>

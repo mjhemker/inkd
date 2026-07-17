@@ -7,6 +7,7 @@ export interface SemanticColors {
     base: string;
     raised: string;
     overlay: string;
+    chrome: string;
     inverse: string;
     plate: string;
     plateActive: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -21,6 +21,7 @@ import {
   useCurrentArtistProfile,
   useDowngradeToClient,
   useInkdClient,
+  useMyShop,
 } from "@inkd/core/hooks";
 import {
   AgentAutonomyEditor,
@@ -37,29 +38,79 @@ import { NotificationPreferencesPanel } from "@/components/notifications/notific
 import { ShopSettingsPanel } from "@/components/shop/ShopSettingsPanel";
 import { AftercareSettingsCard } from "@/components/aftercare/aftercare-settings-card";
 
-const TABS = [
+/**
+ * Grouped settings tabs (was ~11 flat tabs). Related editors are merged into
+ * one tab and shown as clean stacked sections with placard headers:
+ *   Profile · Studio (Locations · Hours & booking · Services · Waivers) ·
+ *   AI staff · Shop (owners only) · Sharing · Preferences (Notifications ·
+ *   Appearance) · Account.
+ */
+const TAB_DEFS: { value: string; label: string; ownerOnly?: boolean }[] = [
   { value: "profile", label: "Profile" },
-  { value: "locations", label: "Locations" },
-  { value: "booking", label: "Hours & booking" },
-  { value: "services", label: "Services" },
-  { value: "shop", label: "Shop" },
+  { value: "studio", label: "Studio" },
   { value: "ai", label: "AI staff" },
-  { value: "waivers", label: "Waivers" },
-  { value: "grow", label: "Share & connect" },
-  { value: "notifications", label: "Notifications" },
-  { value: "appearance", label: "Appearance" },
+  { value: "shop", label: "Shop", ownerOnly: true },
+  { value: "sharing", label: "Sharing" },
+  { value: "preferences", label: "Preferences" },
   { value: "account", label: "Account" },
 ];
+
+type SettingsSection =
+  | "locations"
+  | "booking"
+  | "services"
+  | "waivers"
+  | "notifications"
+  | "appearance";
+
+/**
+ * Maps every historical `?tab=` key (and the new tab keys) to the tab it now
+ * lives on plus the section to scroll to. Keeps old deep-links landing right:
+ * `?tab=notifications` → Preferences › Notifications, `?tab=ai` → AI staff, etc.
+ */
+const TAB_ROUTE: Record<string, { tab: string; section?: SettingsSection }> = {
+  // new keys
+  profile: { tab: "profile" },
+  studio: { tab: "studio" },
+  ai: { tab: "ai" },
+  shop: { tab: "shop" },
+  sharing: { tab: "sharing" },
+  preferences: { tab: "preferences" },
+  account: { tab: "account" },
+  // legacy keys → grouped tab + section
+  locations: { tab: "studio", section: "locations" },
+  booking: { tab: "studio", section: "booking" },
+  services: { tab: "studio", section: "services" },
+  waivers: { tab: "studio", section: "waivers" },
+  grow: { tab: "sharing" },
+  notifications: { tab: "preferences", section: "notifications" },
+  appearance: { tab: "preferences", section: "appearance" },
+};
 
 export function SettingsView() {
   const { toast } = useToast();
   const { data: profile, isLoading: pLoading } = useCurrentProfile();
   const { data: artist, isLoading: aLoading } = useCurrentArtistProfile();
+  const { data: shop } = useMyShop();
   const searchParams = useSearchParams();
-  const initialTab = TABS.some((t) => t.value === searchParams.get("tab"))
-    ? (searchParams.get("tab") as string)
-    : "profile";
-  const [tab, setTab] = useState(initialTab);
+
+  const route = TAB_ROUTE[searchParams.get("tab") ?? ""] ?? { tab: "profile" };
+  const [tab, setTab] = useState(route.tab);
+  // Section to scroll to on landing (from a legacy deep-link), consumed once.
+  const initialSection = route.section;
+
+  // Shop tab is owners-only; hide it for everyone else.
+  const tabs = TAB_DEFS.filter((t) => !t.ownerOnly || Boolean(shop));
+
+  // On landing via a legacy section deep-link, scroll that section into view
+  // once the grouped tab has rendered its stacked sections.
+  useEffect(() => {
+    if (!initialSection) return;
+    const el = document.getElementById(`settings-section-${initialSection}`);
+    if (el) el.scrollIntoView({ block: "start", behavior: "auto" });
+    // Run once on mount — the deep-link only steers the initial landing
+    // (initialSection omitted from deps intentionally).
+  }, []);
 
   // The instagram-oauth callback redirects here with ?instagram=connected|
   // denied|error — surface the result once, on landing. Deliberately runs
@@ -134,19 +185,11 @@ export function SettingsView() {
         </p>
       </div>
 
-      {/* `overflow-x-auto` alone makes browsers auto-compute `overflow-y:
-          auto` too (CSS overflow §3: "if one axis is a non-visible value and
-          the other is visible, visible is set to auto"). The selected tab's
-          underline (`Tabs` renders it `-bottom-px`) sits 1px below the
-          tablist's border box, so that computed overflow-y saw 1px of
-          "content" to scroll — a permanently visible vertical scrollbar with
-          nothing meaningful behind it. `overflow-y-hidden` pins that axis so
-          only the intended horizontal scroll applies. */}
       <Tabs
         value={tab}
         onValueChange={setTab}
-        items={TABS}
-        className="overflow-x-auto overflow-y-hidden"
+        items={tabs}
+        className="max-w-full"
       />
 
       {/* Content column: wide enough on desktop for forms to breathe and for
@@ -156,26 +199,53 @@ export function SettingsView() {
           unaffected. */}
       <div
         className={
-          tab === "grow" ? "max-w-4xl xl:max-w-5xl" : "max-w-3xl xl:max-w-4xl"
+          tab === "sharing" ? "max-w-4xl xl:max-w-5xl" : "max-w-3xl xl:max-w-4xl"
         }
       >
         {tab === "profile" && (
           <IdentityEditor profile={profile} artist={artist} variant="settings" />
         )}
-        {tab === "locations" && (
-          <LocationsEditor artist={artist} variant="settings" />
-        )}
-        {tab === "booking" && (
-          <div className="flex flex-col gap-6">
-            <BookingEditor artist={artist} variant="settings" />
-            <AftercareSettingsCard artist={artist} />
+
+        {tab === "studio" && (
+          <div className="flex flex-col gap-10">
+            <SettingsSection
+              section="locations"
+              eyebrow="Studio"
+              title="Locations"
+              description="Where you tattoo — studios, private suites, and travel options."
+            >
+              <LocationsEditor artist={artist} variant="settings" />
+            </SettingsSection>
+            <SettingsSection
+              section="booking"
+              eyebrow="Studio"
+              title="Hours & booking"
+              description="Business days, vacation blocks, booking window, and aftercare."
+            >
+              <div className="flex flex-col gap-6">
+                <BookingEditor artist={artist} variant="settings" />
+                <AftercareSettingsCard artist={artist} />
+              </div>
+            </SettingsSection>
+            <SettingsSection
+              section="services"
+              eyebrow="Studio"
+              title="Services"
+              description="What clients can book, with rates, durations, and add-ons."
+            >
+              <ServicesEditor artistId={artist.id} variant="settings" />
+            </SettingsSection>
+            <SettingsSection
+              section="waivers"
+              eyebrow="Studio"
+              title="Waivers"
+              description="MD/PA consent forms and signed-waiver records."
+            >
+              <WaiversPanel />
+            </SettingsSection>
           </div>
         )}
-        {tab === "services" && (
-          <ServicesEditor artistId={artist.id} variant="settings" />
-        )}
-        {tab === "shop" && <ShopSettingsPanel />}
-        {tab === "waivers" && <WaiversPanel />}
+
         {tab === "ai" && (
           <div className="flex flex-col gap-5">
             <Link
@@ -200,17 +270,81 @@ export function SettingsView() {
             <AgentAutonomyEditor artist={artist} variant="settings" />
           </div>
         )}
-        {tab === "grow" && (
+
+        {tab === "shop" && <ShopSettingsPanel />}
+
+        {tab === "sharing" && (
           <div className="flex flex-col gap-10">
             <ShareKit profile={profile} />
             <ConnectedAccountsEditor artist={artist} />
           </div>
         )}
-        {tab === "notifications" && <NotificationPreferencesPanel />}
-        {tab === "appearance" && <AppearancePanel />}
-        {tab === "account" && <AccountPanel profileName={profile.display_name} avatarUrl={profile.avatar_url} handle={profile.handle} published={artist.is_published} />}
+
+        {tab === "preferences" && (
+          <div className="flex flex-col gap-10">
+            <SettingsSection
+              section="notifications"
+              eyebrow="Preferences"
+              title="Notifications"
+              description="Choose what INKD tells you about, and where."
+            >
+              <NotificationPreferencesPanel />
+            </SettingsSection>
+            <SettingsSection
+              section="appearance"
+              eyebrow="Preferences"
+              title="Appearance"
+              description="How INKD looks on this device."
+            >
+              <AppearancePanel />
+            </SettingsSection>
+          </div>
+        )}
+
+        {tab === "account" && (
+          <AccountPanel
+            profileName={profile.display_name}
+            avatarUrl={profile.avatar_url}
+            handle={profile.handle}
+            published={artist.is_published}
+          />
+        )}
       </div>
     </div>
+  );
+}
+
+/** Placard section header + its editor, used inside merged settings tabs. The
+ * id lets legacy `?tab=` deep-links scroll straight to the right section. */
+function SettingsSection({
+  section,
+  eyebrow,
+  title,
+  description,
+  children,
+}: {
+  section: SettingsSection;
+  eyebrow: string;
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      id={`settings-section-${section}`}
+      className="flex scroll-mt-24 flex-col gap-4"
+    >
+      <div className="flex flex-col gap-1 border-l-2 border-brand bg-surface-raised px-4 py-3">
+        <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-content-muted">
+          {eyebrow}
+        </span>
+        <h2 className="font-display text-lg font-bold tracking-tight">{title}</h2>
+        {description && (
+          <p className="text-sm text-content-secondary">{description}</p>
+        )}
+      </div>
+      {children}
+    </section>
   );
 }
 

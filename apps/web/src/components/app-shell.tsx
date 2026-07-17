@@ -4,7 +4,12 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Avatar, Icon, Logo, LogoMark, buttonVariants, cx } from "@inkd/ui/web";
-import { useCurrentProfile, useMyShop } from "@inkd/core/hooks";
+import {
+  useCurrentProfile,
+  useMyShop,
+  useAttentionCounts,
+  type AttentionCounts,
+} from "@inkd/core/hooks";
 import {
   bottomNavFor,
   isActivePath,
@@ -42,6 +47,7 @@ export function AppShell({
   action,
   identity: identityOverride,
   forceArtistNav,
+  attention: attentionOverride,
 }: {
   children: ReactNode;
   /** Override active-path detection (used by the /dev/shell preview). */
@@ -52,6 +58,8 @@ export function AppShell({
   identity?: ShellIdentity;
   /** Force the artist "Studio" nav group on (dev/preview harnesses only). */
   forceArtistNav?: boolean;
+  /** Override the nav attention counts (dev/preview harnesses only). */
+  attention?: AttentionCounts;
 }) {
   const pathname = usePathname();
   const active = currentPath ?? pathname;
@@ -65,9 +73,14 @@ export function AppShell({
     avatarUrl: profile?.avatar_url ?? null,
   };
 
+  // Aggregated attention counts, computed once and passed to both nav surfaces
+  // so the realtime-backed pending-approvals query is only subscribed once.
+  const liveAttention = useAttentionCounts();
+  const attention = attentionOverride ?? liveAttention;
+
   return (
     <div className="min-h-dvh bg-surface-base text-content-primary">
-      <Sidebar active={active} role={role} identity={identity} />
+      <Sidebar active={active} role={role} identity={identity} attention={attention} />
 
       <div className="md:pl-64">
         <TopBar title={title} action={action} />
@@ -76,9 +89,33 @@ export function AppShell({
         </main>
       </div>
 
-      <BottomTabs active={active} role={role} />
+      <BottomTabs active={active} role={role} attention={attention} />
     </div>
   );
+}
+
+/** Ember count pill for nav attention badges (9+ cap). */
+function NavBadge({ count, className }: { count: number; className?: string }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      aria-hidden
+      className={cx(
+        "grid h-5 min-w-5 place-items-center rounded-full bg-surface-ember px-1.5 font-mono text-[10px] font-bold leading-none text-brand-on-ember",
+        className,
+      )}
+    >
+      {count > 9 ? "9+" : count}
+    </span>
+  );
+}
+
+/** Which attention count, if any, a sidebar destination should badge. */
+function sidebarBadge(href: string, a: AttentionCounts): number {
+  if (href === "/messages") return a.messages;
+  if (href === "/bookings") return a.bookings;
+  if (href === "/studio/ai") return a.aiStaff;
+  return 0;
 }
 
 function BrandMark({ compact = false }: { compact?: boolean }) {
@@ -97,10 +134,12 @@ function Sidebar({
   active,
   role,
   identity,
+  attention,
 }: {
   active: string;
   role: ViewerRole;
   identity: ShellIdentity;
+  attention: AttentionCounts;
 }) {
   const isArtist = role === "artist";
   // Shop owners get a "Shop" item in the Studio group; the query is disabled for
@@ -108,7 +147,7 @@ function Sidebar({
   const { data: shop } = useMyShop();
   const studioItems = studioNavFor({ ownsShop: isArtist && Boolean(shop) });
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-border-subtle bg-surface-base md:flex">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-border-subtle bg-surface-chrome md:flex">
       <div className="flex h-16 items-center px-5">
         <BrandMark />
       </div>
@@ -116,7 +155,12 @@ function Sidebar({
       <nav className="flex-1 overflow-y-auto px-3 py-2">
         <ul className="flex flex-col gap-0.5">
           {primaryNavFor(role).map((item) => (
-            <SidebarLink key={item.href} item={item} active={active} />
+            <SidebarLink
+              key={item.href}
+              item={item}
+              active={active}
+              badge={sidebarBadge(item.href, attention)}
+            />
           ))}
         </ul>
 
@@ -127,7 +171,12 @@ function Sidebar({
             </p>
             <ul className="flex flex-col gap-0.5">
               {studioItems.map((item) => (
-                <SidebarLink key={item.href} item={item} active={active} />
+                <SidebarLink
+                  key={item.href}
+                  item={item}
+                  active={active}
+                  badge={sidebarBadge(item.href, attention)}
+                />
               ))}
             </ul>
           </>
@@ -160,7 +209,15 @@ function Sidebar({
   );
 }
 
-function SidebarLink({ item, active }: { item: NavItem; active: string }) {
+function SidebarLink({
+  item,
+  active,
+  badge = 0,
+}: {
+  item: NavItem;
+  active: string;
+  badge?: number;
+}) {
   const isActive = isActivePath(active, item.href);
   return (
     <li>
@@ -185,7 +242,13 @@ function SidebarLink({ item, active }: { item: NavItem; active: string }) {
           size={20}
           className={isActive ? "text-content-accent" : "text-content-muted"}
         />
-        {item.label}
+        <span className="flex-1">{item.label}</span>
+        <NavBadge count={badge} />
+        {badge > 0 && (
+          <span className="sr-only">
+            {badge > 9 ? "9 or more" : badge} needing attention
+          </span>
+        )}
       </Link>
     </li>
   );
@@ -193,7 +256,7 @@ function SidebarLink({ item, active }: { item: NavItem; active: string }) {
 
 function TopBar({ title, action }: { title?: string; action?: ReactNode }) {
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border-subtle bg-surface-base/85 px-5 backdrop-blur md:px-8">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border-subtle bg-surface-chrome/85 px-5 backdrop-blur md:px-8">
       <div className="flex items-center gap-3 md:hidden">
         <BrandMark compact />
       </div>
@@ -230,13 +293,30 @@ function TopBar({ title, action }: { title?: string; action?: ReactNode }) {
   );
 }
 
-function BottomTabs({ active, role }: { active: string; role: ViewerRole }) {
+/** Which attention count a bottom tab should badge. The artist "Studio" tab
+ * (→ /dashboard) aggregates its whole group; Messages carries its own count. */
+function bottomBadge(href: string, a: AttentionCounts): number {
+  if (href === "/messages") return a.messages;
+  if (href === "/dashboard") return a.studio;
+  return 0;
+}
+
+function BottomTabs({
+  active,
+  role,
+  attention,
+}: {
+  active: string;
+  role: ViewerRole;
+  attention: AttentionCounts;
+}) {
   const [pressed, setPressed] = useState<string | null>(null);
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border-subtle bg-surface-base/95 backdrop-blur md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border-subtle bg-surface-chrome/95 backdrop-blur md:hidden">
       <ul className="mx-auto flex max-w-lg items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)] pt-1.5">
         {bottomNavFor(role).map((item) => {
           const isActive = isActivePath(active, item.href);
+          const badge = bottomBadge(item.href, attention);
           return (
             <li key={item.href} className="flex-1">
               <Link
@@ -250,7 +330,12 @@ function BottomTabs({ active, role }: { active: string; role: ViewerRole }) {
                   isActive ? "text-content-accent" : "text-content-muted",
                 )}
               >
-                <Icon name={item.icon} size={22} />
+                <span className="relative">
+                  <Icon name={item.icon} size={22} />
+                  {badge > 0 && (
+                    <NavBadge count={badge} className="absolute -right-2.5 -top-1.5" />
+                  )}
+                </span>
                 {item.label}
               </Link>
             </li>

@@ -55,6 +55,8 @@ module.exports = {
           base: v("surface-base"),
           raised: v("surface-raised"),
           overlay: v("surface-overlay"),
+          // App chrome (sidebar + header) — distinct from content surface.
+          chrome: v("surface-chrome"),
           inverse: v("surface-inverse"),
           // Solid accent plates (replace old low-opacity brand tints).
           plate: v("surface-plate"),

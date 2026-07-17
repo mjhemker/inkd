@@ -28,7 +28,9 @@ export interface StatusMeta {
 
 // --- Request status ---------------------------------------------------------
 export const REQUEST_STATUS_META: Record<BookingRequestStatus, StatusMeta> = {
-  pending: { label: "New", tone: "warning" },
+  // "New" reads as a brand/violet stamp so it never collides with the ember
+  // "warning" tone used by the Medical urgency badge on the same row.
+  pending: { label: "New", tone: "brand" },
   reviewing: { label: "Reviewing", tone: "info" },
   accepted: { label: "Accepted", tone: "success" },
   declined: { label: "Declined", tone: "danger" },

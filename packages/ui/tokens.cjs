@@ -128,6 +128,10 @@ const darkSemantic = {
     base: neutral[950], // app canvas
     raised: neutral[900], // cards, sheets — solid raised ink
     overlay: neutral[800], // popovers, menus
+    // App chrome (left sidebar + top header). A subtle lift off the base
+    // canvas so the frame reads as chrome, not content. Kept close to base in
+    // dark so the near-black gallery feel is preserved.
+    chrome: "#0D0D0F",
     inverse: neutral[50],
     // SOLID accent plates — replace old low-opacity brand tints (bg-brand/15).
     plate: primary[600], // solid violet plate (emphasis block, active fill)
@@ -181,6 +185,9 @@ const lightSemantic = {
     base: "#F6F2E9", // paper wall (paper.base)
     raised: "#FCFAF4", // warm-white placard card, lifted off the wall
     overlay: "#FFFFFF", // crisp white menus / popovers (top layer)
+    // App chrome (sidebar + header). Slightly deeper/warmer than the paper
+    // wall so the frame reads as chrome around the lighter content.
+    chrome: "#EFEADD",
     inverse: "#1C1917", // near-black inverse surface
     plate: primary[600], // SAME solid violet plate
     plateActive: primary[700], // pressed violet plate

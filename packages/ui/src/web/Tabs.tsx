@@ -42,11 +42,17 @@ export function Tabs({ value, onValueChange, items, className }: TabsProps) {
   }
 
   return (
+    // Segmented control on a distinct solid raised surface (placard language):
+    // the whole row is a raised track; the active tab is a solid plate with
+    // strong contrast. Hard edges, generous hit area, consistent app-wide.
     <div
       ref={listRef}
       role="tablist"
+      className={cx(
+        "inline-flex max-w-full items-center gap-1 overflow-x-auto rounded-lg border border-border-subtle bg-surface-raised p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        className,
+      )}
       onKeyDown={handleKeyDown}
-      className={cx("flex items-center gap-1 border-b border-border-subtle", className)}
     >
       {items.map((item) => {
         const selected = item.value === value;
@@ -61,15 +67,14 @@ export function Tabs({ value, onValueChange, items, className }: TabsProps) {
             tabIndex={selected ? 0 : -1}
             onClick={() => onValueChange(item.value)}
             className={cx(
-              "relative inline-flex h-10 items-center gap-1.5 px-3 text-sm font-medium outline-none transition-colors duration-[180ms] ease-[cubic-bezier(0.2,0,0,1)] focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base",
-              selected ? "text-content-primary" : "text-content-muted hover:text-content-secondary",
+              "relative inline-flex h-9 shrink-0 items-center gap-1.5 rounded-sm px-3.5 text-sm font-semibold outline-none transition-[background-color,color] duration-[180ms] ease-[cubic-bezier(0.2,0,0,1)] focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised",
+              selected
+                ? "bg-surface-plate-ink text-content-primary shadow-sm"
+                : "text-content-secondary hover:bg-surface-overlay/60 hover:text-content-primary",
             )}
           >
             {item.icon && <span className="inline-flex">{item.icon}</span>}
             {item.label}
-            {selected && (
-              <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-brand" />
-            )}
           </button>
         );
       })}

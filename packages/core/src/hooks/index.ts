@@ -17,6 +17,7 @@ export * from "./useDiscover";
 export * from "./useAgentSettings";
 export * from "./useAgentStaff";
 export * from "./useThreads";
+export * from "./useAttentionCounts";
 export * from "./queryKeysExtras";
 // useArtistContent is the canonical artist/content/media hook module. It
 // supersedes the onboarding branch's usePortfolio.ts + messaging's
