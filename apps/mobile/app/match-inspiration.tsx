@@ -525,18 +525,29 @@ function MatchResults({
     );
   }
 
+  const isFallback = outcome === "fallback";
+
   return (
     <View className="gap-3">
       <View className="flex-row items-baseline justify-between gap-2">
         <Text className="font-mono text-xs uppercase tracking-wider text-content-secondary">
-          {groups.length} {groups.length === 1 ? "artist" : "artists"} match your inspiration
+          {isFallback
+            ? `${groups.length} ${groups.length === 1 ? "artist" : "artists"} nearby`
+            : `${groups.length} ${groups.length === 1 ? "artist" : "artists"} match your inspiration`}
         </Text>
-        {outcome === "low_match" ? (
+        {outcome === "low_match" || isFallback ? (
           <Text className="font-mono text-[10px] uppercase tracking-widest text-content-muted">
-            Closest we found
+            {isFallback ? "Who's nearby" : "Closest we found"}
           </Text>
         ) : null}
       </View>
+
+      {isFallback ? (
+        <Text className="rounded-sm border border-border-subtle bg-surface-overlay px-3 py-2 text-xs text-content-secondary">
+          No close visual match yet — here are the closest artists by style. Try another image or
+          browse by style.
+        </Text>
+      ) : null}
 
       {outcome === "low_match" ? (
         <Text className="rounded-sm border border-border-subtle bg-surface-overlay px-3 py-2 text-xs text-content-secondary">
@@ -634,14 +645,22 @@ function MatchArtistCardMobile({ group }: { group: MatchArtistGroup }) {
             </Text>
           </View>
         </View>
-        <View className="items-end">
-          <Text className={`font-hand text-2xl leading-none ${tone}`}>
-            {group.topSimilarityPercent}%
-          </Text>
-          <Text className="mt-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-content-muted">
-            {group.matchLabel}
-          </Text>
-        </View>
+        {group.isAffinityFallback ? (
+          <View className="items-end">
+            <Text className="rounded-sm border border-border-subtle bg-surface-overlay px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-content-muted">
+              Nearby
+            </Text>
+          </View>
+        ) : (
+          <View className="items-end">
+            <Text className={`font-hand text-2xl leading-none ${tone}`}>
+              {group.topSimilarityPercent}%
+            </Text>
+            <Text className="mt-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-content-muted">
+              {group.matchLabel}
+            </Text>
+          </View>
+        )}
       </View>
 
       {group.works.length > 0 ? (
@@ -675,11 +694,13 @@ function WorkThumb({ work }: { work: MatchWork }) {
           <Icon name="image" size={16} color={colors.text.muted} />
         </View>
       )}
-      <View className="absolute bottom-1 right-1 rounded-sm bg-surface-base/85 px-1 py-0.5">
-        <Text className="font-mono text-[9px] font-bold tabular-nums text-content-primary">
-          {work.similarityPercent}%
-        </Text>
-      </View>
+      {work.similarityPercent > 0 ? (
+        <View className="absolute bottom-1 right-1 rounded-sm bg-surface-base/85 px-1 py-0.5">
+          <Text className="font-mono text-[9px] font-bold tabular-nums text-content-primary">
+            {work.similarityPercent}%
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }

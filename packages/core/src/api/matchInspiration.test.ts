@@ -224,3 +224,76 @@ test("hasAnyDiscoverFilter detects narrowing filters only", () => {
   assert.equal(hasAnyDiscoverFilter({ styles: ["fine-line"] }), true);
   assert.equal(hasAnyDiscoverFilter({ priceMax: 20000 }), true);
 });
+
+// ---------------------------------------------------------------------------
+// Style-affinity fallback groups (the "always return something" path).
+// ---------------------------------------------------------------------------
+import {
+  buildAffinityFallbackGroups,
+  type FallbackArtist,
+} from "./matchInspiration.ts";
+import type { MatchWork } from "./matchInspiration.ts";
+
+function fbArtist(over: Partial<FallbackArtist> = {}): FallbackArtist {
+  return {
+    artistId: "a1",
+    handle: "handle",
+    displayName: "Artist",
+    avatarUrl: null,
+    styles: [],
+    ...over,
+  };
+}
+
+function previewWork(id: string): MatchWork {
+  return {
+    subjectType: "post",
+    subjectId: id,
+    imageUrl: `https://img/${id}.jpg`,
+    styles: [],
+    colorType: "unknown",
+    similarity: 0,
+    similarityPercent: 0,
+  };
+}
+
+test("fallback groups: flagged, meter-less, style-sharers ranked first", () => {
+  const artists = [
+    fbArtist({ artistId: "a-blackwork", handle: "bw", styles: ["blackwork"] }),
+    fbArtist({ artistId: "a-fineline", handle: "fl", styles: ["fine-line", "floral-botanical"] }),
+  ];
+  const works = new Map<string, MatchWork[]>([["a-fineline", [previewWork("p1")]]]);
+
+  const groups = buildAffinityFallbackGroups(artists, works, {
+    detectedSlugs: ["fine-line"],
+    colorLabel: "Black & grey",
+  });
+
+  assert.equal(groups.length, 2);
+  assert.ok(groups.every((g) => g.isAffinityFallback === true));
+  assert.ok(groups.every((g) => g.topSimilarity === 0 && g.matchLabel === "Nearby"));
+  // The fine-line artist shares the detected style -> ranks first.
+  assert.equal(groups[0]!.artistId, "a-fineline");
+  assert.deepEqual(groups[0]!.sharedStyleLabels, ["Fine Line"]);
+  assert.equal(groups[0]!.works[0]?.imageUrl, "https://img/p1.jpg");
+  assert.equal(groups[0]!.profileHref, "/a/fl");
+  // The non-sharer still gets an honest reason (own style, no false "like yours").
+  assert.match(groups[1]!.matchReason, /Blackwork/);
+});
+
+test("fallback groups: no shared style -> honest generic reason, excludeArtistId respected", () => {
+  const artists = [
+    fbArtist({ artistId: "me", handle: "me", styles: ["realism"] }),
+    fbArtist({ artistId: "other", handle: "other", styles: [] }),
+  ];
+  const groups = buildAffinityFallbackGroups(artists, new Map(), {
+    detectedSlugs: ["fine-line"],
+    colorLabel: "Color",
+    excludeArtistId: "me",
+  });
+  assert.equal(groups.length, 1); // "me" excluded
+  assert.equal(groups[0]!.artistId, "other");
+  assert.equal(groups[0]!.sharedStyleLabels.length, 0);
+  // With no styles at all, falls back to the color-based generic line.
+  assert.match(groups[0]!.matchReason, /color/i);
+});

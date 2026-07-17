@@ -61,11 +61,17 @@ export function MatchArtistCard({ group, className }: MatchArtistCardProps) {
             <span className="truncate">{group.matchReason}</span>
           </p>
         </div>
-        <MatchMeter
-          percent={group.topSimilarityPercent}
-          label={group.matchLabel}
-          similarity={group.topSimilarity}
-        />
+        {group.isAffinityFallback ? (
+          <span className="shrink-0 self-start rounded-sm border border-border-subtle bg-surface-overlay px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-content-muted">
+            Nearby
+          </span>
+        ) : (
+          <MatchMeter
+            percent={group.topSimilarityPercent}
+            label={group.matchLabel}
+            similarity={group.topSimilarity}
+          />
+        )}
       </div>
 
       {/* Pieces strip */}
@@ -108,9 +114,11 @@ function WorkThumb({ handle, work }: { handle: string | null; work: MatchWork })
           <Icon name="image" size={18} />
         </div>
       )}
-      <span className="absolute bottom-1 right-1 rounded-sm bg-surface-base/85 px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-content-primary backdrop-blur-sm">
-        {work.similarityPercent}%
-      </span>
+      {work.similarityPercent > 0 && (
+        <span className="absolute bottom-1 right-1 rounded-sm bg-surface-base/85 px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-content-primary backdrop-blur-sm">
+          {work.similarityPercent}%
+        </span>
+      )}
     </div>
   );
   return href ? (

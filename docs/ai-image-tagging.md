@@ -99,15 +99,33 @@ are **untouched** — `VECTOR_DIM` is the only contract both sides pin to.
 
 ## `tag-image` edge function
 
-`POST /functions/v1/tag-image` · `verify_jwt = false` (gateway) · requires the
-AI-runtime bearer (`AGENT_RUNNER_TOKEN`, or the service key) — identical to
-`agent-run`. Needs `ANTHROPIC_API_KEY`; absent → `503 not_configured`.
+`POST /functions/v1/tag-image` · `verify_jwt = false` (gateway) · needs
+`ANTHROPIC_API_KEY`; absent → `503 not_configured`.
 
-| Body | Behavior |
-| --- | --- |
-| `{ "mode": "batch", "batch_size"? }` | drain the queue (default) |
-| `{ "mode": "single", "subject_type", "subject_id" }` | tag one image + persist |
-| `{ "mode": "inline", "image_url" }` | classify + return `{ tags, embedding }`, **no persist** (match-inspiration query images) |
+| Body | Behavior | Auth |
+| --- | --- | --- |
+| `{ "mode": "batch", "batch_size"? }` | drain the queue (default) | AI-runtime bearer (`AGENT_RUNNER_TOKEN` / service key) |
+| `{ "mode": "single", "subject_type", "subject_id" }` | tag one image + persist | AI-runtime bearer |
+| `{ "mode": "inline", "image_url" }` | classify + return `{ tags, embedding }`, **no persist** (match-inspiration query images) | **AI-runtime bearer OR a signed-in USER JWT** |
+
+**Zero-config match on localhost.** `inline` persists nothing, so it now also
+accepts an ordinary signed-in **user JWT** (verified via the anon `getUser`) — not
+just the runner bearer. The web `/api/match-inspiration` proxy therefore forwards
+the caller's **own** access token and needs **no server-side runner secret** to
+run image search in local dev. A privileged runner token
+(`AGENT_RUNNER_TOKEN` / `SUPABASE_SERVICE_ROLE_KEY`) is still used in preference
+when present (production), but is optional. `not_configured` (503) is now reserved
+for a genuinely unreachable pipeline — `tag-image` itself lacking
+`ANTHROPIC_API_KEY` — never merely "the operator didn't set a proxy env locally".
+
+**Always-return-something.** When the KNN search finds no artists at all, the
+match run layer (`matchInspirationRun.rankMatchesWithOutcome`) falls back to the
+closest artists **by style affinity** (`search_artists` on the detected styles,
+widening to the top local artists if none share a style), flagged
+`isAffinityFallback` with the honest outcome `"fallback"` ("No close matches yet —
+here's who's nearby"). The seeded demo corpus is placeholder graphics whose
+embeddings collapse together, so a real uploaded tattoo scores low against them —
+the fallback is what keeps that from being a dead end.
 
 It fetches the image server-side → base64 → Claude Vision with the classifier
 prompt (which pins the model to the canonical style slugs) → maps to canonical
