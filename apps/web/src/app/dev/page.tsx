@@ -139,6 +139,36 @@ const DEV_ROUTES: { href: string; title: string; description: string }[] = [
     description:
       "Wave 2: client join/manage + offer/claim flow and the artist-side waitlist view. Supports ?only= for per-surface screenshots.",
   },
+  {
+    href: "/dev/round4-booking-preview",
+    title: "Round 4 — booking polish",
+    description:
+      "Round 4: theme-aware BodyMap silhouette, the reserve-space FormField two-column rows, and the dual-thumb budget RangeSlider, in both themes.",
+  },
+  {
+    href: "/dev/round4-drops-match",
+    title: "Round 4 — daily drop + match",
+    description:
+      "Round 4: the full-screen DailyDropReveal takeover + feed drop card progression, and the zero-config match-inspiration always-return fallback gallery.",
+  },
+  {
+    href: "/dev/feed-filter-preview",
+    title: "Round 4 — feed filters",
+    description:
+      "Round 4: the feed FeedFilterPanel (web popover) with multi-style, location, price range and open-books controls, active-filter chips, and the nowrap style chip row.",
+  },
+  {
+    href: "/dev/search-preview",
+    title: "Round 4 — global search",
+    description:
+      "Round 4: the global SearchOverlay (⌘K) across artists, shops, styles and cities against a seeded offline search client.",
+  },
+  {
+    href: "/dev/bookings-inbox-preview",
+    title: "Round 4 — bookings inbox",
+    description:
+      "Round 4: the bookings request inbox with the differentiated 'New' stamp vs. Medical badge, against seeded offline requests.",
+  },
 ];
 
 export default function DevIndexPage() {
