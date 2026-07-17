@@ -39,6 +39,7 @@ import {
   FormField,
   Icon,
   Input,
+  RangeSlider,
   Skeleton,
   Stepper,
   TextArea,
@@ -67,14 +68,23 @@ const STEPS: { id: StepId; label: string }[] = [
 
 const CUSTOM = "__custom__";
 
+// Budget range slider (client dollars). Top thumb at BUDGET_MAX means "$2,000+"
+// — an uncapped upper bound (stored as a null budget_max_cents).
+const BUDGET_MIN_USD = 0;
+const BUDGET_MAX_USD = 2000;
+const BUDGET_STEP_USD = 50;
+function formatBudgetUsd(usd: number): string {
+  if (usd >= BUDGET_MAX_USD) return `$${BUDGET_MAX_USD.toLocaleString("en-US")}+`;
+  return `$${usd.toLocaleString("en-US")}`;
+}
+
 interface FormState {
   serviceId: string | null; // null when custom
   placementValue: PlacementValue | null; // structured body-map selection
   placement: string; // free-text specifics ("inner wrist, wrapping toward elbow")
   sizeDescription: string;
   description: string;
-  budgetMin: string;
-  budgetMax: string;
+  budget: [number, number]; // [low, high] in whole dollars; high === BUDGET_MAX → uncapped
   isFirstTattoo: boolean;
   isCoverUp: boolean;
   hasMedical: boolean;
@@ -89,8 +99,7 @@ const EMPTY: FormState = {
   placement: "",
   sizeDescription: "",
   description: "",
-  budgetMin: "",
-  budgetMax: "",
+  budget: [BUDGET_MIN_USD, BUDGET_MAX_USD],
   isFirstTattoo: false,
   isCoverUp: false,
   hasMedical: false,
@@ -103,9 +112,10 @@ function fmtDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   return `${MONTHS[(m ?? 1) - 1]?.slice(0, 3)} ${d}, ${y}`;
 }
-function toCents(v: string): number | null {
-  const n = Number(v.replace(/[^0-9.]/g, ""));
-  return Number.isFinite(n) && n > 0 ? Math.round(n * 100) : null;
+/** Budget dollars → cents; low of 0 and high at the uncapped top both mean "no bound". */
+function budgetCents(usd: number, bound: "min" | "max"): number | null {
+  if (bound === "min") return usd > BUDGET_MIN_USD ? usd * 100 : null;
+  return usd < BUDGET_MAX_USD ? usd * 100 : null;
 }
 
 export function BookFlow({ handle }: { handle: string }) {
@@ -233,8 +243,8 @@ function BookLoaded({
         size_description: form.sizeDescription || null,
         description: form.description || null,
         reference_uploads: form.references as unknown as Record<string, unknown>[],
-        budget_min_cents: toCents(form.budgetMin),
-        budget_max_cents: toCents(form.budgetMax),
+        budget_min_cents: budgetCents(form.budget[0], "min"),
+        budget_max_cents: budgetCents(form.budget[1], "max"),
         is_first_tattoo: form.isFirstTattoo,
         is_cover_up: form.isCoverUp,
         has_medical_flags: form.hasMedical,
@@ -586,28 +596,30 @@ function StepDetails({
           placeholder="A fine-line heron standing in reeds, mostly black with a touch of sage…"
         />
       </FormField>
-      <div className="grid gap-5 sm:grid-cols-2">
-        <FormField label="Budget — low" htmlFor="bk-bmin" description="Optional, helps scope the work.">
-          <Input
-            id="bk-bmin"
-            inputMode="numeric"
-            value={form.budgetMin}
-            onChange={(e) => patch({ budgetMin: e.target.value })}
-            placeholder="$300"
-            leadingIcon={<Icon name="credit-card" size={16} />}
+      <FormField
+        label="Budget range"
+        description="Optional — helps scope the work. Drag to set a range; the top means “$2,000+”."
+      >
+        <div className="flex flex-col gap-2 pt-1">
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center gap-1.5 text-content-muted">
+              <Icon name="credit-card" size={16} />
+              <span className="text-sm">Estimated budget</span>
+            </span>
+            <span className="font-mono text-sm tabular-nums text-content-primary">
+              {formatBudgetUsd(form.budget[0])} – {formatBudgetUsd(form.budget[1])}
+            </span>
+          </div>
+          <RangeSlider
+            value={form.budget}
+            onValueChange={(v) => patch({ budget: v })}
+            min={BUDGET_MIN_USD}
+            max={BUDGET_MAX_USD}
+            step={BUDGET_STEP_USD}
+            formatValue={formatBudgetUsd}
           />
-        </FormField>
-        <FormField label="Budget — high" htmlFor="bk-bmax">
-          <Input
-            id="bk-bmax"
-            inputMode="numeric"
-            value={form.budgetMax}
-            onChange={(e) => patch({ budgetMax: e.target.value })}
-            placeholder="$600"
-            leadingIcon={<Icon name="credit-card" size={16} />}
-          />
-        </FormField>
-      </div>
+        </div>
+      </FormField>
       <div className="flex flex-col gap-4 rounded-xl border border-border-subtle bg-surface-raised/50 p-4">
         <Toggle
           checked={form.isFirstTattoo}
@@ -894,10 +906,10 @@ function StepReview({
         {form.placement && <ReviewRow label="Placement details" value={form.placement} />}
         {form.sizeDescription && <ReviewRow label="Size" value={form.sizeDescription} />}
         {form.description && <ReviewRow label="Idea" value={form.description} />}
-        {(form.budgetMin || form.budgetMax) && (
+        {(form.budget[0] > BUDGET_MIN_USD || form.budget[1] < BUDGET_MAX_USD) && (
           <ReviewRow
             label="Budget"
-            value={[form.budgetMin, form.budgetMax].filter(Boolean).join(" – ")}
+            value={`${formatBudgetUsd(form.budget[0])} – ${formatBudgetUsd(form.budget[1])}`}
           />
         )}
         <ReviewRow
