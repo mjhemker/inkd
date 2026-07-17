@@ -11,6 +11,13 @@ export interface FormFieldProps {
   required?: boolean;
   children: ReactNode;
   className?: string;
+  /**
+   * When true and no `description` is given, reserve one line of helper-text
+   * height so the control sits on the same baseline as a sibling field that
+   * DOES have a description. Used to keep two-column form rows aligned when only
+   * one field carries helper text.
+   */
+  reserveDescriptionSpace?: boolean;
 }
 
 interface FieldElementProps {
@@ -26,6 +33,7 @@ export function FormField({
   required,
   children,
   className,
+  reserveDescriptionSpace = false,
 }: FormFieldProps) {
   const generatedId = useId();
   const fieldId = htmlFor ?? generatedId;
@@ -46,9 +54,13 @@ export function FormField({
           {required && <span className="ml-0.5 text-content-accent">*</span>}
         </label>
       )}
-      {description && (
+      {description ? (
         <p className="text-sm text-content-muted">{description}</p>
-      )}
+      ) : reserveDescriptionSpace ? (
+        <p aria-hidden className="select-none text-sm text-content-muted">
+          &nbsp;
+        </p>
+      ) : null}
       {wiredChildren}
       {error && (
         <p role="alert" className="text-sm text-danger-500">

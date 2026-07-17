@@ -39,11 +39,49 @@ export interface BodyMapProps {
   "aria-label"?: string;
 }
 
-const PALETTE = {
-  base: { fill: "rgba(250,250,250,0.05)", stroke: "rgba(250,250,250,0.16)" },
-  hover: { fill: "rgba(139,92,246,0.22)", stroke: "#A78BFA" },
-  selected: { fill: "#7C3AED", stroke: "#C4B5FD" },
-};
+/**
+ * Theming. The figure fill/stroke are driven by CSS custom properties scoped to
+ * `.inkd-bodymap` (see BodyMapStyle) so a single `[data-theme="light"]` flip
+ * re-skins the silhouette. Dark keeps the original faint ink-on-black look;
+ * light paints a SOLID mid-tone ink silhouette that reads on the warm paper
+ * wall (the old hardcoded near-white fill was invisible white-on-white). The
+ * selected marker + hover/active states are tuned to read on BOTH themes.
+ */
+const VAR = {
+  base: { fill: "var(--bm-base-fill)", stroke: "var(--bm-base-stroke)" },
+  hover: { fill: "var(--bm-hover-fill)", stroke: "var(--bm-hover-stroke)" },
+  selected: { fill: "var(--bm-sel-fill)", stroke: "var(--bm-sel-stroke)" },
+} as const;
+
+/**
+ * One <style> that declares the body-map palette variables and their light
+ * override. Rendered inside every BodyMap / thumbnail; duplicate identical rules
+ * across instances are harmless (the cascade dedupes them).
+ */
+function BodyMapStyle() {
+  return (
+    <style>{`
+      .inkd-bodymap {
+        --bm-base-fill: rgba(250,250,250,0.05);
+        --bm-base-stroke: rgba(250,250,250,0.16);
+        --bm-hover-fill: rgba(139,92,246,0.22);
+        --bm-hover-stroke: #A78BFA;
+        --bm-sel-fill: #7C3AED;
+        --bm-sel-stroke: #C4B5FD;
+        --bm-focus-stroke: #C4B5FD;
+      }
+      [data-theme="light"] .inkd-bodymap {
+        --bm-base-fill: rgba(28,25,23,0.14);
+        --bm-base-stroke: rgba(28,25,23,0.55);
+        --bm-hover-fill: rgba(124,58,237,0.15);
+        --bm-hover-stroke: #7C3AED;
+        --bm-sel-fill: #7C3AED;
+        --bm-sel-stroke: #4C1D95;
+        --bm-focus-stroke: #6D28D9;
+      }
+    `}</style>
+  );
+}
 
 function ShapeEl({
   rs,
@@ -58,7 +96,7 @@ function ShapeEl({
   onSelect: () => void;
   onHover: (on: boolean) => void;
 }) {
-  const tone = selected ? PALETTE.selected : hovered ? PALETTE.hover : PALETTE.base;
+  const tone = selected ? VAR.selected : hovered ? VAR.hover : VAR.base;
   const common = {
     role: "button" as const,
     tabIndex: 0,
@@ -84,7 +122,7 @@ function ShapeEl({
       outline: "none",
     } as React.CSSProperties,
     className:
-      "focus-visible:[stroke:#C4B5FD] focus-visible:[stroke-width:2.5px]",
+      "focus-visible:[stroke:var(--bm-focus-stroke)] focus-visible:[stroke-width:2.5px]",
   };
   return renderShape(rs.shape, common);
 }
@@ -177,11 +215,12 @@ export function BodyMap({
       </div>
 
       <div className="relative mx-auto w-full max-w-[260px]">
+        <BodyMapStyle />
         <svg
           role="group"
           aria-label={ariaLabel}
           viewBox={`0 0 ${figure.viewBox.w} ${figure.viewBox.h}`}
-          className="h-auto w-full select-none"
+          className="inkd-bodymap h-auto w-full select-none"
         >
           {figure.regions.map((rs) => {
             const key = `${rs.region}:${rs.side ?? "-"}`;
@@ -253,22 +292,25 @@ export function BodyMapThumbnail({
 }) {
   const figure = FIGURES[value.view];
   return (
-    <svg
-      viewBox={`0 0 ${figure.viewBox.w} ${figure.viewBox.h}`}
-      width={size}
-      height={(size * figure.viewBox.h) / figure.viewBox.w}
-      className={className}
-      role="img"
-      aria-label={`Placement: ${placementLabel(value, { withView: value.view })}`}
-    >
-      {figure.regions.map((rs) => {
-        const isSel = samePlacement(value, { region: rs.region, side: rs.side, view: value.view });
-        const tone = isSel ? PALETTE.selected : PALETTE.base;
-        return renderShape(rs.shape, {
-          key: `${rs.region}:${rs.side ?? "-"}`,
-          style: { fill: tone.fill, stroke: tone.stroke, strokeWidth: isSel ? 2 : 1 },
-        });
-      })}
-    </svg>
+    <>
+      <BodyMapStyle />
+      <svg
+        viewBox={`0 0 ${figure.viewBox.w} ${figure.viewBox.h}`}
+        width={size}
+        height={(size * figure.viewBox.h) / figure.viewBox.w}
+        className={cx("inkd-bodymap", className)}
+        role="img"
+        aria-label={`Placement: ${placementLabel(value, { withView: value.view })}`}
+      >
+        {figure.regions.map((rs) => {
+          const isSel = samePlacement(value, { region: rs.region, side: rs.side, view: value.view });
+          const tone = isSel ? VAR.selected : VAR.base;
+          return renderShape(rs.shape, {
+            key: `${rs.region}:${rs.side ?? "-"}`,
+            style: { fill: tone.fill, stroke: tone.stroke, strokeWidth: isSel ? 2 : 1 },
+          });
+        })}
+      </svg>
+    </>
   );
 }

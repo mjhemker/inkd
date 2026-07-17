@@ -53,8 +53,11 @@ export function RangeSlider({
         </div>
       )}
       <div className="relative h-5">
-        {/* Track */}
-        <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-[rgb(26_26_29)]" />
+        {/* Track. A recessed groove keyed to the ink color so it reads as a
+            subtle bar on BOTH themes (faint light groove on the dark canvas, a
+            soft dark groove on the light paper) — the filled violet range and
+            thumbs carry the actual value. */}
+        <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-content-primary/10" />
         {/* Selected range */}
         <div
           className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-brand"
