@@ -4,7 +4,7 @@
  * each rendered in `variant="settings"` so they show their own Save button
  * instead of deferring to a parent Continue flow.
  */
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -26,6 +26,7 @@ import {
   useCurrentProfile,
   useCurrentArtistProfile,
   useDowngradeToClient,
+  useMyShop,
   useUpdateArtistProfile,
 } from "@inkd/core/hooks";
 import type { ArtistProfile } from "@inkd/core";
@@ -48,19 +49,41 @@ import { ShopSettingsSection } from "@/components/shop/ShopSettingsSection";
 import { useSession } from "@/providers/session";
 import { useTheme } from "@/providers/theme";
 
-const TABS = [
+/**
+ * Grouped settings tabs, mirroring the web settings-view.tsx: related editors
+ * merge into one tab and render as stacked sections with placard headers.
+ * Profile · Studio (Locations · Hours & booking · Services · Waivers) ·
+ * AI staff · Shop (owners only) · Sharing · Preferences (Notifications ·
+ * Appearance) · Account.
+ */
+const TAB_DEFS: { value: string; label: string; ownerOnly?: boolean }[] = [
   { value: "profile", label: "Profile" },
-  { value: "locations", label: "Locations" },
-  { value: "booking", label: "Hours & booking" },
-  { value: "services", label: "Services" },
-  { value: "shop", label: "Shop" },
+  { value: "studio", label: "Studio" },
   { value: "ai", label: "AI staff" },
-  { value: "waivers", label: "Waivers" },
-  { value: "grow", label: "Share & connect" },
-  { value: "notifications", label: "Notifications" },
-  { value: "appearance", label: "Appearance" },
+  { value: "shop", label: "Shop", ownerOnly: true },
+  { value: "sharing", label: "Sharing" },
+  { value: "preferences", label: "Preferences" },
   { value: "account", label: "Account" },
 ];
+
+/** Old `?tab=` keys (and new keys) → the grouped tab they now live on. Keeps
+ * cross-links and notification deep-links landing on the right tab. */
+const TAB_ROUTE: Record<string, string> = {
+  profile: "profile",
+  studio: "studio",
+  ai: "ai",
+  shop: "shop",
+  sharing: "sharing",
+  preferences: "preferences",
+  account: "account",
+  locations: "studio",
+  booking: "studio",
+  services: "studio",
+  waivers: "studio",
+  grow: "sharing",
+  notifications: "preferences",
+  appearance: "preferences",
+};
 
 export default function SettingsScreen() {
   return (
@@ -80,10 +103,12 @@ function SettingsView() {
   const params = useLocalSearchParams<{ tab?: string }>();
   const { data: profile, isLoading: pLoading } = useCurrentProfile();
   const { data: artist, isLoading: aLoading } = useCurrentArtistProfile();
-  const initialTab = TABS.some((t) => t.value === params.tab)
-    ? (params.tab as string)
-    : "profile";
+  const { data: shop } = useMyShop();
+  const initialTab = TAB_ROUTE[params.tab ?? ""] ?? "profile";
   const [tab, setTab] = useState(initialTab);
+
+  // Shop tab is owners-only.
+  const tabs = TAB_DEFS.filter((t) => !t.ownerOnly || Boolean(shop));
 
   if (pLoading || aLoading) {
     return (
@@ -126,41 +151,61 @@ function SettingsView() {
           </Card>
         ) : (
           <>
-            <Tabs value={tab} onValueChange={setTab} items={TABS} />
+            <Tabs value={tab} onValueChange={setTab} items={tabs} />
 
             <View>
               {tab === "profile" && (
                 <IdentityEditor profile={profile} artist={artist} variant="settings" />
               )}
-              {tab === "locations" && <LocationsEditor artist={artist} variant="settings" />}
-              {tab === "booking" && (
-                <View className="gap-6">
-                  <BookingEditor artist={artist} variant="settings" />
-                  <AftercareSettingsCard artist={artist} />
-                </View>
-              )}
-              {tab === "services" && (
-                <ServicesEditor artistId={artist.id} variant="settings" />
-              )}
-              {tab === "shop" && <ShopSettingsSection />}
-              {tab === "waivers" && (
-                <View className="gap-4 rounded-xl border border-border-subtle p-5">
-                  <Text className="text-base font-sans-semibold text-content-primary">
-                    Consent &amp; waivers
-                  </Text>
-                  <Text className="text-sm text-content-secondary">
-                    Manage your MD/PA consent forms, edit template content, and
-                    review signed waivers from clients.
-                  </Text>
-                  <Button
-                    onPress={() => router.push("/waivers")}
-                    className="self-start"
+
+              {tab === "studio" && (
+                <View className="gap-10">
+                  <SettingsSection
+                    eyebrow="Studio"
+                    title="Locations"
+                    description="Where you tattoo — studios, private suites, and travel options."
                   >
-                    Manage waivers
-                    <Icon name="arrow-right" size={16} color={colors.text.primary} />
-                  </Button>
+                    <LocationsEditor artist={artist} variant="settings" />
+                  </SettingsSection>
+                  <SettingsSection
+                    eyebrow="Studio"
+                    title="Hours & booking"
+                    description="Business days, vacation blocks, booking window, and aftercare."
+                  >
+                    <View className="gap-6">
+                      <BookingEditor artist={artist} variant="settings" />
+                      <AftercareSettingsCard artist={artist} />
+                    </View>
+                  </SettingsSection>
+                  <SettingsSection
+                    eyebrow="Studio"
+                    title="Services"
+                    description="What clients can book, with rates, durations, and add-ons."
+                  >
+                    <ServicesEditor artistId={artist.id} variant="settings" />
+                  </SettingsSection>
+                  <SettingsSection
+                    eyebrow="Studio"
+                    title="Waivers"
+                    description="MD/PA consent forms and signed-waiver records."
+                  >
+                    <View className="gap-4 rounded-xl border border-border-subtle p-5">
+                      <Text className="text-sm text-content-secondary">
+                        Manage your MD/PA consent forms, edit template content,
+                        and review signed waivers from clients.
+                      </Text>
+                      <Button
+                        onPress={() => router.push("/waivers")}
+                        className="self-start"
+                      >
+                        Manage waivers
+                        <Icon name="arrow-right" size={16} color={colors.text.primary} />
+                      </Button>
+                    </View>
+                  </SettingsSection>
                 </View>
               )}
+
               {tab === "ai" && (
                 <View className="gap-5">
                   <Card
@@ -187,29 +232,44 @@ function SettingsView() {
                   <AgentAutonomyEditor artist={artist} variant="settings" />
                 </View>
               )}
-              {tab === "grow" && (
+
+              {tab === "shop" && <ShopSettingsSection />}
+
+              {tab === "sharing" && (
                 <View className="gap-10">
                   <ShareKit profile={profile} />
                   <ConnectedAccountsEditor artist={artist} />
                 </View>
               )}
-              {tab === "notifications" && <NotificationPreferencesEditor />}
-              {tab === "appearance" && (
-                <View className="gap-4 rounded-xl border border-border-subtle p-5">
-                  <Text className="text-base font-sans-semibold text-content-primary">
-                    Appearance
-                  </Text>
-                  <Text className="text-sm text-content-secondary">
-                    Choose how INKD looks on this device. Dark is the gallery
-                    default; Light is a warm paper wall. System follows your
-                    device.
-                  </Text>
-                  <AppearanceControl />
-                  <Text className="font-mono text-xs uppercase tracking-widest text-content-muted">
-                    Saved on this device
-                  </Text>
+
+              {tab === "preferences" && (
+                <View className="gap-10">
+                  <SettingsSection
+                    eyebrow="Preferences"
+                    title="Notifications"
+                    description="Choose what INKD tells you about, and where."
+                  >
+                    <NotificationPreferencesEditor />
+                  </SettingsSection>
+                  <SettingsSection
+                    eyebrow="Preferences"
+                    title="Appearance"
+                    description="How INKD looks on this device."
+                  >
+                    <View className="gap-4 rounded-xl border border-border-subtle p-5">
+                      <Text className="text-sm text-content-secondary">
+                        Dark is the gallery default; Light is a warm paper wall.
+                        System follows your device.
+                      </Text>
+                      <AppearanceControl />
+                      <Text className="font-mono text-xs uppercase tracking-widest text-content-muted">
+                        Saved on this device
+                      </Text>
+                    </View>
+                  </SettingsSection>
                 </View>
               )}
+
               {tab === "account" && (
                 <AccountPanel
                   profileName={profile.display_name}
@@ -223,6 +283,35 @@ function SettingsView() {
         )}
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+/** Placard section header + its editor, used inside merged settings tabs so
+ * the grouped Studio / Preferences tabs read as clean stacked sections. */
+function SettingsSection({
+  eyebrow,
+  title,
+  description,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <View className="gap-4">
+      <View className="gap-1 border-l-2 border-brand bg-surface-raised px-4 py-3">
+        <Text className="font-mono text-[11px] uppercase tracking-widest text-content-muted">
+          {eyebrow}
+        </Text>
+        <Text className="font-display text-lg text-content-primary">{title}</Text>
+        {description ? (
+          <Text className="text-sm text-content-secondary">{description}</Text>
+        ) : null}
+      </View>
+      {children}
+    </View>
   );
 }
 
