@@ -104,10 +104,42 @@ didn't ask for. That was chosen to respect the notifications lane's ownership.
 > `email` default OFF. That is the *only* change needed to deliver the drop as a
 > push "boom"; it belongs to the notifications lane, not this one.
 
+## On-demand generation (so nobody sees a blank)
+
+The cron only fires once a day at 13:00 UTC, so a user who opens the app before
+their tick — or a brand-new user — would have no drop yet. To fix that the
+`daily-drop` function has a **`self` mode**: it accepts an ordinary signed-in
+**user JWT** (verified via the anon `getUser`, `verify_jwt=false` at the gateway)
+and generates **only that user's** drop for **today**, idempotently. The app calls
+it the moment the feed loads and today's drop is missing (`ensureTodayDrop` →
+`client.functions.invoke("daily-drop")`, which forwards the session token), then
+refetches — driving an **empty → generating → ready** progression on the card.
+
+Self mode is pinned to `(caller, today)`: the request body's `user_id`/`drop_date`
+are ignored, so a user can neither target someone else nor backfill an arbitrary
+day. `resolveDropTargets()` (pure, unit-tested in `_shared/daily-drop.test.ts`)
+encodes this contract; the DB `unique(user_id, drop_date)` makes repeat calls a
+no-op. The privileged runner bearer still drives the all-users cron sweep and
+runner-named single-user backfill.
+
+## The reveal (the daily "boom")
+
+The **first feed visit of the day** triggers a full-screen **reveal takeover**
+(`DailyDropReveal`, web + mobile): a teaser ("Your daily drop is in" + the
+animated **INKD Drop** mark — the monogram with an ember ink-drop, `LogoDropMark`)
+→ an ink-spread reveal of the artwork placard (artist, style stamps,
+flash/original, price if flash) → CTAs (view artist / view the piece / dismiss).
+It's gated by a `localStorage`/`AsyncStorage` date stamp
+(`inkd:daily-drop:revealed`), so once dismissed it never shows again that day —
+the drop then lives on as the highlighted card atop the feed. All motion is
+CSS-keyframes / RN-`Animated` (dependency-free) and fully disabled under
+`prefers-reduced-motion` / `AccessibilityInfo.isReduceMotionEnabled()`.
+
 ## Surfaces
 
 - **Feed** — a compact `DailyDropCard` mounts atop the *discover* feed
   (web `FeedScreen`, mobile `app/(tabs)/index.tsx`), with a "See all" → `/daily-drop`.
+  The first visit of the day is preceded by the `DailyDropReveal` takeover.
 - **Dedicated** — `/daily-drop` (web) / `app/daily-drop.tsx` (mobile): today's
   full card + a recent-drops history strip. The notification deep-links here.
 - **Engagement loop** — the card stamps `seen_at` on render and `clicked_at`
@@ -122,9 +154,10 @@ didn't ask for. That was chosen to respect the notifications lane's ownership.
 | Migration | `supabase/migrations/20260717100000_daily_drops.sql` |
 | Algorithm (+tests) | `supabase/functions/_shared/daily-drop.ts` / `.test.ts` |
 | Edge job | `supabase/functions/daily-drop/index.ts` (config.toml `verify_jwt=false`) |
-| Core data + hooks | `packages/core/src/api/dailyDrop.ts`, `hooks/useDailyDrop.ts`, `hooks/queryKeysDailyDrop.ts` |
-| Web UI | `apps/web/src/components/daily-drop/*`, `app/(app)/daily-drop/page.tsx`, `app/dev/daily-drop-preview/*` |
-| Mobile UI | `apps/mobile/components/daily-drop/DailyDropCard.tsx`, `app/daily-drop.tsx` |
+| Core data + hooks | `packages/core/src/api/dailyDrop.ts` (`ensureTodayDrop`), `hooks/useDailyDrop.ts` (`useTodayDropLive`), `hooks/queryKeysDailyDrop.ts` |
+| Web UI | `apps/web/src/components/daily-drop/*` (`DailyDropReveal.tsx`), `app/(app)/daily-drop/page.tsx`, `app/dev/daily-drop-preview/*` |
+| Mobile UI | `apps/mobile/components/daily-drop/{DailyDropCard,DailyDropReveal}.tsx`, `app/daily-drop.tsx` |
+| Brand mark | `packages/ui/src/{web,native}/Logo.tsx` (`LogoDropMark`) |
 
 ## Deploy / go-live
 

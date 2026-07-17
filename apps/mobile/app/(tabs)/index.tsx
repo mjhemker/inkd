@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import { FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -7,6 +7,7 @@ import {
   Card,
   EmptyState,
   Icon,
+  LogoDropMark,
   Skeleton,
   Spinner,
   Tabs,
@@ -14,16 +15,22 @@ import {
   type TabItem,
 } from "@inkd/ui/native";
 import {
+  todayDropDate,
   useCurrentProfile,
   useFeedItems,
   useStyleFilters,
-  useTodayDrop,
+  useTodayDropLive,
   type FeedItem,
   type FeedScope,
 } from "@inkd/core";
 
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { DailyDropCard } from "@/components/daily-drop/DailyDropCard";
+import {
+  DailyDropReveal,
+  hasRevealedDailyDrop,
+  markDailyDropRevealed,
+} from "@/components/daily-drop/DailyDropReveal";
 import { FeedCard } from "@/components/feed/FeedCard";
 import { PostDetailSheet } from "@/components/feed/PostDetailSheet";
 import { StyleFilterRow } from "@/components/feed/StyleFilterRow";
@@ -45,7 +52,25 @@ export default function HomeScreen() {
   const signedIn = Boolean(profile);
   const { data: styleData } = useStyleFilters();
   const styles = styleData ?? [];
-  const { data: drop } = useTodayDrop();
+  const drop = useTodayDropLive();
+
+  // First feed visit of the day → the full-screen reveal takeover (once, then
+  // it lives on as the highlighted card below). Gated by an AsyncStorage date
+  // stamp; default to "already revealed" until the async read resolves, so we
+  // never flash the takeover open then closed.
+  const dropDate = todayDropDate();
+  const [revealDismissed, setRevealDismissed] = useState(true);
+  useEffect(() => {
+    let mounted = true;
+    void hasRevealedDailyDrop(dropDate).then((revealed) => {
+      if (mounted) setRevealDismissed(revealed);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [dropDate]);
+  const showReveal =
+    scope === "discover" && drop.status === "ready" && !!drop.card && !revealDismissed;
 
   const {
     items,
@@ -77,24 +102,30 @@ export default function HomeScreen() {
         />
       </View>
       <StyleFilterRow styles={styles} selectedSlug={styleSlug} onSelect={setStyleSlug} />
-      {scope === "discover" && drop && (
+      {scope === "discover" && (drop.card || drop.status === "generating") && (
         <View className="gap-2 px-6">
           <View className="flex-row items-center justify-between">
             <Text className="font-mono text-[11px] font-semibold uppercase tracking-widest text-content-ember">
               Today&apos;s drop
             </Text>
-            <Pressable
-              onPress={() => router.push("/daily-drop" as never)}
-              hitSlop={8}
-              accessibilityRole="link"
-              accessibilityLabel="See all daily drops"
-            >
-              <Text className="font-mono text-[11px] uppercase tracking-widest text-content-muted">
-                See all
-              </Text>
-            </Pressable>
+            {drop.card && (
+              <Pressable
+                onPress={() => router.push("/daily-drop" as never)}
+                hitSlop={8}
+                accessibilityRole="link"
+                accessibilityLabel="See all daily drops"
+              >
+                <Text className="font-mono text-[11px] uppercase tracking-widest text-content-muted">
+                  See all
+                </Text>
+              </Pressable>
+            )}
           </View>
-          <DailyDropCard card={drop} variant="feed" signedIn={signedIn} />
+          {drop.card ? (
+            <DailyDropCard card={drop.card} variant="feed" signedIn={signedIn} />
+          ) : (
+            <DailyDropGeneratingCard />
+          )}
         </View>
       )}
     </View>
@@ -213,7 +244,37 @@ export default function HomeScreen() {
       />
 
       <PostDetailSheet item={selected} onClose={() => setSelected(null)} signedIn={signedIn} />
+
+      {showReveal && drop.card && (
+        <DailyDropReveal
+          card={drop.card}
+          onDismiss={() => {
+            void markDailyDropRevealed(dropDate).then(() => setRevealDismissed(true));
+          }}
+        />
+      )}
     </SafeAreaView>
+  );
+}
+
+/** The "we're picking your drop" progression, shown while on-demand generation
+ *  runs for a user who opened the app before their drop existed. */
+function DailyDropGeneratingCard() {
+  return (
+    <Card variant="raised" padding="md" className="flex-row items-center gap-4 border border-border-accent">
+      <View className="h-14 w-14 shrink-0 items-center justify-center rounded-sm bg-surface-ember/15">
+        <LogoDropMark size={40} />
+      </View>
+      <View className="min-w-0 flex-1 gap-1">
+        <Text className="font-mono text-[10px] font-semibold uppercase tracking-widest text-content-ember">
+          Picking your drop
+        </Text>
+        <Text className="font-hand text-xl leading-tight text-content-primary">
+          Finding today&apos;s piece for you…
+        </Text>
+        <Spinner size="small" />
+      </View>
+    </Card>
   );
 }
 

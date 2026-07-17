@@ -72,6 +72,75 @@ export function LogoMark({ size = 32 }: LogoMarkProps) {
   );
 }
 
+/**
+ * INKD **Drop** mark (native) — the monogram with an ember ink-DROP stamped on
+ * the "I" instead of the flash-diamond. The mark for the Daily Drop. Built from
+ * plain Views (no SVG dep); the teardrop is a circle with a squared top-corner,
+ * a fair approximation of the web teardrop within RN's primitives.
+ */
+export function LogoDropMark({ size = 32 }: LogoMarkProps) {
+  const u = size / 48;
+  const dropW = 12 * u;
+  const dropH = 13 * u;
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: 10 * u,
+        backgroundColor: "#7C3AED",
+      }}
+    >
+      <View
+        style={{
+          position: "absolute",
+          left: 14 * u,
+          top: 12 * u,
+          width: 20 * u,
+          height: 5 * u,
+          backgroundColor: "#FFFFFF",
+        }}
+      />
+      <View
+        style={{
+          position: "absolute",
+          left: 21 * u,
+          top: 12 * u,
+          width: 6 * u,
+          height: 24 * u,
+          backgroundColor: "#FFFFFF",
+        }}
+      />
+      <View
+        style={{
+          position: "absolute",
+          left: 14 * u,
+          top: 31 * u,
+          width: 20 * u,
+          height: 5 * u,
+          backgroundColor: "#FFFFFF",
+        }}
+      />
+      {/* ember ink-drop: rounded except the top-right corner (the "tail"). */}
+      <View
+        style={{
+          position: "absolute",
+          left: (size - dropW) / 2,
+          top: 17 * u,
+          width: dropW,
+          height: dropH,
+          backgroundColor: "#E8A15C",
+          borderBottomLeftRadius: dropW,
+          borderBottomRightRadius: dropW,
+          borderTopLeftRadius: dropW,
+          borderTopRightRadius: 1 * u,
+          transform: [{ rotate: "45deg" }],
+        }}
+      />
+    </View>
+  );
+}
+
 export interface LogoProps extends LogoMarkProps {
   /** Show the "INKD" wordmark beside the mark (default true). */
   wordmark?: boolean;

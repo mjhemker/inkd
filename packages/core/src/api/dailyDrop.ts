@@ -293,6 +293,33 @@ export async function getTodayDrop(
   return cards[0] ?? null;
 }
 
+/**
+ * On-demand generation: ask the `daily-drop` edge function to generate the
+ * calling user's drop for TODAY if it doesn't exist yet. The function runs in
+ * "self" mode — it verifies the forwarded user JWT and generates ONLY that
+ * user's drop, idempotently (a no-op if today's drop already exists). This is
+ * what makes the drop appear the moment a user opens the app, rather than only
+ * after the once-a-day cron tick. Best-effort: any failure is swallowed so the
+ * surface degrades to "empty" (and the cron still fills it later) — never errors.
+ */
+export async function ensureTodayDrop(client: InkdSupabaseClient): Promise<boolean> {
+  try {
+    const { error } = await (
+      client as unknown as {
+        functions: {
+          invoke: (
+            fn: string,
+            opts: { body: unknown },
+          ) => PromiseLike<{ data: unknown; error: unknown }>;
+        };
+      }
+    ).functions.invoke("daily-drop", { body: { mode: "self" } });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
 /** Recent drops (newest first) for the "yesterday's drops" history strip. */
 export async function getDropHistory(
   client: InkdSupabaseClient,

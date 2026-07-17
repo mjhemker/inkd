@@ -60,7 +60,14 @@ export { Eyebrow, type EyebrowProps } from "./Eyebrow";
 export { FormField, type FormFieldProps } from "./FormField";
 export { Icon, type IconName, type IconProps } from "./Icon";
 export { Input, type InputProps, type InputSize } from "./Input";
-export { Logo, LogoMark, type LogoProps, type LogoMarkProps } from "./Logo";
+export {
+  Logo,
+  LogoMark,
+  LogoDropMark,
+  type LogoProps,
+  type LogoMarkProps,
+  type LogoDropMarkProps,
+} from "./Logo";
 export { Modal, type ModalProps, type ModalSize } from "./Modal";
 export { ProgressBar, type ProgressBarProps, type ProgressBarSize } from "./ProgressBar";
 export { RadioGroup, type RadioGroupOption, type RadioGroupProps } from "./RadioGroup";

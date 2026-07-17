@@ -8,9 +8,11 @@
  * `user_style_affinity` for tomorrow's drop. They optimistically patch every
  * daily-drop query and invalidate the feed so the two surfaces stay consistent.
  */
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
+  ensureTodayDrop,
   getDropHistory,
   getTodayDrop,
   markDropClicked,
@@ -51,6 +53,72 @@ export function useTodayDrop(options: UseDailyDropOptions = {}) {
     enabled: (options.enabled ?? true) && !viewerLoading && !!viewerId,
     queryFn: () => (viewerId ? getTodayDrop(client, viewerId, { date }) : Promise.resolve(null)),
   });
+}
+
+/** The lifecycle a live (on-demand-generating) daily drop moves through. */
+export type DailyDropStatus = "loading" | "generating" | "ready" | "empty";
+
+export interface UseDailyDropLiveResult {
+  card: DailyDropCard | null;
+  status: DailyDropStatus;
+  /** True while the on-demand generation request is in flight. */
+  isGenerating: boolean;
+  refetch: () => void;
+}
+
+/**
+ * Today's drop WITH on-demand generation. Reads today's drop; if the user has
+ * none yet (they opened the app before the daily cron ran for them), it asks the
+ * edge function to generate theirs now ("self" mode — idempotent), then refetches.
+ * Drives the empty → generating → ready progression on the feed card + reveal, so
+ * a signed-in user always ends up with a real drop instead of a blank.
+ */
+export function useTodayDropLive(options: UseDailyDropOptions = {}): UseDailyDropLiveResult {
+  const client = useInkdClient();
+  const qc = useQueryClient();
+  const { viewerId, isLoading: viewerLoading } = useViewerId();
+  const date = todayDropDate();
+  const enabled = (options.enabled ?? true) && !viewerLoading && !!viewerId;
+
+  const query = useQuery({
+    queryKey: dailyDropQueryKeys.today(viewerId, date),
+    enabled,
+    queryFn: () => (viewerId ? getTodayDrop(client, viewerId, { date }) : Promise.resolve(null)),
+  });
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  // One generation attempt per (viewer, date) — avoids a loop if the pipeline is
+  // unreachable (e.g. the generator can't produce a pick) or returns nothing.
+  const attemptedKey = useRef<string | null>(null);
+
+  const settled = enabled && !query.isLoading && !query.isFetching;
+  const missing = settled && !query.data;
+
+  useEffect(() => {
+    if (!missing || !viewerId) return;
+    const key = `${viewerId}:${date}`;
+    if (attemptedKey.current === key) return;
+    attemptedKey.current = key;
+    setIsGenerating(true);
+    void ensureTodayDrop(client)
+      .then(() => qc.invalidateQueries({ queryKey: dailyDropQueryKeys.today(viewerId, date) }))
+      .finally(() => setIsGenerating(false));
+  }, [missing, viewerId, date, client, qc]);
+
+  let status: DailyDropStatus;
+  if (!enabled || query.isLoading) status = "loading";
+  else if (query.data) status = "ready";
+  else if (isGenerating) status = "generating";
+  else status = "empty";
+
+  return {
+    card: query.data ?? null,
+    status,
+    isGenerating,
+    refetch: () => {
+      void qc.invalidateQueries({ queryKey: dailyDropQueryKeys.today(viewerId, date) });
+    },
+  };
 }
 
 /** Recent drops (newest first) for the "yesterday's drops" history strip. */

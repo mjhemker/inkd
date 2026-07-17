@@ -54,6 +54,54 @@ export function LogoMark({
   );
 }
 
+// The "drop" variant: the same slab "I" with an ember ink-DROP (teardrop)
+// stamped on its stem instead of the flash-diamond — the mark for the Daily Drop.
+const DROP_PATH = "M24 17 C28.6 23.4 31 27.2 31 30 a7 7 0 0 1 -14 0 c0 -2.8 2.4 -6.6 7 -13 Z";
+
+export interface LogoDropMarkProps extends LogoMarkProps {
+  /** Animate the ink-drop (a subtle drip + shine). Off by default + respects
+   *  the consumer's reduced-motion handling — pass false to force it static. */
+  animate?: boolean;
+}
+
+/**
+ * INKD **Drop** mark — the brand monogram with an ember ink-drop stamped on the
+ * "I". Used by the Daily Drop reveal + placard so the daily "boom" has its own
+ * honest, on-brand glyph (not clip-art). Shares the plate + letter geometry with
+ * {@link LogoMark}; only the ember element changes (diamond → teardrop).
+ */
+export function LogoDropMark({
+  size = 32,
+  rounded = true,
+  animate = false,
+  className,
+  style,
+}: LogoDropMarkProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 48 48"
+      role="img"
+      aria-label="INKD Drop"
+      className={className}
+      style={style}
+    >
+      <rect width="48" height="48" rx={rounded ? 10 : 0} fill="#7C3AED" />
+      <path d={I_PATH} fill="#FFFFFF" />
+      <path
+        d={DROP_PATH}
+        fill="#E8A15C"
+        style={
+          animate
+            ? { transformOrigin: "24px 24px", animation: "inkd-drop-bob 2.4s ease-in-out infinite" }
+            : undefined
+        }
+      />
+    </svg>
+  );
+}
+
 export interface LogoProps extends LogoMarkProps {
   /** Show the "INKD" wordmark beside the mark (default true). */
   wordmark?: boolean;

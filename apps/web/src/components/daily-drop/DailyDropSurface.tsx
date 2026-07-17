@@ -5,7 +5,7 @@ import { Eyebrow, Skeleton, cx } from "@inkd/ui/web";
 import {
   useCurrentProfile,
   useDropHistory,
-  useTodayDrop,
+  useTodayDropLive,
   type DailyDropCard as DailyDropCardData,
 } from "@inkd/core";
 import { artworkGradient } from "@/components/feed/artwork";
@@ -19,12 +19,12 @@ import { DailyDropCard } from "./DailyDropCard";
 export function DailyDropSurface() {
   const { data: profile, isLoading: profileLoading } = useCurrentProfile();
   const signedIn = Boolean(profile);
-  const today = useTodayDrop();
+  const drop = useTodayDropLive();
   const history = useDropHistory({ limit: 14 });
 
-  const todayCard = today.data ?? null;
+  const todayCard = drop.card;
   const past = (history.data ?? []).filter((d) => d.id !== todayCard?.id);
-  const loading = profileLoading || today.isLoading;
+  const loading = profileLoading || drop.status === "loading" || drop.status === "generating";
 
   return (
     <div className="flex flex-col gap-8">

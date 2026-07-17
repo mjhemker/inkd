@@ -9,6 +9,7 @@ import {
   buildDropReason,
   deterministicUnit,
   humanizeStyle,
+  resolveDropTargets,
   selectDailyDrop,
   type DropCandidate,
   type PriorDrop,
@@ -257,4 +258,59 @@ test("excludes the user's own artist work", () => {
     excludeArtistId: "art-me",
   });
   assert.equal(sel!.candidate.subjectId, "p-other");
+});
+
+// ---------------------------------------------------------------------------
+// On-demand ("self" mode) target resolution — the safety + idempotency contract
+// of the app-triggered daily-drop generation (resolveDropTargets).
+// ---------------------------------------------------------------------------
+test("resolveDropTargets: self mode pins the caller + today, ignoring body", () => {
+  const plan = resolveDropTargets({
+    runner: false,
+    selfUserId: "user-me",
+    // A malicious/confused caller tries to target someone else + backfill a date:
+    body: { user_id: "user-someone-else", drop_date: "2020-01-01", batch_size: 999 },
+    today: "2026-07-17",
+  });
+  assert.equal(plan.scope, "self");
+  assert.equal(plan.userId, "user-me"); // NOT the body's user_id
+  assert.equal(plan.dropDate, "2026-07-17"); // NOT the body's drop_date
+  assert.equal(plan.batchSize, 1);
+});
+
+test("resolveDropTargets: self mode requires an authenticated user", () => {
+  assert.throws(() =>
+    resolveDropTargets({ runner: false, selfUserId: null, body: {}, today: "2026-07-17" }),
+  );
+});
+
+test("resolveDropTargets: two self calls resolve to the SAME (user, day) — idempotent target", () => {
+  const a = resolveDropTargets({ runner: false, selfUserId: "u1", body: {}, today: "2026-07-17" });
+  const b = resolveDropTargets({ runner: false, selfUserId: "u1", body: {}, today: "2026-07-17" });
+  assert.deepEqual(a, b); // same target both times → the unique(user,day) index makes the 2nd a no-op
+});
+
+test("resolveDropTargets: runner may target a single named user", () => {
+  const plan = resolveDropTargets({
+    runner: true,
+    selfUserId: null,
+    body: { user_id: "u9", drop_date: "2026-07-10" },
+    today: "2026-07-17",
+  });
+  assert.equal(plan.scope, "single");
+  assert.equal(plan.userId, "u9");
+  assert.equal(plan.dropDate, "2026-07-10");
+});
+
+test("resolveDropTargets: runner default is the paged all-users sweep (the cron)", () => {
+  const plan = resolveDropTargets({
+    runner: true,
+    selfUserId: null,
+    body: { batch_size: 50, offset: 100 },
+    today: "2026-07-17",
+  });
+  assert.equal(plan.scope, "all");
+  assert.equal(plan.batchSize, 50);
+  assert.equal(plan.offset, 100);
+  assert.equal(plan.dropDate, "2026-07-17");
 });
