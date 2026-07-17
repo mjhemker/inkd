@@ -2,11 +2,23 @@ import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Card, Icon, type IconName } from "@inkd/ui/native";
-import { useMyShop } from "@inkd/core";
+import { useAttentionCounts, useMyShop } from "@inkd/core";
 
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { AiStaffDashboardCard } from "@/components/ai-staff/DashboardCard";
 import { useTheme } from "@/providers/theme";
+
+/** Ember attention pill (9+ cap), matching the web nav badges. */
+function StudioBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <View className="min-w-5 items-center justify-center rounded-full bg-surface-ember px-1.5 py-0.5">
+      <Text className="font-mono text-[10px] font-sans-semibold text-brand-on-ember">
+        {count > 9 ? "9+" : count}
+      </Text>
+    </View>
+  );
+}
 
 /**
  * Artist STUDIO hub (mobile). The ops wedge that the web sidebar shows as its
@@ -44,6 +56,13 @@ const LINKS: { href: string; icon: IconName; title: string; subtitle: string }[]
 export default function StudioScreen() {
   const { colors } = useTheme();
   const { data: shop } = useMyShop();
+  const attention = useAttentionCounts();
+  const badgeFor = (href: string): number =>
+    href === "/bookings"
+      ? attention.bookings
+      : href === "/studio/ai"
+        ? attention.aiStaff
+        : 0;
   const links = shop
     ? [
         ...LINKS,
@@ -86,7 +105,10 @@ export default function StudioScreen() {
                   <Text className="text-xs text-content-muted">{link.subtitle}</Text>
                 </View>
               </View>
-              <Icon name="chevron-right" size={18} color={colors.text.muted} />
+              <View className="flex-row items-center gap-2">
+                <StudioBadge count={badgeFor(link.href)} />
+                <Icon name="chevron-right" size={18} color={colors.text.muted} />
+              </View>
             </Card>
           ))}
         </View>

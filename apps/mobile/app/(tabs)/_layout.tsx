@@ -1,7 +1,13 @@
 import { Tabs } from "expo-router";
 import { Icon } from "@inkd/ui/native";
-import { useCurrentArtistProfile } from "@inkd/core/hooks";
+import { useAttentionCounts, useCurrentArtistProfile } from "@inkd/core/hooks";
 import { useTheme } from "@/providers/theme";
+
+/** expo-router tabBarBadge value with a 9+ cap; undefined hides the badge. */
+function badgeValue(count: number): number | string | undefined {
+  if (count <= 0) return undefined;
+  return count > 9 ? "9+" : count;
+}
 
 /**
  * Bottom tab bar. Colors follow the active theme (Dark / Light).
@@ -17,6 +23,15 @@ export default function TabsLayout() {
   const { colors } = useTheme();
   const { data: artist } = useCurrentArtistProfile();
   const isArtist = Boolean(artist);
+  const attention = useAttentionCounts();
+
+  // Ember attention badge, matching the web nav pills.
+  const badgeStyle = {
+    backgroundColor: colors.surface.ember,
+    color: colors.brand.onEmber,
+    fontSize: 10,
+    fontWeight: "700" as const,
+  };
 
   return (
     <Tabs
@@ -57,12 +72,15 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Icon name="calendar" color={color} size={size} />,
         }}
       />
-      {/* Artist: Studio ops hub (Bookings live inside). Hidden for clients. */}
+      {/* Artist: Studio ops hub (Bookings live inside). Hidden for clients.
+          Its badge sums the studio-scoped items (bookings + AI staff). */}
       <Tabs.Screen
         name="studio"
         options={{
           title: "Studio",
           href: isArtist ? "/studio" : null,
+          tabBarBadge: badgeValue(attention.studio),
+          tabBarBadgeStyle: badgeStyle,
           tabBarIcon: ({ color, size }) => (
             <Icon name="layout-grid" color={color} size={size} />
           ),
@@ -72,6 +90,8 @@ export default function TabsLayout() {
         name="messages"
         options={{
           title: "Messages",
+          tabBarBadge: badgeValue(attention.messages),
+          tabBarBadgeStyle: badgeStyle,
           tabBarIcon: ({ color, size }) => (
             <Icon name="message-circle" color={color} size={size} />
           ),
