@@ -108,7 +108,7 @@ function Sidebar({
   const { data: shop } = useMyShop();
   const studioItems = studioNavFor({ ownsShop: isArtist && Boolean(shop) });
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-border-subtle bg-surface-base md:flex">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-border-subtle bg-surface-chrome md:flex">
       <div className="flex h-16 items-center px-5">
         <BrandMark />
       </div>
@@ -193,7 +193,7 @@ function SidebarLink({ item, active }: { item: NavItem; active: string }) {
 
 function TopBar({ title, action }: { title?: string; action?: ReactNode }) {
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border-subtle bg-surface-base/85 px-5 backdrop-blur md:px-8">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border-subtle bg-surface-chrome/85 px-5 backdrop-blur md:px-8">
       <div className="flex items-center gap-3 md:hidden">
         <BrandMark compact />
       </div>
@@ -233,7 +233,7 @@ function TopBar({ title, action }: { title?: string; action?: ReactNode }) {
 function BottomTabs({ active, role }: { active: string; role: ViewerRole }) {
   const [pressed, setPressed] = useState<string | null>(null);
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border-subtle bg-surface-base/95 backdrop-blur md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border-subtle bg-surface-chrome/95 backdrop-blur md:hidden">
       <ul className="mx-auto flex max-w-lg items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)] pt-1.5">
         {bottomNavFor(role).map((item) => {
           const isActive = isActivePath(active, item.href);
