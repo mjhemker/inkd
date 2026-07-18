@@ -25,8 +25,8 @@ export function MessagesHeaderButton() {
     >
       <Icon name="message-circle" size={22} color={colors.text.primary} />
       {unread > 0 && (
-        <View className="absolute right-0.5 top-0.5 h-4 min-w-4 items-center justify-center rounded-full bg-surface-ember px-1">
-          <Text className="font-mono text-[10px] font-bold leading-none text-brand-on-ember">
+        <View className="absolute right-0.5 top-0.5 h-4 min-w-4 items-center justify-center rounded-full bg-danger-600 px-1">
+          <Text className="font-mono text-[10px] font-bold leading-none text-neutral-50">
             {unread > 9 ? "9+" : unread}
           </Text>
         </View>

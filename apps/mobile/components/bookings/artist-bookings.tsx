@@ -181,7 +181,7 @@ function RequestRow({ request, muted }: { request: BookingRequest; muted?: boole
       <View className="flex-row flex-wrap items-center gap-1.5">
         <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
         {request.has_medical_flags && (
-          <Badge variant="warning">
+          <Badge variant="danger">
             <View className="flex-row items-center gap-1">
               <Icon name="shield" size={11} color="#FAFAFA" />
               <Text className="font-sans-semibold text-xs text-neutral-50">Medical</Text>

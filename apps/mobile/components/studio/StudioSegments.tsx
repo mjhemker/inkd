@@ -13,11 +13,11 @@ import { STUDIO_SECTIONS, type StudioSection } from "@/lib/nav";
  * fed through the primitive's additive `badge` slot, matching the web nav.
  */
 
-/** Ember attention pill (9+ cap), matching the web nav badges. */
+/** Alert-red attention pill (9+ cap), matching the web nav badges (danger-600). */
 function SegmentBadge({ count }: { count: number }) {
   return (
-    <View className="ml-0.5 min-w-5 items-center justify-center rounded-full bg-surface-ember px-1.5 py-0.5">
-      <Text className="font-mono text-[10px] font-sans-semibold text-brand-on-ember">
+    <View className="ml-0.5 min-w-5 items-center justify-center rounded-full bg-danger-600 px-1.5 py-0.5">
+      <Text className="font-mono text-[10px] font-sans-semibold text-neutral-50">
         {count > 9 ? "9+" : count}
       </Text>
     </View>
