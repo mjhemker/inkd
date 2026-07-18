@@ -14,6 +14,7 @@ import {
   Modal,
   Spinner,
   Tabs,
+  cx,
   useToast,
 } from "@inkd/ui/web";
 import {
@@ -63,6 +64,20 @@ type SettingsSection =
   | "notifications"
   | "appearance";
 
+/** Section subheaders for the desktop "on this page" ToC. Long, multi-section
+ * tabs (Studio, Preferences) get a right-hand sticky index; ids line up with
+ * the `settings-section-${id}` anchors rendered by <SettingsSection>. */
+const STUDIO_SECTIONS: { id: SettingsSection; label: string }[] = [
+  { id: "locations", label: "Locations" },
+  { id: "booking", label: "Hours & booking" },
+  { id: "services", label: "Services" },
+  { id: "waivers", label: "Waivers" },
+];
+const PREFERENCES_SECTIONS: { id: SettingsSection; label: string }[] = [
+  { id: "notifications", label: "Notifications" },
+  { id: "appearance", label: "Appearance" },
+];
+
 /**
  * Maps every historical `?tab=` key (and the new tab keys) to the tab it now
  * lives on plus the section to scroll to. Keeps old deep-links landing right:
@@ -101,6 +116,10 @@ export function SettingsView() {
 
   // Shop tab is owners-only; hide it for everyone else.
   const tabs = TAB_DEFS.filter((t) => !t.ownerOnly || Boolean(shop));
+
+  // Studio + Preferences are long, multi-section tabs — they get the desktop
+  // right-hand "on this page" ToC alongside the content column.
+  const withToc = tab === "studio" || tab === "preferences";
 
   // On landing via a legacy section deep-link, scroll that section into view
   // once the grouped tab has rendered its stacked sections.
@@ -195,13 +214,19 @@ export function SettingsView() {
       {/* Content column: wide enough on desktop for forms to breathe and for
           each tab's own two-column field groups (services, locations) to lay
           out side by side, without stretching narrow single-column tabs
-          edge-to-edge. Unconstrained below the breakpoint, so mobile is
-          unaffected. */}
+          edge-to-edge. Long multi-section tabs (Studio, Preferences) pair the
+          content with a right-hand sticky "on this page" ToC on lg+ screens.
+          Unconstrained below the breakpoint, so mobile is unaffected. */}
       <div
-        className={
-          tab === "sharing" ? "max-w-4xl xl:max-w-5xl" : "max-w-3xl xl:max-w-4xl"
-        }
+        className={cx(
+          withToc
+            ? "lg:flex lg:items-start lg:gap-10"
+            : tab === "sharing"
+              ? "max-w-4xl xl:max-w-5xl"
+              : "max-w-3xl xl:max-w-4xl",
+        )}
       >
+        <div className={withToc ? "min-w-0 flex-1 lg:max-w-3xl xl:max-w-4xl" : undefined}>
         {tab === "profile" && (
           <IdentityEditor profile={profile} artist={artist} variant="settings" />
         )}
@@ -309,8 +334,82 @@ export function SettingsView() {
             published={artist.is_published}
           />
         )}
+        </div>
+
+        {tab === "studio" && <SectionToc sections={STUDIO_SECTIONS} />}
+        {tab === "preferences" && <SectionToc sections={PREFERENCES_SECTIONS} />}
       </div>
     </div>
+  );
+}
+
+/** Desktop-only sticky "on this page" index for a long settings tab. Highlights
+ * the section currently in view (IntersectionObserver) and smooth-scrolls to a
+ * section on click; the anchors' `scroll-mt-24` clears the sticky header. Hidden
+ * below lg. Mono placard styling to match the section eyebrows. */
+function SectionToc({
+  sections,
+}: {
+  sections: { id: SettingsSection; label: string }[];
+}) {
+  const [activeId, setActiveId] = useState<string>(sections[0]?.id ?? "");
+
+  useEffect(() => {
+    const els = sections
+      .map((s) => document.getElementById(`settings-section-${s.id}`))
+      .filter((el): el is HTMLElement => Boolean(el));
+    if (els.length === 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) {
+          setActiveId(visible[0].target.id.replace("settings-section-", ""));
+        }
+      },
+      // Top margin clears the sticky header; the tall bottom margin means a
+      // section counts as "current" once it reaches the upper third.
+      { rootMargin: "-96px 0px -55% 0px", threshold: 0 },
+    );
+    els.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [sections]);
+
+  return (
+    <aside className="hidden w-44 shrink-0 lg:block">
+      <div className="sticky top-24 flex flex-col gap-2">
+        <span className="px-3 font-mono text-[11px] uppercase tracking-[0.18em] text-content-muted">
+          On this page
+        </span>
+        <nav className="flex flex-col gap-0.5">
+          {sections.map((s) => {
+            const isActive = activeId === s.id;
+            return (
+              <a
+                key={s.id}
+                href={`#settings-section-${s.id}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  document
+                    .getElementById(`settings-section-${s.id}`)
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                aria-current={isActive ? "location" : undefined}
+                className={cx(
+                  "border-l-2 px-3 py-1.5 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand",
+                  isActive
+                    ? "border-brand font-medium text-content-primary"
+                    : "border-border-subtle text-content-muted hover:text-content-secondary",
+                )}
+              >
+                {s.label}
+              </a>
+            );
+          })}
+        </nav>
+      </div>
+    </aside>
   );
 }
 

@@ -20,6 +20,7 @@ import {
 } from "@/lib/nav";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { SearchProvider, useGlobalSearchOverlay } from "@/components/search/search-context";
+import { SearchOverlay } from "@/components/search/SearchOverlay";
 
 /** The identity rendered in the sidebar footer. */
 export interface ShellIdentity {
@@ -97,14 +98,17 @@ export function AppShell({
   );
 }
 
-/** Ember count pill for nav attention badges (9+ cap). */
+/** Alert-red count pill for nav attention badges (9+ cap). Red = "needs your
+ * attention" (danger ramp), distinct from ember, which is reserved for FLASH /
+ * brand accents. `danger-600` (#DC2626) holds AA with the near-white numerals
+ * in both themes and stays ≥3:1 against the chrome surface it sits on. */
 function NavBadge({ count, className }: { count: number; className?: string }) {
   if (count <= 0) return null;
   return (
     <span
       aria-hidden
       className={cx(
-        "grid h-5 min-w-5 place-items-center rounded-full bg-surface-ember px-1.5 font-mono text-[10px] font-bold leading-none text-brand-on-ember",
+        "grid h-5 min-w-5 place-items-center rounded-full bg-danger-600 px-1.5 font-mono text-[10px] font-bold leading-none text-neutral-50",
         className,
       )}
     >
@@ -272,29 +276,37 @@ function TopBar({ title, action }: { title?: string; action?: ReactNode }) {
       )}
 
       <div className="ml-auto flex items-center gap-2">
-        {/* Desktop: a wide search affordance showing the ⌘K shortcut. */}
-        <button
-          type="button"
-          onClick={search.open}
-          aria-label="Search INKD"
-          aria-keyshortcuts="Meta+K Control+K"
-          className="hidden h-10 items-center gap-2 rounded-lg border border-border-subtle bg-surface-raised px-3 text-content-muted outline-none transition-colors hover:border-border-strong hover:text-content-primary focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base md:flex"
-        >
-          <Icon name="search" size={16} />
-          <span className="text-sm">Search</span>
-          <kbd className="ml-6 rounded border border-border-subtle bg-surface-overlay px-1.5 py-0.5 font-mono text-[10px] text-content-secondary">
-            ⌘K
-          </kbd>
-        </button>
-        {/* Mobile: the compact icon button. */}
-        <button
-          type="button"
-          onClick={search.open}
-          aria-label="Search INKD"
-          className="grid h-10 w-10 place-items-center rounded-lg text-content-muted outline-none transition-colors hover:bg-surface-raised hover:text-content-primary focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base md:hidden"
-        >
-          <Icon name="search" size={20} />
-        </button>
+        {/* Search control + its dropdown. The overlay is anchored to this
+            relative wrapper so it opens as a panel beneath the control (not a
+            centered modal). */}
+        <div className="relative">
+          {/* Desktop: a wide search affordance showing the ⌘K shortcut. */}
+          <button
+            type="button"
+            onClick={search.open}
+            aria-label="Search INKD"
+            aria-keyshortcuts="Meta+K Control+K"
+            aria-expanded={search.isOpen}
+            className="hidden h-10 items-center gap-2 rounded-lg border border-border-subtle bg-surface-raised px-3 text-content-muted outline-none transition-colors hover:border-border-strong hover:text-content-primary focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base md:flex"
+          >
+            <Icon name="search" size={16} />
+            <span className="text-sm">Search</span>
+            <kbd className="ml-6 rounded border border-border-subtle bg-surface-overlay px-1.5 py-0.5 font-mono text-[10px] text-content-secondary">
+              ⌘K
+            </kbd>
+          </button>
+          {/* Mobile: the compact icon button. */}
+          <button
+            type="button"
+            onClick={search.open}
+            aria-label="Search INKD"
+            aria-expanded={search.isOpen}
+            className="grid h-10 w-10 place-items-center rounded-lg text-content-muted outline-none transition-colors hover:bg-surface-raised hover:text-content-primary focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base md:hidden"
+          >
+            <Icon name="search" size={20} />
+          </button>
+          <SearchOverlay open={search.isOpen} onClose={search.close} />
+        </div>
         <NotificationBell />
         {action ?? (
           <Link
