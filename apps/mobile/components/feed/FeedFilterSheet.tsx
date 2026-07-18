@@ -7,13 +7,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import * as Location from "expo-location";
-import { Chip, Icon, RangeSlider, Sheet, Spinner, Toggle } from "@inkd/ui/native";
+import { Chip, Icon, Input, RangeSlider, Sheet, Spinner, Toggle } from "@inkd/ui/native";
 import {
   DISCOVER_CITIES,
   DEFAULT_RADIUS_MI,
   milesToKm,
   formatPriceUsd,
   hasActiveFeedFilters,
+  hasStyleQuery,
   PRICE_SLIDER_MIN_USD,
   PRICE_SLIDER_MAX_USD,
   PRICE_SLIDER_STEP_USD,
@@ -74,6 +75,34 @@ export function FeedFilterSheet({
     if (next.has(slug)) next.delete(slug);
     else next.add(slug);
     patch({ styles: [...next] });
+  };
+
+  // "Other" — a free-text style query for anything outside the taxonomy.
+  const [otherOpen, setOtherOpen] = useState(hasStyleQuery(filter));
+  const [otherLocal, setOtherLocal] = useState(filter.styleQuery ?? "");
+  const otherTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    setOtherLocal(filter.styleQuery ?? "");
+  }, [filter.styleQuery]);
+  useEffect(() => () => { if (otherTimerRef.current) clearTimeout(otherTimerRef.current); }, []);
+
+  const toggleOther = () => {
+    if (otherOpen) {
+      setOtherOpen(false);
+      setOtherLocal("");
+      patch({ styleQuery: undefined });
+    } else {
+      setOtherOpen(true);
+    }
+  };
+
+  const onOtherChange = (value: string) => {
+    setOtherLocal(value);
+    if (otherTimerRef.current) clearTimeout(otherTimerRef.current);
+    otherTimerRef.current = setTimeout(
+      () => patch({ styleQuery: value.trim() || undefined }),
+      COMMIT_DEBOUNCE_MS,
+    );
   };
 
   const pickCity = (slug: string) => {
@@ -168,7 +197,21 @@ export function FeedFilterSheet({
               {s.name}
             </Chip>
           ))}
+          <Chip selected={otherOpen} onPress={toggleOther}>
+            Other
+          </Chip>
         </View>
+        {otherOpen && (
+          <Input
+            size="sm"
+            value={otherLocal}
+            onChangeText={onOtherChange}
+            placeholder="e.g. Chicano, dotwork…"
+            autoFocus
+            accessibilityLabel="Other style — search by name"
+            className="mt-2"
+          />
+        )}
       </ScrollView>
 
       {/* Footer */}

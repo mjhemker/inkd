@@ -134,7 +134,7 @@ export function DailyDropCard({ card, variant = "feed", signedIn = true }: Daily
             <Link
               href={artistHref}
               onClick={stampClick}
-              className="inline-flex items-center gap-1.5 rounded-sm bg-brand px-3.5 py-2 font-sans text-sm font-semibold text-brand-on outline-none transition-colors hover:bg-brand-hover focus-visible:ring-2 focus-visible:ring-brand"
+              className="inline-flex min-h-10 items-center gap-1.5 rounded-sm bg-brand px-3.5 py-2.5 font-sans text-sm font-semibold text-brand-on outline-none transition-colors hover:bg-brand-hover focus-visible:ring-2 focus-visible:ring-brand"
             >
               {isFlash ? "Book this flash" : "View artist"}
               <Icon name="arrow-right" size={15} />
@@ -147,6 +147,7 @@ export function DailyDropCard({ card, variant = "feed", signedIn = true }: Daily
                 type="button"
                 disabled={!signedIn}
                 aria-pressed={card.post.likedByViewer}
+                aria-label={card.post.likedByViewer ? "Unlike this piece" : "Like this piece"}
                 onClick={() =>
                   react.mutate({
                     dropId: card.id,
@@ -156,11 +157,11 @@ export function DailyDropCard({ card, variant = "feed", signedIn = true }: Daily
                   })
                 }
                 className={cx(
-                  "inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-2 font-sans text-sm font-medium outline-none transition-colors hover:border-border-strong focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40",
+                  "inline-flex min-h-10 min-w-10 items-center justify-center gap-1.5 rounded-sm border border-border px-3 py-2.5 font-sans text-sm font-medium outline-none transition-colors hover:border-border-strong focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40",
                   card.post.likedByViewer ? "text-danger-500" : "text-content-secondary",
                 )}
               >
-                <FeedGlyph name="heart" size={15} filled={card.post.likedByViewer} />
+                <FeedGlyph name="heart" size={16} filled={card.post.likedByViewer} />
                 {card.post.likeCount > 0 && (
                   <span className="font-mono text-xs tabular-nums">{card.post.likeCount}</span>
                 )}
@@ -169,6 +170,7 @@ export function DailyDropCard({ card, variant = "feed", signedIn = true }: Daily
                 type="button"
                 disabled={!signedIn}
                 aria-pressed={card.post.savedByViewer}
+                aria-label={card.post.savedByViewer ? "Remove from saved" : "Save for later"}
                 onClick={() =>
                   react.mutate({
                     dropId: card.id,
@@ -178,11 +180,11 @@ export function DailyDropCard({ card, variant = "feed", signedIn = true }: Daily
                   })
                 }
                 className={cx(
-                  "inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-2 font-sans text-sm font-medium outline-none transition-colors hover:border-border-strong focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40",
+                  "inline-flex min-h-10 min-w-10 items-center justify-center gap-1.5 rounded-sm border border-border px-3 py-2.5 font-sans text-sm font-medium outline-none transition-colors hover:border-border-strong focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40",
                   card.post.savedByViewer ? "text-content-accent" : "text-content-secondary",
                 )}
               >
-                <FeedGlyph name="bookmark" size={15} filled={card.post.savedByViewer} />
+                <FeedGlyph name="bookmark" size={16} filled={card.post.savedByViewer} />
                 {card.post.savedByViewer ? "Saved" : "Save"}
               </button>
             </>
@@ -190,9 +192,9 @@ export function DailyDropCard({ card, variant = "feed", signedIn = true }: Daily
 
           <Link
             href="/try-on"
-            className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-2 font-sans text-sm font-medium text-content-secondary outline-none transition-colors hover:border-border-strong hover:text-content-primary focus-visible:ring-2 focus-visible:ring-brand"
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-sm border-2 border-content-accent px-3.5 py-2.5 font-sans text-sm font-semibold text-content-accent outline-none transition-colors hover:bg-content-accent hover:text-surface-base focus-visible:ring-2 focus-visible:ring-brand"
           >
-            <Icon name="sparkles" size={14} />
+            <Icon name="sparkles" size={15} />
             Try it on
           </Link>
         </div>

@@ -154,7 +154,7 @@ export function DailyDropCard({ card, variant = "feed", signedIn = true }: Daily
 
         {card.subjectType === "post" ? (
           <View className="flex-row items-center gap-2 pt-1">
-            <Button size="sm" variant="secondary" className="flex-1" onPress={openArtist}>
+            <Button size="sm" variant="primary" className="flex-1" onPress={openArtist}>
               View artist
             </Button>
             {card.post && (
@@ -169,18 +169,18 @@ export function DailyDropCard({ card, variant = "feed", signedIn = true }: Daily
                     })
                   }
                   disabled={!signedIn}
-                  hitSlop={8}
+                  hitSlop={6}
                   accessibilityRole="button"
                   accessibilityLabel={card.post.likedByViewer ? "Unlike this post" : "Like this post"}
                   accessibilityState={{ selected: card.post.likedByViewer, disabled: !signedIn }}
                   className={cx(
-                    "h-9 w-9 items-center justify-center rounded-sm border border-border-subtle",
+                    "h-10 w-10 items-center justify-center rounded-sm border border-border-subtle",
                     !signedIn && "opacity-40",
                   )}
                 >
                   <Feather
                     name="heart"
-                    size={16}
+                    size={17}
                     color={card.post.likedByViewer ? ICON_ACTIVE : colors.text.muted}
                   />
                 </Pressable>
@@ -194,18 +194,18 @@ export function DailyDropCard({ card, variant = "feed", signedIn = true }: Daily
                     })
                   }
                   disabled={!signedIn}
-                  hitSlop={8}
+                  hitSlop={6}
                   accessibilityRole="button"
                   accessibilityLabel={card.post.savedByViewer ? "Remove from saved" : "Save this post"}
                   accessibilityState={{ selected: card.post.savedByViewer, disabled: !signedIn }}
                   className={cx(
-                    "h-9 w-9 items-center justify-center rounded-sm border border-border-subtle",
+                    "h-10 w-10 items-center justify-center rounded-sm border border-border-subtle",
                     !signedIn && "opacity-40",
                   )}
                 >
                   <Feather
                     name="bookmark"
-                    size={16}
+                    size={17}
                     color={card.post.savedByViewer ? ICON_ACTIVE : colors.text.muted}
                   />
                 </Pressable>
@@ -236,11 +236,16 @@ export function DailyDropCard({ card, variant = "feed", signedIn = true }: Daily
           </View>
         )}
 
-        <Pressable onPress={() => router.push("/try-on" as never)} hitSlop={6}>
-          <Text className="font-mono text-[11px] uppercase tracking-widest text-content-accent">
-            Try it on &rarr;
-          </Text>
-        </Pressable>
+        <Button
+          size="sm"
+          variant="outline"
+          className="mt-1 border-content-accent"
+          leadingIcon={<Icon name="sparkles" size={14} color={colors.text.accent} />}
+          onPress={() => router.push("/try-on" as never)}
+          accessibilityLabel="Try it on — fit check"
+        >
+          <Text className="font-sans-semibold text-sm text-content-accent">Try it on</Text>
+        </Button>
       </View>
     </Card>
   );

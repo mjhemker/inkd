@@ -12,8 +12,8 @@ export const feedQueryKeys = {
     scope: FeedScope,
     styleSlug: string | null,
     viewerId: string | null,
-    /** Extra filter dimensions (panel multi-styles + artist-level filters). */
-    filters?: { styleSlugs?: string[]; artistFilters?: FeedArtistFilters },
+    /** Extra filter dimensions (panel multi-styles + "Other" query + artist-level filters). */
+    filters?: { styleSlugs?: string[]; styleQuery?: string; artistFilters?: FeedArtistFilters },
   ) =>
     [
       "feed",
@@ -22,9 +22,10 @@ export const feedQueryKeys = {
       viewerId ?? "anon",
       // A stable string of the panel filters; "none" keeps the default feed
       // key identical to before this change (cache continuity).
-      filters?.styleSlugs?.length || filters?.artistFilters
+      filters?.styleSlugs?.length || filters?.styleQuery || filters?.artistFilters
         ? JSON.stringify({
             s: [...(filters.styleSlugs ?? [])].sort(),
+            q: filters.styleQuery ?? null,
             a: filters.artistFilters ?? null,
           })
         : "none",

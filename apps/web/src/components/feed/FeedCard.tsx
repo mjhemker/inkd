@@ -203,7 +203,7 @@ function ActionButton({
         if (!disabled) onClick();
       }}
       className={cx(
-        "inline-flex items-center gap-1 rounded-sm bg-black/45 px-2 py-1.5 backdrop-blur-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40",
+        "inline-flex min-h-10 min-w-10 items-center justify-center gap-1 rounded-sm bg-black/45 px-2.5 py-2 backdrop-blur-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40",
         active ? activeClass : "text-neutral-50 hover:text-white",
       )}
     >
