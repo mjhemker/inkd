@@ -12,8 +12,8 @@ import {
   useToggleSave,
   useTodayDropLive,
   todayDropDate,
-  queryToDiscoverFilter,
-  discoverFilterToQuery,
+  queryToFeedFilter,
+  feedFilterToQuery,
   EMPTY_FEED_FILTER,
   feedArtistFilterParams,
   describeFeedFilters,
@@ -26,7 +26,6 @@ import {
   type FeedScope,
 } from "@inkd/core";
 import { FeedCard } from "./FeedCard";
-import { StyleFilterChips } from "./StyleFilterChips";
 import { FeedFilterPanel } from "./FeedFilterPanel";
 import { PostDetailOverlay } from "./PostDetailOverlay";
 import { DailyDropCard } from "@/components/daily-drop/DailyDropCard";
@@ -36,8 +35,11 @@ import {
   markDailyDropRevealed,
 } from "@/components/daily-drop/DailyDropReveal";
 
+// Label is "Explore" (not "Discover") so this subtab doesn't collide with the
+// Discover nav tab; the scope VALUE stays "discover" so URL/query-key state
+// (feedQueryKeys, cached queries, etc.) is untouched.
 const SCOPES: { value: FeedScope; label: string }[] = [
-  { value: "discover", label: "Discover" },
+  { value: "discover", label: "Explore" },
   { value: "following", label: "Following" },
 ];
 
@@ -56,15 +58,14 @@ export function FeedScreen() {
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // Filter state lives in the URL (shareable / back-button-safe), reusing the
-  // discover (de)serializers. The style chip row and the filter panel both edit
-  // this one state so they stay in sync.
+  // Filter state lives in the URL (shareable / back-button-safe). The Filters
+  // panel is the single entry point for editing it.
   const filter = useMemo(
-    () => queryToDiscoverFilter((k) => searchParams.get(k)) as FeedFilterState,
+    () => queryToFeedFilter((k) => searchParams.get(k)),
     [searchParams],
   );
   const setFilter = (next: FeedFilterState) => {
-    const qs = discoverFilterToQuery(next);
+    const qs = feedFilterToQuery(next);
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   };
 
@@ -75,7 +76,7 @@ export function FeedScreen() {
   const drop = useTodayDropLive();
 
   const artistFilters = useMemo(() => feedArtistFilterParams(filter), [filter]);
-  const feed = useFeedItems(scope, { styleSlugs: filter.styles, artistFilters });
+  const feed = useFeedItems(scope, { styleSlugs: filter.styles, styleQuery: filter.styleQuery, artistFilters });
 
   // First feed visit of the day → the full-screen reveal takeover (once, then it
   // lives on as the highlighted card below). Gated by a localStorage date stamp.
@@ -89,12 +90,6 @@ export function FeedScreen() {
   const like = useToggleLike();
   const save = useToggleSave();
   const follow = useToggleFollow();
-
-  // The chip row is a quick SINGLE-style filter; it reflects the selection only
-  // when exactly one style is active (the panel handles multi-select).
-  const chipSelected = filter.styles.length === 1 ? filter.styles[0] ?? null : null;
-  const selectStyleChip = (slug: string | null) =>
-    setFilter({ ...filter, styles: slug ? [slug] : [] });
 
   const activeChips = useMemo(
     () => describeFeedFilters(filter, styles ?? []),
@@ -135,45 +130,36 @@ export function FeedScreen() {
         </div>
 
         <div className="flex flex-col gap-4">
-          {/* Scope switch — two hard placard tabs */}
-          <div
-            className="inline-flex w-fit gap-1 rounded-sm border border-border-subtle bg-surface-raised p-1"
-            role="tablist"
-            aria-label="Feed scope"
-          >
-            {SCOPES.map((s) => {
-              const active = scope === s.value;
-              return (
-                <button
-                  key={s.value}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => setScope(s.value)}
-                  className={cx(
-                    "rounded-sm px-4 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand",
-                    active
-                      ? "bg-brand text-brand-on"
-                      : "text-content-muted hover:text-content-primary",
-                  )}
-                >
-                  {s.label}
-                </button>
-              );
-            })}
-          </div>
+          {/* Scope switch (Explore/Following) + Filters — the single filter
+              entry point, right beside the tabs it governs. */}
+          <div className="flex items-center justify-between gap-3">
+            <div
+              className="inline-flex w-fit gap-1 rounded-sm border border-border-subtle bg-surface-raised p-1"
+              role="tablist"
+              aria-label="Feed scope"
+            >
+              {SCOPES.map((s) => {
+                const active = scope === s.value;
+                return (
+                  <button
+                    key={s.value}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setScope(s.value)}
+                    className={cx(
+                      "rounded-sm px-4 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand",
+                      active
+                        ? "bg-brand text-brand-on"
+                        : "text-content-muted hover:text-content-primary",
+                    )}
+                  >
+                    {s.label}
+                  </button>
+                );
+              })}
+            </div>
 
-          {/* Style chip row (quick single-style) + Filters popover trigger */}
-          <div className="flex items-center gap-2">
-            {styles && styles.length > 0 && (
-              <div className="min-w-0 flex-1">
-                <StyleFilterChips
-                  styles={styles}
-                  selected={chipSelected}
-                  onSelect={selectStyleChip}
-                />
-              </div>
-            )}
             <div className="relative shrink-0">
               <button
                 type="button"

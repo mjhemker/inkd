@@ -19,6 +19,7 @@ import {
   PRICE_SLIDER_MAX_USD,
   PRICE_SLIDER_STEP_USD,
   hasActiveFeedFilters,
+  hasStyleQuery,
   type FeedFilterState,
 } from "@inkd/core";
 import type { Style } from "@inkd/core/types";
@@ -100,6 +101,35 @@ export function FeedFilterPanel({
     if (next.has(slug)) next.delete(slug);
     else next.add(slug);
     patch({ styles: [...next] });
+  };
+
+  // "Other" — a free-text style query for anything outside the taxonomy.
+  // Debounced the same way price is, so typing doesn't fire a query per key.
+  const [otherOpen, setOtherOpen] = useState(hasStyleQuery(filter));
+  const [otherLocal, setOtherLocal] = useState(filter.styleQuery ?? "");
+  const otherTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    setOtherLocal(filter.styleQuery ?? "");
+  }, [filter.styleQuery]);
+  useEffect(() => () => { if (otherTimerRef.current) clearTimeout(otherTimerRef.current); }, []);
+
+  const toggleOther = () => {
+    if (otherOpen) {
+      setOtherOpen(false);
+      setOtherLocal("");
+      patch({ styleQuery: undefined });
+    } else {
+      setOtherOpen(true);
+    }
+  };
+
+  const onOtherChange = (value: string) => {
+    setOtherLocal(value);
+    if (otherTimerRef.current) clearTimeout(otherTimerRef.current);
+    otherTimerRef.current = setTimeout(
+      () => patch({ styleQuery: value.trim() || undefined }),
+      COMMIT_DEBOUNCE_MS,
+    );
   };
 
   const pickCity = (slug: string) => {
@@ -221,7 +251,21 @@ export function FeedFilterPanel({
               {s.name}
             </Chip>
           ))}
+          <Chip selected={otherOpen} onClick={toggleOther}>
+            Other
+          </Chip>
         </div>
+        {otherOpen && (
+          <input
+            type="text"
+            value={otherLocal}
+            onChange={(e) => onOtherChange(e.target.value)}
+            placeholder="e.g. Chicano, dotwork…"
+            aria-label="Other style — search by name"
+            autoFocus
+            className="w-full rounded-sm border border-border-subtle bg-surface-base px-2.5 py-1.5 text-sm text-content-primary outline-none placeholder:text-content-muted focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand"
+          />
+        )}
       </div>
 
       {/* Footer */}
