@@ -66,6 +66,13 @@ export function DailyDropReveal({ card, onDismiss }: DailyDropRevealProps) {
   const seen = useMarkDropSeen();
   const clicked = useMarkDropClicked();
   const firedSeen = useRef(false);
+  // The reveal → revealed animation timer. Tracked so it's cleared if the user
+  // dismisses (unmounting the takeover) mid-animation — otherwise it would fire
+  // a state update after unmount.
+  const revealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (revealTimer.current) clearTimeout(revealTimer.current);
+  }, []);
 
   const artist = card.artist;
   const handle = artist?.handle ?? null;
@@ -98,7 +105,7 @@ export function DailyDropReveal({ card, onDismiss }: DailyDropRevealProps) {
       return;
     }
     setPhase("revealing");
-    window.setTimeout(() => setPhase("revealed"), 620);
+    revealTimer.current = setTimeout(() => setPhase("revealed"), 620);
   }
 
   const stampClick = () => clicked.mutate(card.id);
