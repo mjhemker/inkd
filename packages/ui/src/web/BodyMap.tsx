@@ -28,6 +28,7 @@ import {
   type RegionShape,
   type Shape,
 } from "../bodyMap/regions";
+import { SILHOUETTE_PATHS } from "../bodyMap/silhouette";
 
 export interface BodyMapProps {
   value: PlacementValue | null;
@@ -42,16 +43,21 @@ export interface BodyMapProps {
 /**
  * Theming. The figure fill/stroke are driven by CSS custom properties scoped to
  * `.inkd-bodymap` (see BodyMapStyle) so a single `[data-theme="light"]` flip
- * re-skins the silhouette. Dark keeps the original faint ink-on-black look;
- * light paints a SOLID mid-tone ink silhouette that reads on the warm paper
- * wall (the old hardcoded near-white fill was invisible white-on-white). The
- * selected marker + hover/active states are tuned to read on BOTH themes.
+ * re-skins the silhouette. `--bm-figure-*` paints the realistic-figure artwork
+ * (`SILHOUETTE_PATHS`) — a visible ink outline in both themes: light-on-ink for
+ * dark, a mid-tone ink outline on the warm paper wall for light. Region hit
+ * areas (`ShapeEl`) sit on top and are INVISIBLE at rest — they only pick up
+ * `--bm-hover-*` on hover/focus, or `--bm-sel-*` when selected — so the
+ * realistic figure reads cleanly and the old blocky region outlines don't
+ * compete with it.
  */
 const VAR = {
-  base: { fill: "var(--bm-base-fill)", stroke: "var(--bm-base-stroke)" },
+  base: { fill: "transparent", stroke: "transparent" },
   hover: { fill: "var(--bm-hover-fill)", stroke: "var(--bm-hover-stroke)" },
   selected: { fill: "var(--bm-sel-fill)", stroke: "var(--bm-sel-stroke)" },
 } as const;
+
+const FIGURE_VAR = { fill: "var(--bm-figure-fill)", stroke: "var(--bm-figure-stroke)" } as const;
 
 /**
  * One <style> that declares the body-map palette variables and their light
@@ -62,8 +68,8 @@ function BodyMapStyle() {
   return (
     <style>{`
       .inkd-bodymap {
-        --bm-base-fill: rgba(250,250,250,0.05);
-        --bm-base-stroke: rgba(250,250,250,0.16);
+        --bm-figure-fill: rgba(250,250,250,0.06);
+        --bm-figure-stroke: rgba(250,250,250,0.55);
         --bm-hover-fill: rgba(139,92,246,0.22);
         --bm-hover-stroke: #A78BFA;
         --bm-sel-fill: #7C3AED;
@@ -71,8 +77,8 @@ function BodyMapStyle() {
         --bm-focus-stroke: #C4B5FD;
       }
       [data-theme="light"] .inkd-bodymap {
-        --bm-base-fill: rgba(28,25,23,0.14);
-        --bm-base-stroke: rgba(28,25,23,0.55);
+        --bm-figure-fill: rgba(28,25,23,0.08);
+        --bm-figure-stroke: rgba(28,25,23,0.7);
         --bm-hover-fill: rgba(124,58,237,0.15);
         --bm-hover-stroke: #7C3AED;
         --bm-sel-fill: #7C3AED;
@@ -80,6 +86,18 @@ function BodyMapStyle() {
         --bm-focus-stroke: #6D28D9;
       }
     `}</style>
+  );
+}
+
+/** The realistic-figure background artwork for a view; purely decorative
+ * (`pointer-events: none`) — all interaction stays on the region shapes. */
+function Silhouette({ view }: { view: PlacementView }) {
+  return (
+    <path
+      d={SILHOUETTE_PATHS[view]}
+      style={{ fill: FIGURE_VAR.fill, stroke: FIGURE_VAR.stroke, strokeWidth: 1.5 }}
+      pointerEvents="none"
+    />
   );
 }
 
@@ -128,20 +146,24 @@ function ShapeEl({
 }
 
 function renderShape(shape: Shape, props: Record<string, unknown>) {
+  // `key` must be a real JSX attribute (not spread) or React warns — callers
+  // that need one (BodyMapThumbnail) pass it inside `props`; pull it out here.
+  const { key, ...rest } = props as { key?: React.Key } & Record<string, unknown>;
   switch (shape.kind) {
     case "circle":
-      return <circle cx={shape.cx} cy={shape.cy} r={shape.r} {...props} />;
+      return <circle key={key} cx={shape.cx} cy={shape.cy} r={shape.r} {...rest} />;
     case "ellipse":
-      return <ellipse cx={shape.cx} cy={shape.cy} rx={shape.rx} ry={shape.ry} {...props} />;
+      return <ellipse key={key} cx={shape.cx} cy={shape.cy} rx={shape.rx} ry={shape.ry} {...rest} />;
     case "rrect":
       return (
         <rect
+          key={key}
           x={shape.x}
           y={shape.y}
           width={shape.w}
           height={shape.h}
           rx={shape.rx}
-          {...props}
+          {...rest}
         />
       );
   }
@@ -222,6 +244,7 @@ export function BodyMap({
           viewBox={`0 0 ${figure.viewBox.w} ${figure.viewBox.h}`}
           className="inkd-bodymap h-auto w-full select-none"
         >
+          <Silhouette view={view} />
           {figure.regions.map((rs) => {
             const key = `${rs.region}:${rs.side ?? "-"}`;
             const isSel =
@@ -302,6 +325,7 @@ export function BodyMapThumbnail({
         role="img"
         aria-label={`Placement: ${placementLabel(value, { withView: value.view })}`}
       >
+        <Silhouette view={value.view} />
         {figure.regions.map((rs) => {
           const isSel = samePlacement(value, { region: rs.region, side: rs.side, view: value.view });
           const tone = isSel ? VAR.selected : VAR.base;
