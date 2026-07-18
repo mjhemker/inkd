@@ -282,7 +282,7 @@ function ActionPill({
       aria-pressed={active}
       onClick={onClick}
       className={cx(
-        "inline-flex items-center gap-1.5 rounded-sm border px-3 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40",
+        "inline-flex min-h-10 items-center gap-1.5 rounded-sm border px-3.5 py-2.5 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40",
         active ? activeClass : "border-border text-content-secondary hover:border-border-strong hover:text-content-primary",
       )}
     >
