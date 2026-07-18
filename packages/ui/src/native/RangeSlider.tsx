@@ -7,6 +7,7 @@ import {
   type LayoutChangeEvent,
 } from "react-native";
 import { cx } from "../cx";
+import { a11yPercent, sliderRatio } from "./sliderMath";
 
 const THUMB_SIZE = 24;
 
@@ -117,10 +118,9 @@ export function RangeSlider({
     }),
   ).current;
 
-  const span = max - min || 1;
   const [low, high] = value;
-  const lowRatio = (Math.min(Math.max(low, min), max) - min) / span;
-  const highRatio = (Math.min(Math.max(high, min), max) - min) / span;
+  const lowRatio = sliderRatio(low, min, max);
+  const highRatio = sliderRatio(high, min, max);
   const thumbLeft = (ratio: number) =>
     trackWidth > 0
       ? Math.min(Math.max(ratio * trackWidth - THUMB_SIZE / 2, -THUMB_SIZE / 2), trackWidth - THUMB_SIZE / 2)
@@ -140,7 +140,10 @@ export function RangeSlider({
         onLayout={handleLayout}
         pointerEvents={disabled ? "none" : "auto"}
         accessibilityRole="adjustable"
-        accessibilityValue={{ min, max, now: low }}
+        // Whole-number percent (min:0/max:100), never the raw domain value —
+        // Fabric types accessibilityValue as int; a fractional `now` crashes
+        // createNode. See sliderMath.ts.
+        accessibilityValue={{ min: 0, max: 100, now: a11yPercent(low, min, max) }}
         className="h-6 justify-center"
         {...panResponder.panHandlers}
       >
