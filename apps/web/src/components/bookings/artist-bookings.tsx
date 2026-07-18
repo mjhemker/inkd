@@ -192,7 +192,7 @@ function RequestRow({
               </span>
               <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
               {request.has_medical_flags && (
-                <Badge variant="warning">
+                <Badge variant="danger">
                   <Icon name="shield" size={11} /> Medical
                 </Badge>
               )}

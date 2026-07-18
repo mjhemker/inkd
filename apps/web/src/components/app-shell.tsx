@@ -97,14 +97,17 @@ export function AppShell({
   );
 }
 
-/** Ember count pill for nav attention badges (9+ cap). */
+/** Alert-red count pill for nav attention badges (9+ cap). Red = "needs your
+ * attention" (danger ramp), distinct from ember, which is reserved for FLASH /
+ * brand accents. `danger-600` (#DC2626) holds AA with the near-white numerals
+ * in both themes and stays ≥3:1 against the chrome surface it sits on. */
 function NavBadge({ count, className }: { count: number; className?: string }) {
   if (count <= 0) return null;
   return (
     <span
       aria-hidden
       className={cx(
-        "grid h-5 min-w-5 place-items-center rounded-full bg-surface-ember px-1.5 font-mono text-[10px] font-bold leading-none text-brand-on-ember",
+        "grid h-5 min-w-5 place-items-center rounded-full bg-danger-600 px-1.5 font-mono text-[10px] font-bold leading-none text-neutral-50",
         className,
       )}
     >

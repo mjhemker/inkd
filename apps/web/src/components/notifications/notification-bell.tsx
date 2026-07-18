@@ -17,7 +17,7 @@ import { NotificationRow } from "./notification-row";
 const DROPDOWN_LIMIT = 10;
 
 /**
- * Header bell: unread badge (solid ember stamp when > 0) + a dropdown panel
+ * Header bell: unread badge (solid alert-red stamp when > 0) + a dropdown panel
  * with the 10 most recent notifications. Realtime-backed via
  * `useUnreadNotificationCount` / `useNotifications` (postgres_changes INSERT
  * on `public.notifications`, scoped to the signed-in profile).
@@ -74,7 +74,7 @@ export function NotificationBell() {
         {unreadCount > 0 && (
           <span
             aria-hidden
-            className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-surface-ember px-1 font-mono text-[10px] font-bold leading-none text-brand-on-ember"
+            className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-danger-600 px-1 font-mono text-[10px] font-bold leading-none text-neutral-50"
           >
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>

@@ -4,7 +4,7 @@
  * Dev-only preview harness for the artist BOOKINGS inbox — the real
  * `ArtistBookings` (Inbox / Pipeline / Calendar sub-tabs + the request rows)
  * against an offline mock client. Exists to screenshot the restyled sub-tabs
- * and the "New" (violet) vs "Medical" (ember) badge differentiation on one
+ * and the "New" (violet) vs "Medical" (alert-red) badge differentiation on one
  * inbox row. Never linked from product nav. Not for production use.
  */
 import { useMemo } from "react";
