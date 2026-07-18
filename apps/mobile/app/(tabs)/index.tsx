@@ -41,11 +41,13 @@ import {
 import { FeedCard } from "@/components/feed/FeedCard";
 import { FeedFilterSheet } from "@/components/feed/FeedFilterSheet";
 import { PostDetailSheet } from "@/components/feed/PostDetailSheet";
-import { StyleFilterRow } from "@/components/feed/StyleFilterRow";
 import { useTheme } from "@/providers/theme";
 
+// Label is "Explore" (not "Discover") so this subtab doesn't collide with the
+// Discover nav tab; the scope VALUE stays "discover" so filter/query state is
+// untouched.
 const SCOPE_TABS: TabItem[] = [
-  { value: "discover", label: "Discover" },
+  { value: "discover", label: "Explore" },
   { value: "following", label: "Following" },
 ];
 
@@ -81,10 +83,6 @@ export default function HomeScreen() {
   const showReveal =
     scope === "discover" && drop.status === "ready" && !!drop.card && !revealDismissed;
 
-  // The chip row is a quick SINGLE-style filter; the sheet handles multi-select.
-  const chipSelected = filter.styles.length === 1 ? filter.styles[0] ?? null : null;
-  const selectStyleChip = (slug: string | null) =>
-    setFilter({ ...filter, styles: slug ? [slug] : [] });
   const artistFilters = feedArtistFilterParams(filter);
   const activeChips = describeFeedFilters(filter, styles);
 
@@ -96,7 +94,11 @@ export default function HomeScreen() {
     isFetchingNextPage,
     fetchNextPage,
     refetch,
-  } = useFeedItems(scope, { styleSlugs: filter.styles, artistFilters });
+  } = useFeedItems(scope, {
+    styleSlugs: filter.styles,
+    styleQuery: filter.styleQuery,
+    artistFilters,
+  });
 
   const header = (
     <View className="gap-5 pb-4">
@@ -122,36 +124,34 @@ export default function HomeScreen() {
             </Pressable>
           }
         />
-        <Tabs
-          value={scope}
-          onValueChange={(value) => setScope(value as FeedScope)}
-          items={SCOPE_TABS}
-        />
-      </View>
-      <View className="flex-row items-center gap-2 pr-6">
-        <View className="min-w-0 flex-1">
-          <StyleFilterRow styles={styles} selectedSlug={chipSelected} onSelect={selectStyleChip} />
+        <View className="flex-row items-center justify-between gap-2">
+          <Tabs
+            value={scope}
+            onValueChange={(value) => setScope(value as FeedScope)}
+            items={SCOPE_TABS}
+          />
+          <Pressable
+            onPress={() => setFiltersOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Open filters"
+            hitSlop={4}
+            className={
+              hasActiveFeedFilters(filter)
+                ? "flex-row items-center gap-1.5 rounded-sm border border-brand bg-brand/10 px-3 py-2"
+                : "flex-row items-center gap-1.5 rounded-sm border border-border-subtle bg-surface-raised px-3 py-2"
+            }
+          >
+            <Icon name="settings" size={13} color={colors.text.secondary} />
+            <Text className="font-mono text-[11px] font-semibold uppercase tracking-widest text-content-secondary">
+              Filters
+            </Text>
+            {activeFeedFilterCount(filter) > 0 ? (
+              <View className="h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1">
+                <Text className="text-[10px] font-bold text-brand-on">{activeFeedFilterCount(filter)}</Text>
+              </View>
+            ) : null}
+          </Pressable>
         </View>
-        <Pressable
-          onPress={() => setFiltersOpen(true)}
-          accessibilityRole="button"
-          accessibilityLabel="Open filters"
-          className={
-            hasActiveFeedFilters(filter)
-              ? "flex-row items-center gap-1.5 rounded-sm border border-brand bg-brand/10 px-3 py-1.5"
-              : "flex-row items-center gap-1.5 rounded-sm border border-border-subtle bg-surface-raised px-3 py-1.5"
-          }
-        >
-          <Icon name="settings" size={13} color={colors.text.secondary} />
-          <Text className="font-mono text-[11px] font-semibold uppercase tracking-widest text-content-secondary">
-            Filters
-          </Text>
-          {activeFeedFilterCount(filter) > 0 ? (
-            <View className="h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1">
-              <Text className="text-[10px] font-bold text-brand-on">{activeFeedFilterCount(filter)}</Text>
-            </View>
-          ) : null}
-        </Pressable>
       </View>
 
       {activeChips.length > 0 ? (
