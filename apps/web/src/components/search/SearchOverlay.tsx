@@ -1,15 +1,22 @@
 "use client";
 
 /**
- * Global search overlay — a command-palette modal (⌘K / Ctrl+K, or the top-bar
- * search button). Searches across artists, shops, styles and cities (see
- * `globalSearch` in @inkd/core for the deliberate client-account exclusion).
+ * Global search overlay — a header-anchored dropdown (⌘K / Ctrl+K, or the
+ * top-bar search button). It renders as an absolutely-positioned panel beneath
+ * the header search control (its `relative` wrapper), expanding downward over
+ * the header: input on top, grouped results below, footer hints at the bottom.
+ * Searches across artists, shops, styles and cities (see `globalSearch` in
+ * @inkd/core for the deliberate client-account exclusion).
  *
  * Grouped placard results, full keyboard navigation (↑/↓ to move, ↵ to open,
  * esc to close), debounced queries, trgm typo-tolerance from the RPCs, and
  * local-only recent searches. Clients are NOT searchable by design — only
  * public entities (artists / shops) and the taxonomy/geo that route into
  * discovery.
+ *
+ * NOTE: because it positions with `absolute`, callers must render it inside a
+ * `position: relative` container (the app TopBar and the /dev/search-preview
+ * harness both do).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -130,17 +137,19 @@ export function SearchOverlay({ open, onClose, initialQuery = "" }: SearchOverla
   const nextIdx = () => (idx += 1);
 
   return (
-    <div
-      className="fixed inset-0 z-[60] flex items-start justify-center bg-black/70 p-4 pt-[10vh] backdrop-blur-sm"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
+    <>
+      {/* Transparent click-catcher: closes on any outside click without dimming
+          the page — this reads as a header dropdown, not a full-screen modal. */}
+      <div
+        className="fixed inset-0 z-40"
+        aria-hidden
+        onMouseDown={onClose}
+      />
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Search INKD"
-        className="flex max-h-[80vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-border-subtle bg-surface-raised shadow-2xl"
+        className="absolute right-0 top-[calc(100%+8px)] z-50 flex max-h-[min(72vh,34rem)] w-[min(92vw,34rem)] flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface-raised shadow-2xl"
         onKeyDown={onKeyDown}
       >
         {/* Search field */}
@@ -278,17 +287,22 @@ export function SearchOverlay({ open, onClose, initialQuery = "" }: SearchOverla
           )}
         </div>
 
-        {/* Footer hint bar */}
-        <div className="flex items-center justify-between gap-3 border-t border-border-subtle bg-surface-base/60 px-4 py-2 font-mono text-[11px] uppercase tracking-wider text-content-muted">
-          <span className="flex items-center gap-3">
+        {/* Footer: keycap hints on their own row, then the privacy note as a
+            separate muted line below a thin divider (no longer crammed beside
+            the keycaps). */}
+        <div className="flex flex-col gap-2 border-t border-border-subtle bg-surface-base/60 px-4 py-2.5">
+          <span className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-wider text-content-muted">
             <Hint keys="↑ ↓" label="Navigate" />
             <Hint keys="↵" label="Open" />
             <Hint keys="esc" label="Close" />
           </span>
-          <span className="hidden sm:inline">Clients aren&apos;t searchable — INKD keeps them private</span>
+          <span className="flex items-center gap-1.5 border-t border-border-subtle/60 pt-2 text-[11px] text-content-muted">
+            <Icon name="shield" size={11} className="shrink-0" />
+            Clients aren&apos;t searchable — INKD keeps them private
+          </span>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

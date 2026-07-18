@@ -12,7 +12,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { SearchOverlay } from "./SearchOverlay";
 
 interface SearchContextValue {
   open: () => void;
@@ -53,10 +52,10 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     close: () => setIsOpen(false),
   };
 
+  // The overlay itself is rendered by the header search control (see AppShell
+  // TopBar) so it anchors as a dropdown beneath that control, not as a centered
+  // modal. The provider only owns open/close state + the ⌘K shortcut.
   return (
-    <SearchContext.Provider value={value}>
-      {children}
-      <SearchOverlay open={isOpen} onClose={() => setIsOpen(false)} />
-    </SearchContext.Provider>
+    <SearchContext.Provider value={value}>{children}</SearchContext.Provider>
   );
 }

@@ -8,6 +8,7 @@
  */
 import { useMemo } from "react";
 import { InkdProvider } from "@inkd/core/hooks";
+import { Icon } from "@inkd/ui/web";
 import type { InkdSupabaseClient } from "@inkd/core/supabase";
 import { SearchOverlay } from "@/components/search/SearchOverlay";
 
@@ -74,7 +75,22 @@ export default function SearchPreviewPage() {
   return (
     <InkdProvider client={client}>
       <div className="min-h-dvh bg-surface-base">
-        {/* A faint page behind the overlay so the modal reads as an overlay. */}
+        {/* Mock header chrome so the dropdown anchors under a top-right search
+            control exactly as it does in the real app TopBar. */}
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border-subtle bg-surface-chrome/85 px-5 backdrop-blur md:px-8">
+          <span className="font-display text-xl font-bold tracking-tight">INKD</span>
+          <div className="relative ml-auto">
+            <div className="hidden h-10 items-center gap-2 rounded-lg border border-border-subtle bg-surface-raised px-3 text-content-muted md:flex">
+              <Icon name="search" size={16} />
+              <span className="text-sm">Search</span>
+              <kbd className="ml-6 rounded border border-border-subtle bg-surface-overlay px-1.5 py-0.5 font-mono text-[10px] text-content-secondary">
+                ⌘K
+              </kbd>
+            </div>
+            <SearchOverlay open onClose={() => {}} initialQuery="real" />
+          </div>
+        </header>
+        {/* A faint page behind the dropdown so it reads as an overlay panel. */}
         <div className="mx-auto w-full max-w-6xl px-8 py-10 opacity-40">
           <div className="h-8 w-40 rounded bg-surface-raised" />
           <div className="mt-6 grid grid-cols-3 gap-4">
@@ -83,7 +99,6 @@ export default function SearchPreviewPage() {
             ))}
           </div>
         </div>
-        <SearchOverlay open onClose={() => {}} initialQuery="real" />
       </div>
     </InkdProvider>
   );
