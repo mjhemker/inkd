@@ -12,7 +12,7 @@
 import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useColorScheme } from "nativewind";
-import Svg, { Circle, Ellipse, Rect } from "react-native-svg";
+import Svg, { Circle, Ellipse, Path, Rect } from "react-native-svg";
 import { cx } from "../cx";
 import {
   FIGURES,
@@ -25,6 +25,7 @@ import {
   type RegionShape,
   type Shape,
 } from "../bodyMap/regions";
+import { SILHOUETTE_PATHS } from "../bodyMap/silhouette";
 
 export interface BodyMapProps {
   value: PlacementValue | null;
@@ -37,21 +38,23 @@ export interface BodyMapProps {
 /**
  * Theme-aware figure palette. react-native-svg takes concrete color strings (it
  * can't read NativeWind classes), so we resolve the active scheme and pick the
- * matching set. Dark keeps the original faint ink-on-black look; light paints a
- * SOLID mid-tone ink silhouette that reads on the warm paper wall (the old
- * hardcoded near-white fill was invisible in light mode). The selected marker
- * reads on BOTH themes.
+ * matching set. `figure` paints the realistic-figure artwork (`SILHOUETTE_PATHS`)
+ * — a visible ink outline in both themes. Region hit areas are INVISIBLE at
+ * rest (`base`); they only pick up `hover`-ish emphasis via `selected` when
+ * chosen, same as web, so the realistic figure reads cleanly underneath.
  */
 type BodyMapTone = { fill: string; stroke: string };
-type BodyMapPalette = { base: BodyMapTone; selected: BodyMapTone };
+type BodyMapPalette = { figure: BodyMapTone; base: BodyMapTone; selected: BodyMapTone };
 
 const PALETTES: Record<"dark" | "light", BodyMapPalette> = {
   dark: {
-    base: { fill: "rgba(250,250,250,0.05)", stroke: "rgba(250,250,250,0.16)" },
+    figure: { fill: "rgba(250,250,250,0.06)", stroke: "rgba(250,250,250,0.55)" },
+    base: { fill: "transparent", stroke: "transparent" },
     selected: { fill: "#7C3AED", stroke: "#C4B5FD" },
   },
   light: {
-    base: { fill: "rgba(28,25,23,0.14)", stroke: "rgba(28,25,23,0.55)" },
+    figure: { fill: "rgba(28,25,23,0.08)", stroke: "rgba(28,25,23,0.7)" },
+    base: { fill: "transparent", stroke: "transparent" },
     selected: { fill: "#7C3AED", stroke: "#4C1D95" },
   },
 };
@@ -59,6 +62,19 @@ const PALETTES: Record<"dark" | "light", BodyMapPalette> = {
 function useBodyMapPalette(): BodyMapPalette {
   const { colorScheme } = useColorScheme();
   return colorScheme === "light" ? PALETTES.light : PALETTES.dark;
+}
+
+/** The realistic-figure background artwork for a view; purely decorative —
+ * region shapes carry all touch handling. */
+function Silhouette({ view, palette }: { view: PlacementView; palette: BodyMapPalette }) {
+  return (
+    <Path
+      d={SILHOUETTE_PATHS[view]}
+      fill={palette.figure.fill}
+      stroke={palette.figure.stroke}
+      strokeWidth={1.5}
+    />
+  );
 }
 
 function ShapeEl({
@@ -165,6 +181,7 @@ export function BodyMap({ value, onChange, showFallback = true, className }: Bod
             accessibilityRole="image"
             accessibilityLabel="Tattoo placement — tap a region of the body"
           >
+            <Silhouette view={view} palette={palette} />
             {figure.regions.map((rs) => {
               const isSel =
                 !!value && samePlacement(value, { region: rs.region, side: rs.side, view });
@@ -245,6 +262,7 @@ export function BodyMapThumbnail({
       style={{ width: size, aspectRatio: figure.viewBox.w / figure.viewBox.h }}
     >
       <Svg width="100%" height="100%" viewBox={`0 0 ${figure.viewBox.w} ${figure.viewBox.h}`}>
+        <Silhouette view={value.view} palette={palette} />
         {figure.regions.map((rs) => {
           const isSel = samePlacement(value, {
             region: rs.region,
