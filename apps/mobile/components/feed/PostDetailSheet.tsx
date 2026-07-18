@@ -156,14 +156,18 @@ export function PostDetailSheet({ item, onClose, signedIn = true }: PostDetailSh
             <BooksSignal acceptsNewClients={item.artist.acceptsNewClients} />
 
             {item.kind === "post" && (
-              <View className="flex-row items-center gap-4 pt-1">
+              <View className="flex-row items-center gap-2 pt-1">
                 <Pressable
                   onPress={() => toggleLike.mutate({ postId: item.id, liked: !item.likedByViewer })}
                   disabled={!signedIn}
+                  hitSlop={8}
                   accessibilityRole="button"
                   accessibilityLabel={item.likedByViewer ? "Unlike this post" : "Like this post"}
                   accessibilityState={{ selected: item.likedByViewer, disabled: !signedIn }}
-                  className={cx("flex-row items-center gap-1.5", !signedIn && "opacity-40")}
+                  className={cx(
+                    "min-h-10 min-w-10 flex-row items-center justify-center gap-1.5 rounded-sm",
+                    !signedIn && "opacity-40",
+                  )}
                 >
                   <Feather name="heart" size={18} color={item.likedByViewer ? ICON_ACTIVE : colors.text.muted} />
                   <Text className="font-mono text-xs text-content-muted">{item.likeCount}</Text>
@@ -171,10 +175,14 @@ export function PostDetailSheet({ item, onClose, signedIn = true }: PostDetailSh
                 <Pressable
                   onPress={() => toggleSave.mutate({ postId: item.id, saved: !item.savedByViewer })}
                   disabled={!signedIn}
+                  hitSlop={8}
                   accessibilityRole="button"
                   accessibilityLabel={item.savedByViewer ? "Remove from saved" : "Save this post"}
                   accessibilityState={{ selected: item.savedByViewer, disabled: !signedIn }}
-                  className={cx(!signedIn && "opacity-40")}
+                  className={cx(
+                    "min-h-10 min-w-10 items-center justify-center rounded-sm",
+                    !signedIn && "opacity-40",
+                  )}
                 >
                   <Feather name="bookmark" size={18} color={item.savedByViewer ? ICON_ACTIVE : colors.text.muted} />
                 </Pressable>

@@ -107,7 +107,7 @@ export function FeedCard({ item, onOpen, signedIn = true }: FeedCardProps) {
         </View>
 
         {item.kind === "post" ? (
-          <View className="flex-row items-center gap-4 pt-0.5">
+          <View className="flex-row items-center gap-2 pt-0.5">
             <Pressable
               onPress={() => toggleLike.mutate({ postId: item.id, liked: !item.likedByViewer })}
               disabled={!signedIn}
@@ -115,11 +115,14 @@ export function FeedCard({ item, onOpen, signedIn = true }: FeedCardProps) {
               accessibilityRole="button"
               accessibilityLabel={item.likedByViewer ? "Unlike this post" : "Like this post"}
               accessibilityState={{ selected: item.likedByViewer, disabled: !signedIn }}
-              className={cx("flex-row items-center gap-1.5", !signedIn && "opacity-40")}
+              className={cx(
+                "min-h-10 min-w-10 flex-row items-center justify-center gap-1.5 rounded-sm",
+                !signedIn && "opacity-40",
+              )}
             >
               <Feather
                 name="heart"
-                size={16}
+                size={18}
                 color={item.likedByViewer ? ICON_ACTIVE : colors.text.muted}
               />
               <Text className="font-mono text-xs text-content-muted">{item.likeCount}</Text>
@@ -131,11 +134,14 @@ export function FeedCard({ item, onOpen, signedIn = true }: FeedCardProps) {
               accessibilityRole="button"
               accessibilityLabel={item.savedByViewer ? "Remove from saved" : "Save this post"}
               accessibilityState={{ selected: item.savedByViewer, disabled: !signedIn }}
-              className={cx(!signedIn && "opacity-40")}
+              className={cx(
+                "min-h-10 min-w-10 items-center justify-center rounded-sm",
+                !signedIn && "opacity-40",
+              )}
             >
               <Feather
                 name="bookmark"
-                size={16}
+                size={18}
                 color={item.savedByViewer ? ICON_ACTIVE : colors.text.muted}
               />
             </Pressable>
