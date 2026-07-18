@@ -1,5 +1,4 @@
 import { Text, View } from "react-native";
-import { router } from "expo-router";
 import { Tabs } from "@inkd/ui/native";
 import { useAttentionCounts } from "@inkd/core/hooks";
 
@@ -7,17 +6,12 @@ import { STUDIO_SECTIONS, type StudioSection } from "@/lib/nav";
 
 /**
  * Segmented header for the Studio tab: Dashboard | Bookings | AI staff |
- * Settings. Each screen lives in the Studio tab's nested stack
- * (app/(tabs)/studio/*), so switching sections keeps the bottom tab bar
- * visible throughout. Uses the shared `Tabs` primitive as-is (styling is owned
- * by another agent — do not restyle here); per-item attention badges are fed
- * through the primitive's additive `badge` slot, matching the web nav.
- * Switching sections `replace`s the current route so the sections stay peers
- * with no back-stack pile-up.
+ * Settings. The Studio tab is a SINGLE screen — selecting a segment swaps the
+ * body below IN PLACE via `onSelect` (local state on StudioScreen), with no
+ * navigation and no slide. Uses the shared `Tabs` primitive as-is (styling is
+ * owned by another agent — do not restyle here); per-item attention badges are
+ * fed through the primitive's additive `badge` slot, matching the web nav.
  */
-const ROUTE_BY_SECTION: Record<StudioSection, string> = Object.fromEntries(
-  STUDIO_SECTIONS.map((s) => [s.value, s.route]),
-) as Record<StudioSection, string>;
 
 /** Ember attention pill (9+ cap), matching the web nav badges. */
 function SegmentBadge({ count }: { count: number }) {
@@ -30,7 +24,13 @@ function SegmentBadge({ count }: { count: number }) {
   );
 }
 
-export function StudioSegments({ active }: { active: StudioSection }) {
+export function StudioSegments({
+  active,
+  onSelect,
+}: {
+  active: StudioSection;
+  onSelect: (section: StudioSection) => void;
+}) {
   const attention = useAttentionCounts();
   const countFor: Partial<Record<StudioSection, number>> = {
     bookings: attention.bookings,
@@ -49,7 +49,7 @@ export function StudioSegments({ active }: { active: StudioSection }) {
       value={active}
       items={items}
       onValueChange={(value) => {
-        if (value !== active) router.replace(ROUTE_BY_SECTION[value as StudioSection] as never);
+        if (value !== active) onSelect(value as StudioSection);
       }}
     />
   );

@@ -1,9 +1,9 @@
 import { Pressable, Text, View } from "react-native";
-import { router } from "expo-router";
 import { Badge, Card, Icon } from "@inkd/ui/native";
 import type { AgentSettings } from "@inkd/core";
 
 import { AUTONOMY_LABEL, STAFF } from "@/lib/aiStaff";
+import { useStudioNav } from "@/components/studio/StudioNav";
 import { useAiColors } from "./shared";
 
 /** Front Desk, Booking Manager + Studio Manager as staff, with autonomy +
@@ -16,6 +16,7 @@ export function StaffOverview({
   pendingCount: number;
 }) {
   const AI_COLORS = useAiColors();
+  const goToSegment = useStudioNav();
   const autonomy = settings?.autonomy ?? "draft_only";
   const enabled: Record<string, boolean> = {
     front_desk: settings?.front_desk_enabled ?? true,
@@ -26,7 +27,7 @@ export function StaffOverview({
   return (
     <View className="gap-3">
       <Pressable
-        onPress={() => router.push("/studio/settings" as never)}
+        onPress={() => goToSegment("settings")}
         className="flex-row items-center justify-between rounded-sm border border-border-subtle bg-surface-raised px-3 py-2.5"
         accessibilityRole="button"
       >
