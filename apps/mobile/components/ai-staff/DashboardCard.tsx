@@ -1,16 +1,18 @@
 import { Text, View } from "react-native";
-import { router } from "expo-router";
 import { Badge, Card, Icon } from "@inkd/ui/native";
 import { useAgentActions, useCurrentArtistProfile } from "@inkd/core/hooks";
 
 import { STATUS_META, actionTypeMeta, formatRelative } from "@/lib/aiStaff";
+import { useStudioNav } from "@/components/studio/StudioNav";
 import { useAiColors } from "./shared";
 import { StaffNameplate } from "./StaffNameplate";
 
-/** Dashboard "AI staff activity" card — pending count + latest, taps into
- * /studio/ai. Degrades to a calm prompt when there's nothing (or no DB). */
+/** Dashboard "AI staff activity" card — pending count + latest. Taps switch to
+ * the AI staff segment in place (or push /studio/ai from outside the Studio
+ * screen). Degrades to a calm prompt when there's nothing (or no DB). */
 export function AiStaffDashboardCard() {
   const AI_COLORS = useAiColors();
+  const goToSegment = useStudioNav();
   const { data: artist } = useCurrentArtistProfile();
   const actionsQ = useAgentActions(artist?.id, { limit: 8 });
   const actions = actionsQ.data ?? [];
@@ -18,7 +20,7 @@ export function AiStaffDashboardCard() {
   const latest = actions.slice(0, 3);
 
   return (
-    <Card padding="none" variant="interactive" onPress={() => router.push("/studio/ai")} className="overflow-hidden">
+    <Card padding="none" variant="interactive" onPress={() => goToSegment("ai")} className="overflow-hidden">
       <View className="flex-row items-center justify-between border-b border-border-subtle px-4 py-3">
         <View className="flex-row items-center gap-2">
           <Icon name="sparkles" size={18} color={AI_COLORS.accent} />

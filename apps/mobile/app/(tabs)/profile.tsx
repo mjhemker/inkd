@@ -86,53 +86,53 @@ function ProfileScreenContent() {
 
   return (
     <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
+      {/* Header block removed (founder spec): the profile card is the very top
+          of the screen, with the notification bell docked in its top-right. */}
       <ScrollView className="flex-1" contentContainerClassName="gap-6 px-6 py-8">
-        <ScreenHeader
-          eyebrow="PROFILE"
-          title="Your profile"
-          subtitle={isArtist ? "Manage your portfolio, posts, and flash." : "Your public presence on INKD."}
-          action={<NotificationBellButton />}
-        />
-
         <Card className="gap-4">
-          <View className="flex-row items-start gap-4">
-            <Avatar
-              src={profile.avatar_url ?? undefined}
-              name={profile.display_name ?? profile.handle ?? "You"}
-              size="lg"
-            />
-            <View className="flex-1 gap-1">
-              <View className="flex-row flex-wrap items-center gap-2">
-                <Text className="font-display text-xl text-content-primary">
-                  {profile.display_name || "Add your name"}
-                </Text>
-                {isArtist && (
-                  <Badge variant={artist?.is_published ? "success" : "outline"} size="sm">
-                    {artist?.is_published ? "Published" : "Unpublished"}
-                  </Badge>
+          <View className="flex-row items-start justify-between gap-3">
+            <View className="flex-1 flex-row items-start gap-4">
+              <Avatar
+                src={profile.avatar_url ?? undefined}
+                name={profile.display_name ?? profile.handle ?? "You"}
+                size="xl"
+              />
+              <View className="flex-1 gap-1">
+                <View className="flex-row flex-wrap items-center gap-2">
+                  <Text className="font-display text-xl text-content-primary">
+                    {profile.display_name || "Add your name"}
+                  </Text>
+                  {isArtist && (
+                    <Badge variant={artist?.is_published ? "success" : "outline"} size="sm">
+                      {artist?.is_published ? "Published" : "Unpublished"}
+                    </Badge>
+                  )}
+                </View>
+                {profile.handle && (
+                  <Text className="font-mono text-sm text-content-muted">@{profile.handle}</Text>
+                )}
+                {isArtist && artist?.tagline && (
+                  <Text className="text-sm text-content-secondary">{artist.tagline}</Text>
+                )}
+                {/* Classification ("Independent") + travel tags, left-aligned
+                    with the name/handle block (not a floating row). */}
+                {isArtist && artist && (
+                  <View className="mt-1 flex-row flex-wrap gap-1.5">
+                    <Badge variant="outline" size="sm">
+                      {classificationLabel(artist.classification)}
+                    </Badge>
+                    {travelBadges(artist).map((label) => (
+                      <Badge key={label} variant="outline" size="sm">
+                        {label}
+                      </Badge>
+                    ))}
+                  </View>
                 )}
               </View>
-              {profile.handle && (
-                <Text className="font-mono text-sm text-content-muted">@{profile.handle}</Text>
-              )}
-              {isArtist && artist?.tagline && (
-                <Text className="text-sm text-content-secondary">{artist.tagline}</Text>
-              )}
             </View>
+            {/* Notification bell — top-right of the profile card. */}
+            <NotificationBellButton />
           </View>
-
-          {isArtist && artist && (
-            <View className="flex-row flex-wrap gap-1.5">
-              <Badge variant="outline" size="sm">
-                {classificationLabel(artist.classification)}
-              </Badge>
-              {travelBadges(artist).map((label) => (
-                <Badge key={label} variant="outline" size="sm">
-                  {label}
-                </Badge>
-              ))}
-            </View>
-          )}
 
           <View className="flex-row gap-2">
             {isArtist && artist?.is_published && profile.handle && (

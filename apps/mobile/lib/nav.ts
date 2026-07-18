@@ -29,13 +29,21 @@ export const HUB_TAB_ROUTES = [
 ] as const;
 
 /**
- * The bottom-tab labels a role sees, in order. Clients get four tabs; artists
- * get the same four plus Studio. Mirrors app/(tabs)/_layout.tsx `href` gating —
- * kept here so the contract is unit-testable without a renderer.
+ * The bottom-tab labels a role sees, in order (both roles get exactly four).
+ * Mirrors app/(tabs)/_layout.tsx `href` gating — kept here so the contract is
+ * unit-testable without a renderer.
+ *
+ *   Clients → Home · Discover · Messages · Profile
+ *   Artists → Home · Discover · Profile · Studio
+ *
+ * Artists have NO Messages tab: their inbox is a bell-style icon in the Studio
+ * dashboard header (top-right), freeing the fourth slot for Studio. Clients
+ * keep Messages on the bar. Discover is slot 2 for both.
  */
 export function visibleTabLabels(isArtist: boolean): readonly string[] {
-  const base = ["Home", "Discover", "Messages", "Profile"] as const;
-  return isArtist ? [...base, "Studio"] : [...base];
+  return isArtist
+    ? ["Home", "Discover", "Profile", "Studio"]
+    : ["Home", "Discover", "Messages", "Profile"];
 }
 
 /**

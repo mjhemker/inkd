@@ -44,7 +44,10 @@ export function ProgressBar({
       ) : null}
       <View
         accessibilityRole="progressbar"
-        accessibilityValue={{ min: 0, max, now: clamped }}
+        // Whole-number percent — Fabric types accessibilityValue as int, so a
+        // fractional `max`/`now` (e.g. a 0..1 progress value) crashes
+        // createNode. Report 0–100 instead.
+        accessibilityValue={{ min: 0, max: 100, now: Math.round(percent) }}
         className={cx("w-full overflow-hidden rounded-sm bg-surface-overlay", trackHeight[size])}
       >
         <View
