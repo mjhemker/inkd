@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import {
   Avatar,
@@ -34,21 +34,31 @@ const TABS: TabItem[] = [
   { value: "info", label: "Info" },
 ];
 
-// Deterministic violet-leaning hero gradient so every artist page has a
-// distinct wash before real cover art exists — same palette family as the
-// landing page's gallery wall, keyed off the handle so it's stable per artist.
-const GRADIENTS = [
+// Deterministic hero wash so every artist page has a distinct backdrop before
+// real cover art exists — keyed off the handle so it's stable per artist. The
+// hero is theme-aware (no longer a fixed dark island): a deep violet-leaning
+// wash on the near-black wall in DARK, a soft paper-tinted wash in LIGHT. Both
+// variants share the same per-handle index so the identity stays consistent
+// across a theme flip; the active one is chosen by `.profile-hero` CSS.
+const HERO_GRADIENTS_DARK = [
   "linear-gradient(160deg,#241733,#0a0a0b 70%)",
   "linear-gradient(160deg,#1c1340,#0a0a0b 70%)",
   "linear-gradient(160deg,#331327,#0a0a0b 70%)",
   "linear-gradient(160deg,#15213a,#0a0a0b 70%)",
   "linear-gradient(160deg,#2a1030,#0a0a0b 70%)",
 ];
+const HERO_GRADIENTS_LIGHT = [
+  "linear-gradient(160deg,#ece3f7,#f6f2e9 72%)",
+  "linear-gradient(160deg,#e6e2f8,#f6f2e9 72%)",
+  "linear-gradient(160deg,#f4e2ee,#f6f2e9 72%)",
+  "linear-gradient(160deg,#e2ebf6,#f6f2e9 72%)",
+  "linear-gradient(160deg,#efe1f2,#f6f2e9 72%)",
+];
 
-function gradientFor(seed: string): string {
+function gradientIndexFor(seed: string): number {
   let hash = 0;
   for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
-  return GRADIENTS[hash % GRADIENTS.length]!;
+  return hash % HERO_GRADIENTS_DARK.length;
 }
 
 export function ArtistProfileView({ data }: { data: PublicArtistData }) {
@@ -57,6 +67,7 @@ export function ArtistProfileView({ data }: { data: PublicArtistData }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const displayName = profile.display_name || profile.handle || "Artist";
+  const gradientIndex = gradientIndexFor(profile.handle ?? profile.id);
   const primaryLocation = data.studioLocations.find((l) => l.is_primary) ?? data.studioLocations[0];
   const reviewSummary = useMemo(
     () => summarizeReviews(data.reviews.filter((r) => r.is_public)),
@@ -88,13 +99,18 @@ export function ArtistProfileView({ data }: { data: PublicArtistData }) {
         </div>
       )}
 
-      {/* Hero — a FIXED dark matte in both themes. `surface-dark-fixed` pins the
-          whole panel to the dark token ramp so the name, handle, tagline, chips
-          and badges stay light-on-dark even under the light theme (otherwise
-          theme tokens flip to dark ink and vanish against the dark gradient). */}
+      {/* Hero — theme-aware (NOT a fixed dark island). Descendants use ordinary
+          theme tokens, so text is light-on-dark in dark mode and ink-on-paper in
+          light mode. `.profile-hero` picks the matching per-handle gradient var
+          for the active theme (see globals.css). */}
       <section
-        className="surface-dark-fixed relative overflow-hidden border-b border-border-subtle text-content-primary"
-        style={{ background: gradientFor(profile.handle ?? profile.id) }}
+        className="profile-hero relative overflow-hidden border-b border-border-subtle text-content-primary"
+        style={
+          {
+            "--hero-grad-dark": HERO_GRADIENTS_DARK[gradientIndex],
+            "--hero-grad-light": HERO_GRADIENTS_LIGHT[gradientIndex],
+          } as CSSProperties
+        }
       >
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-12 md:px-8 md:py-16">
           <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-end">
@@ -102,7 +118,7 @@ export function ArtistProfileView({ data }: { data: PublicArtistData }) {
               src={profile.avatar_url ?? undefined}
               name={displayName}
               size="xl"
-              className="border-4 border-surface-base"
+              className="border-4 border-surface-base sm:h-24 sm:w-24 lg:h-28 lg:w-28 lg:text-4xl"
             />
             <div className="flex flex-1 flex-col gap-2">
               <h1 className="font-display text-4xl font-extrabold tracking-tight text-content-primary sm:text-5xl">

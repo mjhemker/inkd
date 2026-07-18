@@ -117,6 +117,21 @@
   --color-status-info: 59 130 246;
 }
 
+/* --- Public profile hero (theme-aware) ------------------------------------
+   The artist / shop public hero is NO LONGER a fixed dark island. It follows
+   the active theme: a deep violet-leaning wash on the near-black wall in dark,
+   a soft paper-tinted wash in light — so name, handle, chips and badges read as
+   normal ink-on-paper in light mode. The per-handle gradient is passed inline
+   as two custom props (`--hero-grad-dark` / `--hero-grad-light`); this rule
+   picks the right one for the current theme. Descendants use ordinary theme
+   tokens (text-content-*, Badge variants), so nothing is pinned to dark. */
+.profile-hero {
+  background: var(--hero-grad-dark);
+}
+[data-theme="light"] .profile-hero {
+  background: var(--hero-grad-light);
+}
+
 html,
 body {
   height: 100%;

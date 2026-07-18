@@ -1,21 +1,31 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { Avatar, Badge, Card, Eyebrow, Icon, Logo } from "@inkd/ui/web";
 import { shopModeLabel, shopRoleLabel } from "@inkd/core/domain";
 import { classificationLabel } from "@/lib/format";
 import type { PublicShopData } from "../data";
 
-// Deterministic violet-leaning hero wash, keyed off the shop handle — same
-// family as the artist page so shop + artist pages read as one system.
-const GRADIENTS = [
+// Deterministic hero wash, keyed off the shop handle — same family as the
+// artist page so shop + artist pages read as one system. Theme-aware (NOT a
+// fixed dark island): a deep wash on the near-black wall in DARK, a soft
+// paper-tinted wash in LIGHT. Both share the per-handle index; `.profile-hero`
+// (globals.css) chooses the active one so text reads correctly in both themes.
+const HERO_GRADIENTS_DARK = [
   "linear-gradient(160deg,#241733,#0a0a0b 70%)",
   "linear-gradient(160deg,#1c1340,#0a0a0b 70%)",
   "linear-gradient(160deg,#331327,#0a0a0b 70%)",
   "linear-gradient(160deg,#15213a,#0a0a0b 70%)",
 ];
-function gradientFor(seed: string): string {
+const HERO_GRADIENTS_LIGHT = [
+  "linear-gradient(160deg,#ece3f7,#f6f2e9 72%)",
+  "linear-gradient(160deg,#e6e2f8,#f6f2e9 72%)",
+  "linear-gradient(160deg,#f4e2ee,#f6f2e9 72%)",
+  "linear-gradient(160deg,#e2ebf6,#f6f2e9 72%)",
+];
+function gradientIndexFor(seed: string): number {
   let hash = 0;
   for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
-  return GRADIENTS[hash % GRADIENTS.length]!;
+  return hash % HERO_GRADIENTS_DARK.length;
 }
 
 export function ShopProfileView({ data }: { data: PublicShopData }) {
@@ -26,6 +36,7 @@ export function ShopProfileView({ data }: { data: PublicShopData }) {
     locations[0];
   const roster = members.filter((m) => m.role !== "owner");
   const owner = members.find((m) => m.role === "owner");
+  const gradientIndex = gradientIndexFor(shop.handle);
 
   return (
     <div className="min-h-dvh bg-surface-base text-content-primary">
@@ -52,10 +63,15 @@ export function ShopProfileView({ data }: { data: PublicShopData }) {
         </div>
       )}
 
-      {/* Hero */}
+      {/* Hero — theme-aware (see globals.css `.profile-hero`). */}
       <section
-        className="relative overflow-hidden border-b border-border-subtle"
-        style={{ background: gradientFor(shop.handle) }}
+        className="profile-hero relative overflow-hidden border-b border-border-subtle text-content-primary"
+        style={
+          {
+            "--hero-grad-dark": HERO_GRADIENTS_DARK[gradientIndex],
+            "--hero-grad-light": HERO_GRADIENTS_LIGHT[gradientIndex],
+          } as CSSProperties
+        }
       >
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-12 md:px-8 md:py-16">
           <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-end">
@@ -64,7 +80,7 @@ export function ShopProfileView({ data }: { data: PublicShopData }) {
               name={shop.name}
               size="xl"
               shape="square"
-              className="border-4 border-surface-base"
+              className="border-4 border-surface-base sm:h-24 sm:w-24 lg:h-28 lg:w-28 lg:text-4xl"
             />
             <div className="flex flex-1 flex-col gap-2">
               <h1 className="font-display text-4xl font-extrabold tracking-tight sm:text-5xl">
