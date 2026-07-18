@@ -13,9 +13,15 @@ import {
   HUB_TAB_ROUTES,
 } from "./nav.ts";
 
-test("clients see four tabs, artists five (Studio last)", () => {
+test("both roles see four tabs; artists swap Messages for Studio", () => {
+  // Clients keep Messages on the bar.
   assert.deepEqual(visibleTabLabels(false), ["Home", "Discover", "Messages", "Profile"]);
-  assert.deepEqual(visibleTabLabels(true), ["Home", "Discover", "Messages", "Profile", "Studio"]);
+  // Artists drop Messages (it moves to the Studio dashboard header) and gain
+  // Studio in the fourth slot. Discover stays slot 2 for both.
+  assert.deepEqual(visibleTabLabels(true), ["Home", "Discover", "Profile", "Studio"]);
+  assert.equal(visibleTabLabels(true).includes("Messages"), false);
+  assert.equal(visibleTabLabels(true)[1], "Discover");
+  assert.equal(visibleTabLabels(false)[1], "Discover");
 });
 
 test("studio hub keeps exactly the five persistent surfaces", () => {
