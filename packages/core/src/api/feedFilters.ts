@@ -1,17 +1,20 @@
 /**
  * Feed filter panel state (SPEC §4 — the feed's "filters that actually work").
  *
- * The panel exposes multi-select styles, location (city quick-picks + near-me),
- * a dual-thumb price range, and a books-open toggle — the same vocabulary as
- * discover, so we REUSE `DiscoverFilterState` rather than inventing a parallel
- * shape. What differs is APPLICATION: in the feed, `styles` filters posts by
- * their post_styles tags (to stay in sync with the style chip row), while
- * location/price/books resolve to eligible artist ids via `feed_filter_artist_ids`.
+ * The panel exposes multi-select styles (plus a free-text "Other" style query
+ * for anything outside the taxonomy), location (city quick-picks + near-me), a
+ * dual-thumb price range, and a books-open toggle — the same vocabulary as
+ * discover, so `FeedFilterState` extends `DiscoverFilterState` rather than
+ * inventing a parallel shape. What differs is APPLICATION: in the feed,
+ * `styles`/`styleQuery` filter posts (by post_styles tags, or by a text match
+ * against style names/captions for "Other"), while location/price/books
+ * resolve to eligible artist ids via `feed_filter_artist_ids`.
  *
- * This module is the bridge between that UI state and (a) the feed query inputs
- * and (b) the inline active-filter chips. URL (de)serialization is inherited
- * from discover's `discoverFilterToQuery` / `queryToDiscoverFilter` so feed
- * filters are shareable/back-button-safe on web with zero new code.
+ * This module is the bridge between that UI state and (a) the feed query
+ * inputs and (b) the inline active-filter chips. URL (de)serialization wraps
+ * discover's `discoverFilterToQuery` / `queryToDiscoverFilter` and adds the
+ * one feed-only param (`styleOther`) so feed filters stay shareable/
+ * back-button-safe on web.
  */
 import {
   EMPTY_FILTER_STATE,
@@ -20,13 +23,23 @@ import {
   isPriceNarrowed,
   usdToCents,
   DISCOVER_CITIES,
+  discoverFilterToQuery,
+  queryToDiscoverFilter,
   type DiscoverFilterState,
 } from "./discover";
 import type { FeedArtistFilters } from "./feed";
 import type { Style } from "../types/rows";
 
-/** The feed panel binds to the same shape discover uses. */
-export type FeedFilterState = DiscoverFilterState;
+/**
+ * The feed panel binds to the same shape discover uses, plus one feed-only
+ * addition: `styleQuery`, the free-text value typed under the Styles list's
+ * "Other" option (for a style that isn't in the taxonomy). It's optional so
+ * every existing `DiscoverFilterState` value still satisfies this type.
+ */
+export interface FeedFilterState extends DiscoverFilterState {
+  /** Free-text "Other" style query — matched against style names / captions. */
+  styleQuery?: string;
+}
 
 export const EMPTY_FEED_FILTER: FeedFilterState = EMPTY_FILTER_STATE;
 
@@ -38,7 +51,8 @@ export function hasActiveFeedFilters(f: FeedFilterState): boolean {
     f.booksOpen ||
     f.city != null ||
     (f.lat != null && f.lng != null) ||
-    f.state != null
+    f.state != null ||
+    hasStyleQuery(f)
   );
 }
 
@@ -49,7 +63,13 @@ export function activeFeedFilterCount(f: FeedFilterState): number {
   if (isPriceNarrowed(f.priceMinUsd, f.priceMaxUsd)) n += 1;
   if (f.booksOpen) n += 1;
   if (f.city != null || (f.lat != null && f.lng != null)) n += 1;
+  if (hasStyleQuery(f)) n += 1;
   return n;
+}
+
+/** True when the "Other" free-text style query has a non-blank value. */
+export function hasStyleQuery(f: FeedFilterState): boolean {
+  return (f.styleQuery ?? "").trim().length > 0;
 }
 
 /**
@@ -75,7 +95,7 @@ export function feedArtistFilterParams(f: FeedFilterState): FeedArtistFilters {
 // ---------------------------------------------------------------------------
 // Active-filter chips — the inline "what's applied" row with clear-all.
 // ---------------------------------------------------------------------------
-export type FeedChipKind = "style" | "city" | "price" | "books";
+export type FeedChipKind = "style" | "styleQuery" | "city" | "price" | "books";
 
 export interface FeedFilterChip {
   /** Stable key for React + the clear handler. */
@@ -116,6 +136,14 @@ export function describeFeedFilters(
     });
   }
 
+  if (hasStyleQuery(f)) {
+    chips.push({
+      key: "styleQuery",
+      kind: "styleQuery",
+      label: `Other: "${f.styleQuery!.trim()}"`,
+    });
+  }
+
   if (f.city != null || (f.lat != null && f.lng != null)) {
     const city = DISCOVER_CITIES.find((c) => c.slug === f.city);
     chips.push({
@@ -148,6 +176,8 @@ export function clearFeedFilterChip(
   switch (chip.kind) {
     case "style":
       return { ...f, styles: f.styles.filter((s) => s !== chip.styleSlug) };
+    case "styleQuery":
+      return { ...f, styleQuery: undefined };
     case "city":
       return { ...f, city: undefined, lat: undefined, lng: undefined, state: undefined, radiusKm: undefined };
     case "price":
@@ -155,4 +185,25 @@ export function clearFeedFilterChip(
     case "books":
       return { ...f, booksOpen: false };
   }
+}
+
+// ---------------------------------------------------------------------------
+// URL (de)serialization — feed-only wrapper around discover's (de)serializers.
+// Adds one param, `styleOther`, for the "Other" free-text style query so it's
+// shareable/back-button-safe like every other feed filter.
+// ---------------------------------------------------------------------------
+const STYLE_QUERY_PARAM = "styleOther";
+
+/** Serialize the feed filter selection into a query string. */
+export function feedFilterToQuery(f: FeedFilterState): string {
+  const sp = new URLSearchParams(discoverFilterToQuery(f));
+  if (hasStyleQuery(f)) sp.set(STYLE_QUERY_PARAM, f.styleQuery!.trim());
+  return sp.toString();
+}
+
+/** Rehydrate the feed filter selection from a query string. */
+export function queryToFeedFilter(get: (key: string) => string | null): FeedFilterState {
+  const base = queryToDiscoverFilter(get);
+  const styleQuery = get(STYLE_QUERY_PARAM)?.trim() || undefined;
+  return { ...base, styleQuery };
 }

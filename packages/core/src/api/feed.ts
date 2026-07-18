@@ -349,6 +349,10 @@ const feedParamsSchema = z.object({
   // filter posts by post_styles; when both are present they union.
   styleSlug: z.string().optional(),
   styleSlugs: z.array(z.string().min(1)).optional(),
+  // The filter panel's "Other" free-text style query. Not part of the
+  // taxonomy, so it can't restrict candidate posts via `post_styles` up
+  // front like `styleSlugs` does — see the in-JS filter below.
+  styleQuery: z.string().trim().max(120).optional(),
   limit: z.number().int().positive().optional(),
   offset: z.number().int().nonnegative().optional(),
 });
@@ -368,7 +372,7 @@ export async function listFeedItems(
   params: ListFeedParams = {},
 ): Promise<FeedItem[]> {
   const { artistFilters } = params;
-  const { scope, viewerId, styleSlug, styleSlugs, limit, offset } =
+  const { scope, viewerId, styleSlug, styleSlugs, styleQuery, limit, offset } =
     feedParamsSchema.parse(params);
   const pageSize = clampLimit(limit, 12);
   const pageOffset = offset ?? 0;
@@ -523,10 +527,33 @@ export async function listFeedItems(
 
   const merged: FeedItem[] = [...postItems, ...flashCards];
 
+  // "Other" free-text style query (filter panel): a taxonomy style slug
+  // wasn't offered, so match in JS against style names + post captions
+  // instead of a `post_styles` lookup. NOTE: this is an honest client-side
+  // substring filter, not a server-side search — fine at today's page sizes,
+  // but if the query surface grows (or needs ranking) it belongs in a
+  // dedicated RPC (e.g. pg_trgm over captions, mirroring `search_artists`)
+  // rather than filtering an already-paginated page in JS.
+  const filtered = styleQuery ? merged.filter((item) => matchesStyleQuery(item, styleQuery)) : merged;
+
   if (scope === "discover") {
     const affinity = await getViewerAffinityStyleIds(client, followedIds);
-    return rankFeedItems(merged, affinity, itemStyleIds);
+    return rankFeedItems(filtered, affinity, itemStyleIds);
   }
   // Following: pure newest-first (no affinity boost within your own follows).
-  return rankFeedItems(merged, new Set(), itemStyleIds);
+  return rankFeedItems(filtered, new Set(), itemStyleIds);
+}
+
+/** Case-insensitive substring match of a free-text style query against an
+ *  item's style tag names, artist free-text styles, and (for posts) caption.
+ *  Exported for direct unit coverage (see feed.test.ts) — it's the entire
+ *  "Other" style filter, so it's worth pinning independent of the RPC/DB
+ *  plumbing the rest of `listFeedItems` depends on. */
+export function matchesStyleQuery(item: FeedItem, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (q === "") return true;
+  if (item.styleTags.some((t) => t.name.toLowerCase().includes(q))) return true;
+  if (item.artist.styles.some((s) => s.toLowerCase().includes(q))) return true;
+  if (item.kind === "post" && item.caption && item.caption.toLowerCase().includes(q)) return true;
+  return false;
 }

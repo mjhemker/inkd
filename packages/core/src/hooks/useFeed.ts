@@ -48,6 +48,8 @@ export interface UseFeedOptions {
   styleSlug?: string | null;
   /** Filter-panel multi-select styles (post_styles). */
   styleSlugs?: string[];
+  /** Filter-panel "Other" free-text style query (matched in JS — see `listFeedItems`). */
+  styleQuery?: string;
   /** Filter-panel artist-level filters (location / price / books / state). */
   artistFilters?: FeedArtistFilters;
   /** Skip the query (e.g. while auth is still resolving). */
@@ -64,10 +66,11 @@ export function useFeed(scope: FeedScope, options: UseFeedOptions = {}) {
   const { viewerId, isLoading: viewerLoading } = useViewerId();
   const styleSlug = options.styleSlug ?? null;
   const styleSlugs = options.styleSlugs ?? [];
+  const styleQuery = options.styleQuery?.trim() || undefined;
   const artistFilters = options.artistFilters;
 
   return useInfiniteQuery({
-    queryKey: feedQueryKeys.list(scope, styleSlug, viewerId, { styleSlugs, artistFilters }),
+    queryKey: feedQueryKeys.list(scope, styleSlug, viewerId, { styleSlugs, styleQuery, artistFilters }),
     enabled: (options.enabled ?? true) && !viewerLoading,
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
@@ -76,6 +79,7 @@ export function useFeed(scope: FeedScope, options: UseFeedOptions = {}) {
         viewerId,
         styleSlug: styleSlug ?? undefined,
         styleSlugs: styleSlugs.length ? styleSlugs : undefined,
+        styleQuery,
         artistFilters,
         limit: PAGE_SIZE,
         offset: pageParam,
