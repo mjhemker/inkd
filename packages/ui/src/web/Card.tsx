@@ -4,12 +4,15 @@ import { cx } from "../cx";
 export type CardVariant = "default" | "raised" | "outlined" | "interactive";
 export type CardPadding = "none" | "sm" | "md" | "lg";
 
+// Flat hairline cards — the Zine law: only the ONE hero per screen carries a
+// shadow. Every other card is a flat 1px hairline in both themes (elevation
+// shadows removed 2026-07). Emphasis comes from the border, not a drop shadow.
 const variants: Record<CardVariant, string> = {
   default: "bg-surface-raised border border-border-subtle",
-  raised: "bg-surface-overlay border border-border-subtle shadow-md",
+  raised: "bg-surface-overlay border border-border-subtle",
   outlined: "bg-transparent border border-border",
   interactive:
-    "bg-surface-raised border border-border-subtle cursor-pointer hover:border-border-strong hover:shadow-md",
+    "bg-surface-raised border border-border-subtle cursor-pointer hover:border-border-strong",
 };
 
 const paddings: Record<CardPadding, string> = {
@@ -22,6 +25,13 @@ const paddings: Record<CardPadding, string> = {
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: CardVariant;
   padding?: CardPadding;
+  /**
+   * The screen's single hero — when THIS card is the thing to act on (e.g. the
+   * needs-review booking card). Adds the hard offset shadow + thin ember/ink
+   * border (the one shadow allowed per screen). The card stays a flat surface;
+   * the offset marks it as the action. Screens opt in — never self-declared.
+   */
+  hero?: boolean;
   className?: string;
   children?: ReactNode;
 }
@@ -29,6 +39,7 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 export function Card({
   variant = "default",
   padding = "md",
+  hero = false,
   className,
   children,
   ...props
@@ -37,8 +48,10 @@ export function Card({
     <div
       className={cx(
         // Placard discipline: near-square hard edge, not a soft rounded panel.
-        "rounded-sm transition-[border-color,box-shadow] duration-[180ms] ease-[cubic-bezier(0.2,0,0,1)]",
-        variants[variant],
+        "rounded-sm transition-[border-color,box-shadow,transform] duration-[180ms] ease-[cubic-bezier(0.2,0,0,1)]",
+        // Hero: flat surface + the one offset shadow (border comes from
+        // `.hero-offset`). Otherwise the flat hairline variant.
+        hero ? "bg-surface-raised hero-offset" : variants[variant],
         paddings[padding],
         className,
       )}

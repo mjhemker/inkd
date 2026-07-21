@@ -32,18 +32,33 @@ const sizes: Record<ButtonSize, string> = {
   icon: "h-10 w-10 p-0",
 };
 
+// The Zine "hero": the ONE clickable thing on a screen. Always the primary
+// violet plate + the hard offset shadow (ink in daylight / ember at night),
+// with a slightly larger presence. Press translates INTO the shadow — handled
+// by the `.hero-offset` utility in globals.css. Screens opt in via `hero`;
+// the component never self-declares it.
+const heroPresence = "hero-offset h-12 px-6 text-base font-bold";
+
 export function buttonVariants(opts?: {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  hero?: boolean;
   className?: string;
 }): string {
-  const { variant = "primary", size = "md", className } = opts ?? {};
+  const { variant = "primary", size = "md", hero = false, className } = opts ?? {};
+  if (hero) {
+    // Hero forces the primary plate; size/variant are ignored in favor of the
+    // fixed larger presence so the one hero reads consistently app-wide.
+    return cx(base, variants.primary, heroPresence, className);
+  }
   return cx(base, variants[variant], sizes[size], className);
 }
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  /** The screen's single hero action — violet plate + offset shadow. */
+  hero?: boolean;
   loading?: boolean;
   leadingIcon?: ReactNode;
   trailingIcon?: ReactNode;
@@ -54,6 +69,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     {
       variant = "primary",
       size = "md",
+      hero = false,
       loading = false,
       leadingIcon,
       trailingIcon,
@@ -71,7 +87,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         type={type}
         disabled={disabled || loading}
         aria-busy={loading || undefined}
-        className={buttonVariants({ variant, size, className })}
+        className={buttonVariants({ variant, size, hero, className })}
         {...props}
       >
         {loading ? (
