@@ -10,6 +10,10 @@ import { artworkGradient } from "./artwork";
 import { FeedGlyph } from "./FeedGlyph";
 import { FlashStamp } from "./FlashStamp";
 import { AvailabilityTag } from "./FeedCard";
+import {
+  InstagramGlyph,
+  ExternalLinkGlyph,
+} from "@/components/artist/instagram/glyphs";
 
 export interface PostDetailOverlayProps {
   item: FeedItem;
@@ -192,11 +196,27 @@ export function PostDetailOverlay({
               </dl>
             </div>
           ) : (
-            item.caption && (
-              <p className="whitespace-pre-line text-sm leading-relaxed text-content-secondary">
-                {item.caption}
-              </p>
-            )
+            <>
+              {item.caption && (
+                <p className="whitespace-pre-line text-sm leading-relaxed text-content-secondary">
+                  {item.caption}
+                </p>
+              )}
+              {item.kind === "post" &&
+                item.source === "instagram" &&
+                item.instagramPermalink && (
+                  <a
+                    href={item.instagramPermalink}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="inline-flex w-fit items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-content-muted outline-none transition-colors hover:text-content-secondary focus-visible:text-content-secondary"
+                  >
+                    <InstagramGlyph size={13} />
+                    View original
+                    <ExternalLinkGlyph size={12} />
+                  </a>
+                )}
+            </>
           )}
 
           {/* Post actions */}

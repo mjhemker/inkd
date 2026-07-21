@@ -96,6 +96,10 @@ export interface FeedPostItem {
   likedByViewer: boolean;
   savedByViewer: boolean;
   artist: FeedArtist;
+  /** posts.source — `'instagram'` for IG-imported work, else `'native'`. */
+  source: string;
+  /** Original Instagram permalink for a "View original" link (IG imports). */
+  instagramPermalink: string | null;
 }
 
 export interface FeedFlashItem {
@@ -491,6 +495,8 @@ export async function listFeedItems(
       likedByViewer: likes.has(post.id),
       savedByViewer: saves.has(post.id),
       artist: feedArtist,
+      source: post.source,
+      instagramPermalink: post.instagram_permalink,
     });
   }
 
