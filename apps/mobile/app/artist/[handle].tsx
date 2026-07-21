@@ -32,6 +32,7 @@ import {
 } from "@/lib/format";
 import { ReviewsTab } from "@/components/reviews/reviews-tab";
 import { useTheme } from "@/providers/theme";
+import { BackButton } from "@/components/BackButton";
 
 const TABS: TabItem[] = [
   { value: "portfolio", label: "Portfolio" },
@@ -50,15 +51,7 @@ export default function ArtistProfileScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
       <View className="flex-row items-center gap-2 px-4 py-2">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          hitSlop={8}
-          onPress={() => router.back()}
-          className="h-9 w-9 items-center justify-center rounded-full active:bg-surface-overlay"
-        >
-          <Icon name="chevron-left" size={20} color={colors.text.primary} />
-        </Pressable>
+        <BackButton fallback="/(tabs)/discover" />
         <Text className="font-mono text-xs uppercase tracking-[0.18em] text-content-muted">
           {handle ? `@${handle}` : "Artist"}
         </Text>

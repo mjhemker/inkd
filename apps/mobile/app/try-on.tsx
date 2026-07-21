@@ -12,7 +12,7 @@ import {
   type PanResponderGestureState,
   type ViewStyle,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import * as Sharing from "expo-sharing";
@@ -20,6 +20,7 @@ import { captureRef } from "react-native-view-shot";
 import { Button, Eyebrow, Icon, Slider, Toggle } from "@inkd/ui/native";
 import type { SemanticColors } from "@inkd/ui/tokens";
 import { useTheme } from "@/providers/theme";
+import { BackButton } from "@/components/BackButton";
 import {
   DEFAULT_TRYON_TRANSFORM,
   TRYON_DISCLAIMER,
@@ -99,7 +100,6 @@ function containFit(srcW: number, srcH: number, boxW: number, boxH: number) {
  */
 export default function TryOnScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const params = useLocalSearchParams<{ design?: string }>();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -114,16 +114,6 @@ export default function TryOnScreen() {
   const [note, setNote] = useState<string | null>(null);
   const [stage, setStage] = useState({ w: 0, h: 0 });
   const [designSize, setDesignSize] = useState<{ w: number; h: number } | null>(null);
-
-  // Real history-back so a "Try it on" launched from a post's sheet lands
-  // back on that same post — Expo Router keeps the previous screen mounted
-  // underneath, so its state (an open post sheet) survives this navigation.
-  // Falls back to the feed tab when there's no history (e.g. a deep link
-  // opened this screen directly).
-  const onBack = useCallback(() => {
-    if (router.canGoBack()) router.back();
-    else router.replace("/(tabs)" as never);
-  }, [router]);
 
   // Cylindrical wrap needs the design's own pixel aspect ratio to line strip
   // fractions up with where `resizeMode="contain"` actually renders it.
@@ -299,9 +289,7 @@ export default function TryOnScreen() {
     <View style={[styles.root, { paddingTop: insets.top }]}>
       {/* Top bar */}
       <View style={styles.topbar}>
-        <Pressable onPress={onBack} accessibilityLabel="Back" hitSlop={10}>
-          <Icon name="chevron-left" size={24} color={colors.text.primary} />
-        </Pressable>
+        <BackButton fallback="/(tabs)" />
         <Text style={styles.topTitle}>{TRYON_TITLE}</Text>
         <View style={{ width: 24 }} />
       </View>

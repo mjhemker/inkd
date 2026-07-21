@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { FlatList, KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
+import { FlatList, KeyboardAvoidingView, Platform, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
 import { Avatar, Eyebrow, Icon, Spinner, useToast } from "@inkd/ui/native";
 import {
   useCurrentArtistProfile,
@@ -16,6 +15,7 @@ import type { ChatAttachment } from "@inkd/core";
 import { MessageBubble } from "./MessageBubble";
 import { Composer } from "./Composer";
 import { useTheme } from "@/providers/theme";
+import { BackButton } from "@/components/BackButton";
 
 type Row =
   | { kind: "separator"; key: string; label: string }
@@ -23,7 +23,6 @@ type Row =
 
 export function ChatThread({ threadId }: { threadId: string }) {
   const { colors } = useTheme();
-  const router = useRouter();
   const { data: profile } = useCurrentProfile();
   const { data: artistProfile } = useCurrentArtistProfile();
   const { data: summary } = useThreadSummary(threadId, profile?.id);
@@ -107,14 +106,7 @@ export function ChatThread({ threadId }: { threadId: string }) {
         keyboardVerticalOffset={Platform.OS === "ios" ? 88 : 0}
       >
         <View className="flex-row items-center gap-3 border-b border-border-subtle px-4 py-3">
-          <Pressable
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel="Back to conversations"
-            className="h-9 w-9 items-center justify-center rounded-lg"
-          >
-            <Icon name="chevron-left" size={22} color={colors.text.primary} />
-          </Pressable>
+          <BackButton fallback="/(tabs)" accessibilityLabel="Back to conversations" />
           <Avatar
             name={summary?.counterpart?.displayName ?? "?"}
             src={summary?.counterpart?.avatarUrl ?? undefined}

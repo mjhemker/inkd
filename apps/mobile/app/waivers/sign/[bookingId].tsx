@@ -46,6 +46,7 @@ import {
   computeRetentionUntil,
   type WaiverRenderContext,
 } from "@inkd/core/waivers";
+import { BackButton } from "@/components/BackButton";
 
 function useSigningPlacementContext(
   artistId: string | undefined,
@@ -180,6 +181,7 @@ function SignWaiverBody() {
     return (
       <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
         <View className="flex-1 items-start gap-4 px-6 py-8">
+          <BackButton fallback="/(tabs)/bookings" />
           <Icon name="shield" size={28} color="#7C3AED" />
           <Text className="font-display text-2xl text-content-primary">
             Sign in to sign this waiver
@@ -203,7 +205,8 @@ function SignWaiverBody() {
   if (contextError || !bookingContext) {
     return (
       <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
-        <View className="flex-1 px-6 py-8">
+        <View className="flex-1 gap-4 px-6 py-8">
+          <BackButton fallback="/(tabs)/bookings" />
           <Text className="text-content-secondary">
             We couldn&apos;t find that booking. Double-check the link your
             artist sent you.
@@ -216,7 +219,8 @@ function SignWaiverBody() {
   if (!template) {
     return (
       <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
-        <View className="flex-1 px-6 py-8">
+        <View className="flex-1 gap-4 px-6 py-8">
+          <BackButton fallback="/(tabs)/bookings" />
           <Text className="text-content-secondary">
             Your artist hasn&apos;t set up a waiver template yet.
           </Text>
@@ -228,7 +232,8 @@ function SignWaiverBody() {
   if (!state) {
     return (
       <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
-        <View className="flex-1 px-6 py-8">
+        <View className="flex-1 gap-4 px-6 py-8">
+          <BackButton fallback="/(tabs)/bookings" />
           <Text className="text-content-secondary">
             We couldn&apos;t determine which state this session is in. Ask
             your artist to add a state to their studio location before you
@@ -264,6 +269,8 @@ function SignWaiverBody() {
   return (
     <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
       <ScrollView className="flex-1" contentContainerClassName="gap-6 px-6 py-8">
+        <BackButton fallback="/(tabs)/bookings" />
+
         <View className="gap-2">
           <View className="flex-row items-center gap-2">
             <Text className="font-mono text-xs uppercase tracking-widest text-content-muted">

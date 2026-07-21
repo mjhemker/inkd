@@ -44,6 +44,7 @@ import {
 
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { useTheme } from "@/providers/theme";
+import { BackButton } from "@/components/BackButton";
 
 type StateTab = "MD" | "PA" | "GENERIC";
 
@@ -179,6 +180,8 @@ function WaiversScreenBody() {
   return (
     <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
       <ScrollView className="flex-1" contentContainerClassName="gap-8 px-6 py-8">
+        <BackButton fallback="/(tabs)/bookings" />
+
         <ScreenHeader
           eyebrow="SETTINGS · WAIVERS"
           title="Waivers & consent"

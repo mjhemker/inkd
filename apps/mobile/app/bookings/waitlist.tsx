@@ -1,19 +1,19 @@
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentProfile, useInkdClient, getCurrentArtistProfile } from "@inkd/core";
 import { Skeleton, ToastProvider } from "@inkd/ui/native";
 
 import { ClientWaitlist } from "@/components/waitlist/client-waitlist";
 import { ArtistWaitlist } from "@/components/waitlist/artist-waitlist";
+import { BackButton } from "@/components/BackButton";
 
 export default function WaitlistScreen() {
   return (
     <ToastProvider>
       <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
         <ScrollView className="flex-1" contentContainerClassName="gap-6 px-6 py-8">
-          <BackLink />
+          <BackButton fallback="/(tabs)/bookings" />
           <WaitlistHub />
         </ScrollView>
       </SafeAreaView>
@@ -48,15 +48,4 @@ function WaitlistHub() {
   }
 
   return <ClientWaitlist clientId={profileQ.data?.id ?? ""} />;
-}
-
-function BackLink() {
-  return (
-    <Text
-      onPress={() => (router.canGoBack() ? router.back() : router.push("/(tabs)/bookings"))}
-      className="text-sm text-content-secondary"
-    >
-      {"< Bookings"}
-    </Text>
-  );
 }

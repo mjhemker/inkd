@@ -5,7 +5,7 @@
  * already resolves any `action_url` via a generic `router.push`, so no extra
  * routing wiring is needed here.
  */
-import { router, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, EmptyState, Icon, Skeleton } from "@inkd/ui/native";
@@ -21,6 +21,7 @@ import { DailyDropCard } from "@/components/daily-drop/DailyDropCard";
 import { ArtworkPlaceholder } from "@/components/feed/ArtworkPlaceholder";
 import { placardLine } from "@/components/feed/format";
 import { useTheme } from "@/providers/theme";
+import { BackButton } from "@/components/BackButton";
 
 const HISTORY_LIMIT = 14;
 
@@ -39,7 +40,7 @@ export default function DailyDropScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
       <ScrollView className="flex-1" contentContainerClassName="gap-6 px-6 py-6">
-        <BackLink />
+        <BackButton fallback="/(tabs)" />
 
         <ScreenHeader
           eyebrow="FOR YOU"
@@ -83,17 +84,6 @@ export default function DailyDropScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-function BackLink() {
-  return (
-    <Text
-      onPress={() => (router.canGoBack() ? router.back() : router.push("/(tabs)"))}
-      className="text-sm text-content-secondary"
-    >
-      {"< Back"}
-    </Text>
   );
 }
 
