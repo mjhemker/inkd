@@ -435,6 +435,7 @@ function BookLoaded({
             </Button>
             {stepIdx < STEPS.length - 1 ? (
               <Button
+                hero
                 onClick={() => setStepIdx((i) => Math.min(STEPS.length - 1, i + 1))}
                 disabled={!canNext}
                 trailingIcon={<Icon name="chevron-right" size={16} />}
@@ -442,7 +443,7 @@ function BookLoaded({
                 Continue
               </Button>
             ) : (
-              <Button onClick={submit} loading={submitting} leadingIcon={<Icon name="check" size={16} />}>
+              <Button hero onClick={submit} loading={submitting} leadingIcon={<Icon name="check" size={16} />}>
                 {signedIn ? "Send request" : "Sign in & send"}
               </Button>
             )}
@@ -1000,7 +1001,7 @@ function StepDates({
       {selected.length > 0 && (
         <div className="flex flex-wrap gap-2 pt-1">
           {selected.map((p) => (
-            <Badge key={p.date} variant="brand">
+            <Badge key={p.date} variant="date">
               {fmtDate(p.date)}
               {p.start ? ` · ${p.start}` : ""}
             </Badge>

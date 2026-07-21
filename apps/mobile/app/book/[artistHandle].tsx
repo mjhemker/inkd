@@ -452,11 +452,12 @@ function BookLoaded({
               {stepIdx === 0 ? "Exit" : "Back"}
             </Button>
             {stepIdx < STEPS.length - 1 ? (
-              <Button onPress={() => setStepIdx((i) => Math.min(STEPS.length - 1, i + 1))} disabled={!canNext}>
+              <Button hero onPress={() => setStepIdx((i) => Math.min(STEPS.length - 1, i + 1))} disabled={!canNext}>
                 Continue
               </Button>
             ) : (
               <Button
+                hero
                 onPress={submit}
                 loading={submitting}
                 disabled={!signedIn}
@@ -977,7 +978,7 @@ function StepDates({
       {selected.length > 0 && (
         <View className="flex-row flex-wrap gap-2 pt-1">
           {selected.map((p) => (
-            <Badge key={p.date} variant="brand">
+            <Badge key={p.date} variant="date">
               {fmtDate(p.date)}
               {p.start ? ` · ${p.start}` : ""}
             </Badge>
