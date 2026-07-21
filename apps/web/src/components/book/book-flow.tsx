@@ -22,10 +22,14 @@ import {
   useRemoveReference,
   newUploadBatchId,
   formatCents,
+  computePreferredDayOptions,
+  preferredDateFromOption,
   type BookableDay,
   type PreferredDate,
+  type PreferredDayOption,
   type ReferenceUpload,
   type Service,
+  type TimeOfDay,
 } from "@inkd/core";
 import {
   Avatar,
@@ -147,6 +151,7 @@ function BookLoaded({
   const [stepIdx, setStepIdx] = useState(0);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [submitting, setSubmitting] = useState(false);
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay | null>(null);
   const batchId = useRef(newUploadBatchId());
   const fileInput = useRef<HTMLInputElement | null>(null);
   const [pendingKind, setPendingKind] = useState<"image" | "document">("image");
@@ -224,6 +229,44 @@ function BookLoaded({
         ...form.preferred,
         { date: day.date, start: w?.start, end: w?.end },
       ],
+    });
+  }
+
+  // No published openings but the artist still takes requests → offer a plain
+  // next-60-days picker (capped to the booking window) so the client can still
+  // name preferred days instead of hitting a dead end.
+  const hasOpenings = days.length > 0;
+  const fallbackDays: PreferredDayOption[] = useMemo(
+    () =>
+      hasOpenings || booksClosed
+        ? []
+        : computePreferredDayOptions({
+            bookingWindow: policy?.booking_window ?? null,
+            span: 60,
+          }),
+    [hasOpenings, booksClosed, policy?.booking_window],
+  );
+
+  function toggleFallbackDay(date: string) {
+    const exists = form.preferred.find((p) => p.date === date);
+    if (exists) {
+      patch({ preferred: form.preferred.filter((p) => p.date !== date) });
+      return;
+    }
+    if (form.preferred.length >= MAX_PREFERRED) {
+      toast({ title: `Pick up to ${MAX_PREFERRED} preferred days`, variant: "info" });
+      return;
+    }
+    patch({ preferred: [...form.preferred, preferredDateFromOption(date, timeOfDay)] });
+  }
+
+  // Changing the global time-of-day band re-stamps every already-picked
+  // fallback day so the whole selection stays consistent.
+  function changeTimeOfDay(next: TimeOfDay | null) {
+    const value = next === timeOfDay ? null : next;
+    setTimeOfDay(value);
+    patch({
+      preferred: form.preferred.map((p) => preferredDateFromOption(p.date, value)),
     });
   }
 
@@ -366,6 +409,10 @@ function BookLoaded({
                 selected={form.preferred}
                 onToggle={togglePreferred}
                 window={policy?.booking_window ?? null}
+                fallbackDays={fallbackDays}
+                timeOfDay={timeOfDay}
+                onTimeOfDay={changeTimeOfDay}
+                onToggleFallback={toggleFallbackDay}
               />
             )}
             {step.id === "review" && (
@@ -793,16 +840,30 @@ function RefTile({ label, onRemove }: { label: string; onRemove: () => void }) {
   );
 }
 
+const TIME_OF_DAY_CHIPS: { id: TimeOfDay; label: string }[] = [
+  { id: "morning", label: "Morning" },
+  { id: "afternoon", label: "Afternoon" },
+  { id: "evening", label: "Evening" },
+];
+
 function StepDates({
   days,
   selected,
   onToggle,
   window,
+  fallbackDays,
+  timeOfDay,
+  onTimeOfDay,
+  onToggleFallback,
 }: {
   days: BookableDay[];
   selected: PreferredDate[];
   onToggle: (day: BookableDay) => void;
   window: string | null;
+  fallbackDays: PreferredDayOption[];
+  timeOfDay: TimeOfDay | null;
+  onTimeOfDay: (t: TimeOfDay | null) => void;
+  onToggleFallback: (date: string) => void;
 }) {
   const months = useMemo(() => {
     const map = new Map<string, BookableDay[]>();
@@ -813,6 +874,17 @@ function StepDates({
     return [...map.entries()];
   }, [days]);
 
+  const fallbackMonths = useMemo(() => {
+    const map = new Map<string, PreferredDayOption[]>();
+    for (const d of fallbackDays) {
+      const key = d.date.slice(0, 7);
+      map.set(key, [...(map.get(key) ?? []), d]);
+    }
+    return [...map.entries()];
+  }, [fallbackDays]);
+
+  const noOpenings = window !== "closed" && days.length === 0;
+
   return (
     <div className="flex flex-col gap-5">
       <StepHeading
@@ -820,7 +892,67 @@ function StepDates({
         title="Preferred days"
         subtitle={`Pick up to ${MAX_PREFERRED} days that work — the artist confirms the exact time.`}
       />
-      {window === "closed" || days.length === 0 ? (
+      {noOpenings && fallbackDays.length > 0 ? (
+        <div className="flex flex-col gap-5">
+          <Card padding="md" className="text-sm text-content-secondary">
+            This artist hasn&apos;t published open days yet. Pick up to {MAX_PREFERRED} days that
+            work for you below — they&apos;ll propose exact times from these.
+          </Card>
+
+          <div className="flex flex-col gap-2">
+            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-content-muted">
+              Time of day (optional)
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {TIME_OF_DAY_CHIPS.map((c) => (
+                <Chip
+                  key={c.id}
+                  selected={timeOfDay === c.id}
+                  onClick={() => onTimeOfDay(c.id)}
+                >
+                  {c.label}
+                </Chip>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-6">
+            {fallbackMonths.map(([month, list]) => (
+              <div key={month} className="flex flex-col gap-2.5">
+                <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-content-muted">
+                  {MONTHS[Number(month.slice(5, 7)) - 1]} {month.slice(0, 4)}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {list.map((day) => {
+                    const isSel = selected.some((p) => p.date === day.date);
+                    return (
+                      <button
+                        key={day.date}
+                        type="button"
+                        onClick={() => onToggleFallback(day.date)}
+                        aria-pressed={isSel}
+                        className={
+                          "flex min-w-[4.5rem] flex-col items-center gap-0.5 rounded-lg border px-3 py-2 text-center outline-none transition-all focus-visible:ring-2 focus-visible:ring-brand " +
+                          (isSel
+                            ? "border-brand bg-surface-plate-ink text-content-primary"
+                            : "border-border-subtle bg-surface-raised text-content-secondary hover:border-border-strong")
+                        }
+                      >
+                        <span className="font-mono text-[10px] uppercase tracking-widest text-content-muted">
+                          {WEEKDAYS[day.weekday]}
+                        </span>
+                        <span className="font-display text-lg font-bold leading-none">
+                          {Number(day.date.slice(8, 10))}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : window === "closed" || days.length === 0 ? (
         <Card padding="md" className="text-sm text-content-secondary">
           No open days are published in this booking window yet. You can still
           send your request and the artist will propose times.

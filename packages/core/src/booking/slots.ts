@@ -60,6 +60,83 @@ export function bookingWindowToDays(window: BookingWindow | null | undefined): n
   }
 }
 
+/** Coarse time-of-day preference offered in the no-openings fallback picker. */
+export type TimeOfDay = "morning" | "afternoon" | "evening";
+
+/** Concrete window each time-of-day band maps to (local "HH:MM"). */
+export const TIME_OF_DAY_WINDOWS: Record<TimeOfDay, DayWindow> = {
+  morning: { start: "09:00", end: "12:00" },
+  afternoon: { start: "12:00", end: "17:00" },
+  evening: { start: "17:00", end: "21:00" },
+};
+
+/** A plain selectable calendar day for the no-openings fallback (no windows). */
+export interface PreferredDayOption {
+  /** ISO calendar date, "YYYY-MM-DD". */
+  date: string;
+  /** 0 = Sunday … 6 = Saturday. */
+  weekday: number;
+}
+
+export interface PreferredDayOptionsInput {
+  bookingWindow?: BookingWindow | null;
+  minNoticeHours?: number | null;
+  /** Anchor "now"; defaults to the current time. Injectable for tests. */
+  now?: Date;
+  /** How many days to offer (default 60), capped to the booking-window horizon. */
+  span?: number;
+}
+
+/**
+ * Fallback day options for the intake calendar when an artist has published NO
+ * concrete openings but is still taking requests: a straight run of the next
+ * `span` calendar days (default 60), starting the day after today (plus any
+ * min-notice), capped to the artist's booking-window horizon. Lets a client
+ * genuinely express preferred days instead of hitting a dead end. Pure +
+ * dependency-free so web and RN behave identically. Returns [] only when the
+ * booking window is `closed`.
+ */
+export function computePreferredDayOptions(
+  input: PreferredDayOptionsInput = {},
+): PreferredDayOption[] {
+  const {
+    bookingWindow = "2_3mo",
+    minNoticeHours = 0,
+    now = new Date(),
+    span = 60,
+  } = input;
+
+  const windowDays = bookingWindowToDays(bookingWindow);
+  if (windowDays === 0) return [];
+
+  const noticeDays = Math.ceil(Math.max(0, minNoticeHours ?? 0) / 24);
+  const start = new Date(now.getTime());
+  start.setHours(0, 0, 0, 0);
+  // Never today: offer from tomorrow at the earliest, plus any min-notice.
+  start.setDate(start.getDate() + Math.max(1, noticeDays));
+
+  const count = Math.min(Math.max(0, Math.floor(span)), windowDays);
+  const out: PreferredDayOption[] = [];
+  for (let i = 0; i < count; i++) {
+    const d = new Date(start.getTime() + i * DAY_MS);
+    out.push({ date: toISODate(d), weekday: d.getDay() });
+  }
+  return out;
+}
+
+/**
+ * Build a `PreferredDate` for a fallback day plus an optional time-of-day band.
+ * With no band it's a bare date; with one it carries the band's window + label.
+ */
+export function preferredDateFromOption(
+  date: string,
+  timeOfDay?: TimeOfDay | null,
+): PreferredDate {
+  if (!timeOfDay) return { date };
+  const band = TIME_OF_DAY_WINDOWS[timeOfDay];
+  return { date, start: band.start, end: band.end, label: timeOfDay };
+}
+
 /** Normalize a "HH:MM[:SS]" time to "HH:MM". */
 function toHHMM(time: string): string {
   return time.slice(0, 5);
