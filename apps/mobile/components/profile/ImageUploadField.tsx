@@ -15,6 +15,7 @@ export function ImageUploadField({
   aspect = "square",
   label = "Add image",
   className,
+  kinds = ["images"],
 }: {
   userId: string;
   folder: MediaFolder;
@@ -23,6 +24,9 @@ export function ImageUploadField({
   aspect?: "square" | "wide";
   label?: string;
   className?: string;
+  /** Which media kinds the picker accepts. Defaults to images-only; the New
+   * post flow widens this to include videos. */
+  kinds?: ("images" | "videos")[];
 }) {
   const { colors } = useTheme();
   const [previewUri, setPreviewUri] = useState<string | null>(null);
@@ -37,9 +41,10 @@ export function ImageUploadField({
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
+      mediaTypes: kinds,
       quality: 0.85,
-      allowsEditing: true,
+      // Editing/cropping only applies to stills; skip it when video is allowed.
+      allowsEditing: !kinds.includes("videos"),
     });
     if (result.canceled) return;
     const asset = result.assets[0];

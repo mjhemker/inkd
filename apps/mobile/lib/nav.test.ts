@@ -13,15 +13,19 @@ import {
   HUB_TAB_ROUTES,
 } from "./nav.ts";
 
-test("both roles see four tabs; artists swap Messages for Studio", () => {
-  // Clients keep Messages on the bar.
-  assert.deepEqual(visibleTabLabels(false), ["Home", "Discover", "Messages", "Profile"]);
-  // Artists drop Messages (it moves to the Studio dashboard header) and gain
-  // Studio in the fourth slot. Discover stays slot 2 for both.
-  assert.deepEqual(visibleTabLabels(true), ["Home", "Discover", "Profile", "Studio"]);
-  assert.equal(visibleTabLabels(true).includes("Messages"), false);
+test("Inbox has its own middle slot for both roles; artists add Studio", () => {
+  // Clients: four tabs, Inbox in slot 3.
+  assert.deepEqual(visibleTabLabels(false), ["Home", "Discover", "Inbox", "Profile"]);
+  // Artists: same four + Studio in the fifth slot. Inbox is NOT swapped out.
+  assert.deepEqual(visibleTabLabels(true), ["Home", "Discover", "Inbox", "Profile", "Studio"]);
+  assert.equal(visibleTabLabels(true).includes("Inbox"), true);
+  assert.equal(visibleTabLabels(true)[2], "Inbox");
+  assert.equal(visibleTabLabels(false)[2], "Inbox");
   assert.equal(visibleTabLabels(true)[1], "Discover");
   assert.equal(visibleTabLabels(false)[1], "Discover");
+  // The old "Messages" label is retired in favor of "Inbox".
+  assert.equal(visibleTabLabels(false).includes("Messages"), false);
+  assert.equal(visibleTabLabels(true).includes("Messages"), false);
 });
 
 test("studio hub keeps exactly the five persistent surfaces", () => {
@@ -34,6 +38,13 @@ test("studio has four internal sections landing on the dashboard", () => {
     ["dashboard", "bookings", "ai", "settings"],
   );
   assert.equal(STUDIO_SECTIONS[0].route, "/studio");
+});
+
+test("every studio section carries a one-line snippet for the header", () => {
+  for (const section of STUDIO_SECTIONS) {
+    assert.equal(typeof section.snippet, "string");
+    assert.ok(section.snippet.length > 0, `${section.value} needs a snippet`);
+  }
 });
 
 test("legacy /dashboard normalizes into the Studio tab", () => {
