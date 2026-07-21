@@ -85,12 +85,12 @@ export default function ProfilePage() {
           <Eyebrow>Your profile</Eyebrow>
           <div className="flex items-center gap-2">
             {isArtist && artist?.is_published && profile.handle && (
-              <LinkButton href={`/a/${profile.handle}`} variant="secondary" size="sm">
+              <LinkButton href={`/a/${profile.handle}`} variant="outline" size="sm">
                 <Icon name="compass" size={16} />
                 View public profile
               </LinkButton>
             )}
-            <Button size="sm" variant="secondary" onClick={() => setEditOpen(true)}>
+            <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
               <Icon name="settings" size={16} />
               Edit profile
             </Button>
@@ -117,16 +117,12 @@ export default function ProfilePage() {
             {profile.handle && (
               <p className="font-mono text-sm text-content-muted">@{profile.handle}</p>
             )}
-            {isArtist && artist?.tagline && (
-              <p className="text-sm text-content-secondary">{artist.tagline}</p>
-            )}
-            {!isArtist && profile.bio && (
-              <p className="text-sm text-content-secondary">{profile.bio}</p>
-            )}
-            {(profile.city || profile.state) && (
-              <p className="flex items-center gap-1.5 text-xs text-content-muted">
-                <Icon name="map-pin" size={13} />
-                {[profile.city, profile.state].filter(Boolean).join(", ")}
+            {/* Tagline · location on one line (zine identity cluster). */}
+            {isArtist && artist && (artist.tagline || profile.city || profile.state) && (
+              <p className="text-sm text-content-secondary">
+                {[artist.tagline, [profile.city, profile.state].filter(Boolean).join(", ")]
+                  .filter(Boolean)
+                  .join(" · ")}
               </p>
             )}
             {isArtist && artist && (
@@ -139,8 +135,9 @@ export default function ProfilePage() {
                     {label}
                   </Badge>
                 ))}
-                <Badge variant={artist.accepts_new_clients ? "brand" : "neutral"} size="sm">
-                  {artist.accepts_new_clients ? "Accepting new clients" : "Not accepting clients"}
+                {/* Books-open reads as a solid GREEN status chip — never violet. */}
+                <Badge variant={artist.accepts_new_clients ? "success" : "neutral"} size="sm">
+                  {artist.accepts_new_clients ? "Books open" : "Books closed"}
                 </Badge>
               </div>
             )}
