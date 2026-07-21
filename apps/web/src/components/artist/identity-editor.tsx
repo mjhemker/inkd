@@ -29,12 +29,15 @@ import {
   useUploadMedia,
   usePortfolioPieces,
   usePortfolioMutations,
-  useInstagramStatus,
-  useInstagramAuthorizeUrl,
-  useStartInstagramImport,
+  useInstagramConnectionState,
+  useInstagramStartOAuth,
 } from "@inkd/core/hooks";
+import { buildPiecesAddedMessage, type InstagramImportRunResult } from "@inkd/core";
+import { useQueryClient } from "@tanstack/react-query";
 
 import type { EditorHandle } from "./types";
+import { InstagramImportModal } from "./instagram/InstagramImportModal";
+import { InstagramGlyph } from "./instagram/glyphs";
 
 type HandleState = "idle" | "checking" | "available" | "taken" | "invalid";
 
@@ -464,7 +467,7 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
             }}
           />
 
-          <InstagramImportRow artistId={artist.id} />
+          <InstagramImportRow artistId={artist.id} variant={variant} />
         </div>
 
         {variant === "settings" && (
@@ -480,24 +483,53 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
 );
 
 /**
- * The portfolio section's Instagram row — shared by onboarding + settings.
- * Reads the same config/connection state the full "Connected accounts"
- * settings section does (`useInstagramStatus`), so this affordance is never
- * out of sync with reality: "Coming soon" only shows while Michael hasn't set
- * the Meta app secrets (see docs/instagram-integration.md §5); once
- * configured it's a real Connect / Import control.
+ * The portfolio section's "Import your work from Instagram" card — shared by
+ * onboarding (§3.A) + settings identity. State is ALWAYS re-derived from the
+ * server (`instagram-status`), so the affordance is never out of sync:
+ * "Coming soon" only shows on a 503; once live it's a real Connect / Import
+ * control that opens the selection picker.
+ *
+ * On connect we set a client-side "resume" flag before the full-page OAuth
+ * redirect (belt-and-suspenders alongside the server `return_to`), so that on
+ * return we can auto-open the picker.
  */
-function InstagramImportRow({ artistId }: { artistId: string }) {
+const IG_RESUME_KEY = "inkd:ig:resume-import";
+
+function InstagramImportRow({
+  artistId,
+  variant,
+}: {
+  artistId: string;
+  variant: "onboarding" | "settings";
+}) {
   const { toast } = useToast();
-  const { data: status } = useInstagramStatus(artistId);
-  const authorizeUrl = useInstagramAuthorizeUrl();
-  const startImport = useStartInstagramImport(artistId);
+  const qc = useQueryClient();
+  const { state } = useInstagramConnectionState(artistId);
+  const startOAuth = useInstagramStartOAuth();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [addedMessage, setAddedMessage] = useState<string | null>(null);
+
+  const returnTo = variant === "onboarding" ? "/onboarding" : "/studio/settings";
+
+  // Resume after the OAuth round-trip: if we flagged a connect and we're now
+  // connected, auto-open the picker once.
+  useEffect(() => {
+    if (state.kind !== "connected") return;
+    if (typeof window === "undefined") return;
+    if (window.sessionStorage.getItem(IG_RESUME_KEY)) {
+      window.sessionStorage.removeItem(IG_RESUME_KEY);
+      setPickerOpen(true);
+    }
+  }, [state.kind]);
 
   async function connect() {
     try {
-      const { url } = await authorizeUrl.mutateAsync();
+      if (typeof window !== "undefined") window.sessionStorage.setItem(IG_RESUME_KEY, "1");
+      // Mint a FRESH url every tap; full-page redirect (never a popup).
+      const { url } = await startOAuth.mutateAsync({ return_to: returnTo });
       window.location.href = url;
     } catch (err) {
+      if (typeof window !== "undefined") window.sessionStorage.removeItem(IG_RESUME_KEY);
       toast({
         title: "Couldn't start Instagram connect",
         description: err instanceof Error ? err.message : "Try again.",
@@ -506,66 +538,76 @@ function InstagramImportRow({ artistId }: { artistId: string }) {
     }
   }
 
-  async function runImport() {
-    try {
-      const summary = await startImport.mutateAsync();
-      toast({
-        title: "Instagram import ran",
-        description:
-          summary.postsCreated > 0
-            ? `${summary.postsCreated} new ${summary.postsCreated === 1 ? "piece" : "pieces"} imported.`
-            : "Everything is already imported.",
-        variant: "success",
-      });
-    } catch (err) {
-      toast({
-        title: "Import failed",
-        description: err instanceof Error ? err.message : "Try again.",
-        variant: "danger",
-      });
+  function onImported(run: InstagramImportRunResult) {
+    if (run.pieces_created > 0) {
+      setAddedMessage(buildPiecesAddedMessage(run));
+      // Refresh the portfolio grid so imported pieces appear immediately.
+      qc.invalidateQueries({ queryKey: ["portfolioPieces", artistId] });
     }
   }
 
-  const configured = status?.configured ?? false;
-  const connected = status?.connected ?? false;
+  const connected = state.kind === "connected";
+  const comingSoon = state.kind === "comingSoon";
+  const tokenExpired = state.kind === "tokenExpired";
 
   return (
-    <div className="flex items-center justify-between rounded-xl border border-border-subtle bg-surface-raised/40 px-4 py-3">
-      <div className="flex items-center gap-3">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-surface-overlay text-content-muted">
-          <Icon name="image" size={16} />
-        </span>
-        <div className="flex flex-col">
-          <span className="text-sm font-medium text-content-secondary">
-            Import from Instagram
+    <div className="flex flex-col gap-3 rounded-xl border border-border-subtle bg-surface-raised/40 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="grid h-9 w-9 place-items-center rounded-sm bg-surface-ember text-brand-on-ember">
+            <InstagramGlyph size={17} />
           </span>
-          <span className="text-xs text-content-muted">
-            {connected && status?.ig_username
-              ? `Connected as @${status.ig_username}`
-              : "Pull your posts in as portfolio pieces."}
-          </span>
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-content-primary">
+              Import your work from Instagram
+            </span>
+            <span className="text-xs text-content-muted">
+              {connected && state.username
+                ? `Connected as @${state.username}`
+                : "Bring your posts in as portfolio pieces — you pick which ones."}
+            </span>
+          </div>
         </div>
+        {comingSoon ? (
+          <Badge variant="outline">Coming soon</Badge>
+        ) : connected ? (
+          <Button size="sm" variant="outline" onClick={() => setPickerOpen(true)}>
+            Import posts
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => void connect()}
+            loading={startOAuth.isPending}
+          >
+            {tokenExpired ? "Reconnect" : "Connect"}
+          </Button>
+        )}
       </div>
-      {!configured ? (
-        <Badge variant="outline">Coming soon</Badge>
-      ) : connected ? (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => void runImport()}
-          loading={startImport.isPending}
-        >
-          Import
-        </Button>
-      ) : (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => void connect()}
-          loading={authorizeUrl.isPending}
-        >
-          Connect
-        </Button>
+
+      {!connected && !comingSoon && (
+        <p className="text-[11px] leading-relaxed text-content-muted">
+          Requires an Instagram Business or Creator account — free to switch in Instagram →
+          Settings → Account type.
+        </p>
+      )}
+
+      {addedMessage && (
+        <p className="flex items-center gap-1.5 text-xs font-medium text-content-ember">
+          <Icon name="check" size={13} />
+          {addedMessage}
+        </p>
+      )}
+
+      {connected && (
+        <InstagramImportModal
+          artistId={artistId}
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          onImported={onImported}
+          portfolioHref={variant === "onboarding" ? undefined : "/profile"}
+        />
       )}
     </div>
   );

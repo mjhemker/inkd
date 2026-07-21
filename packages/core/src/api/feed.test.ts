@@ -26,6 +26,8 @@ function post(overrides: Partial<FeedPostItem> = {}): FeedPostItem {
     likeCount: 0,
     likedByViewer: false,
     savedByViewer: false,
+    source: "native",
+    instagramPermalink: null,
     artist: {
       artistId: "a1",
       profileId: "p1",

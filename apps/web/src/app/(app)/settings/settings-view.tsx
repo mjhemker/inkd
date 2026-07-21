@@ -102,6 +102,26 @@ const TAB_ROUTE: Record<string, { tab: string; section?: SettingsSection }> = {
   appearance: { tab: "preferences", section: "appearance" },
 };
 
+/** Friendly per-reason copy for the Instagram OAuth callback error return. */
+function instagramReasonMessage(reason: string | null): string {
+  switch (reason) {
+    case "invalid_state":
+      return "That connect link expired. Try connecting again.";
+    case "token_exchange_failed":
+    case "long_token_failed":
+      return "Instagram couldn't complete the connection. Try again.";
+    case "profile_fetch_failed":
+      return "We couldn't read your Instagram profile. Make sure it's a Business or Creator account.";
+    case "not_configured":
+      return "Instagram import isn't available yet.";
+    case "missing_params":
+    case "db_error":
+    case "server_error":
+    default:
+      return "Something went wrong connecting Instagram. Try again.";
+  }
+}
+
 export function SettingsView() {
   const { toast } = useToast();
   const { data: profile, isLoading: pLoading } = useCurrentProfile();
@@ -131,23 +151,34 @@ export function SettingsView() {
     // (initialSection omitted from deps intentionally).
   }, []);
 
-  // The instagram-oauth callback redirects here with ?instagram=connected|
-  // denied|error — surface the result once, on landing. Deliberately runs
-  // only on mount (searchParams/toast omitted from deps) so it never re-fires
-  // as the tab state changes afterward.
+  // The instagram-oauth callback redirects here with ?instagram=connected or
+  // ?instagram=error&reason=<code>. This drives a ONE-TIME toast only — the
+  // Instagram section always re-derives its real state from `instagram-status`,
+  // never from this param. We strip the param afterward so a refresh doesn't
+  // re-fire it. Runs only on mount (deps intentionally empty).
   useEffect(() => {
     const result = searchParams.get("instagram");
     if (!result) return;
     if (result === "connected") {
       toast({ title: "Instagram connected", variant: "success" });
-    } else if (result === "denied") {
-      toast({ title: "Instagram connect cancelled" });
-    } else if (result === "error") {
-      toast({
-        title: "Couldn't connect Instagram",
-        description: searchParams.get("reason") ?? "Try again.",
-        variant: "danger",
-      });
+    } else {
+      const reason = searchParams.get("reason");
+      if (reason === "access_denied") {
+        toast({ title: "Connection cancelled" });
+      } else {
+        toast({
+          title: "Couldn't connect Instagram",
+          description: instagramReasonMessage(reason),
+          variant: "danger",
+        });
+      }
+    }
+    // Strip the one-time param from the URL so it can't re-fire on refresh.
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("instagram");
+      url.searchParams.delete("reason");
+      window.history.replaceState(null, "", url.pathname + url.search);
     }
   }, []);
 

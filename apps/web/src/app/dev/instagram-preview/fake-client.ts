@@ -1,187 +1,191 @@
 /**
- * In-memory fake Supabase client for the offline Instagram/share-kit PREVIEW
- * harness only (this env's egress to Supabase is policy-blocked — see
- * dev/onboarding-preview/fake-client.ts for the established pattern this
- * mirrors). Not used in the app; screenshot/QA aid only.
+ * In-memory fake Supabase client for the OFFLINE Instagram preview harness
+ * (this env's egress to Supabase is policy-blocked). Not used in the app;
+ * screenshot/QA aid only.
  *
- * Adds `functions.invoke` interception on top of the onboarding harness's
- * table-query shim, so `ConnectedAccountsEditor` / `ShareKit` — which call
- * the instagram-oauth / instagram-import edge functions — render against
- * canned responses instead of a live network call.
+ * Intercepts `functions.invoke` for the REAL deployed endpoints:
+ *   instagram-status · instagram-oauth-start · instagram-media-list ·
+ *   instagram-import · instagram-disconnect
+ * and models the error contract (503 coming-soon, 409 token-expired) as a
+ * Supabase FunctionsHttpError with a `context` Response the core error mapper
+ * reads.
  */
 import type { InkdSupabaseClient } from "@inkd/core";
 
-const now = new Date().toISOString();
+const now = new Date();
+const iso = (minsAgo: number) => new Date(now.getTime() - minsAgo * 60_000).toISOString();
+
+export type InstagramScenario =
+  | "not-connected"
+  | "connected"
+  | "token-expired"
+  | "coming-soon";
 
 const USER = { id: "demo-ig-user", email: "ig-demo@inkd.test" };
 
-const PROFILE = {
-  id: "demo-ig-user",
-  handle: "jayden.ink",
-  display_name: "Jayden Cole",
-  email: USER.email,
-  avatar_url: null,
-  bio: "Baltimore-based blackwork & fine line. Booking custom pieces and touch-ups.",
-  is_artist: true,
-  is_public: true,
-  city: "Baltimore",
-  state: "MD",
-  phone: null,
-  created_at: now,
-  updated_at: now,
-};
+// A tiny inline SVG data URL so tiles render a real image offline (no network).
+function swatch(hue: number): string {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='300' height='300' fill='hsl(${hue} 45% 22%)'/><circle cx='150' cy='150' r='90' fill='hsl(${hue} 55% 42%)'/></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
 
-const ARTIST = {
-  id: "demo-ig-artist",
-  profile_id: "demo-ig-user",
-  bio: PROFILE.bio,
-  tagline: "Blackwork & fine line",
-  styles: ["blackwork", "fine-line"],
-  classification: "shop_resident",
-  travel_fly_out: true,
-  travel_house_calls: false,
-  travel_at_home: false,
-  accepts_new_clients: true,
-  years_experience: 6,
-  instagram_handle: null,
-  onboarding_step: 5,
-  onboarding_completed_at: now,
-  is_published: true,
-  stripe_account_id: null,
-  stripe_identity_verified: false,
-  created_at: now,
-  updated_at: now,
-};
+interface MediaItem {
+  id: string;
+  caption: string | null;
+  media_type: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM" | null;
+  permalink: string | null;
+  timestamp: string | null;
+  preview_url: string | null;
+  child_count: number;
+  importable: boolean;
+  already_imported: boolean;
+}
 
-export type InstagramScenario = "not-configured" | "not-connected" | "connected";
-
-const RUNS = [
-  {
-    id: "run-1",
-    artist_id: "demo-ig-artist",
-    status: "completed",
-    media_seen: 24,
-    posts_created: 6,
-    pieces_created: 6,
-    media_skipped: 0,
-    already_imported: 18,
-    error_message: null,
-    started_at: now,
-    completed_at: now,
-    created_at: now,
-  },
-  {
-    id: "run-2",
-    artist_id: "demo-ig-artist",
-    status: "completed",
-    media_seen: 18,
-    posts_created: 18,
-    pieces_created: 18,
-    media_skipped: 1,
-    already_imported: 0,
-    error_message: null,
-    started_at: now,
-    completed_at: now,
-    created_at: now,
-  },
-];
-
-function statusFor(scenario: InstagramScenario) {
-  if (scenario === "not-configured") {
-    return {
-      configured: false,
-      connected: false,
-      ig_username: null,
-      connected_at: null,
-      token_expires_at: null,
-      last_synced_at: null,
-    };
-  }
-  if (scenario === "not-connected") {
-    return {
-      configured: true,
-      connected: false,
-      ig_username: null,
-      connected_at: null,
-      token_expires_at: null,
-      last_synced_at: null,
-    };
-  }
+function makeItem(i: number): MediaItem {
+  const kind = i % 5;
+  const media_type =
+    kind === 0 ? "CAROUSEL_ALBUM" : kind === 1 ? "VIDEO" : "IMAGE";
+  const unimportable = i === 3; // one copyright-flagged
+  const alreadyImported = i === 1 || i === 6; // a couple already in portfolio
+  const broken = i === 8; // one with a dead preview URL → caption fallback
   return {
-    configured: true,
-    connected: true,
-    ig_username: "jayden.ink.tattoo",
-    connected_at: now,
-    token_expires_at: now,
-    last_synced_at: now,
+    id: `media-${i}`,
+    caption:
+      i % 3 === 0
+        ? `Fine-line piece ${i} — healed, 3 weeks. Booking custom work this fall.`
+        : i % 3 === 1
+          ? `Blackwork sleeve session ${i}`
+          : null,
+    media_type,
+    permalink: `https://www.instagram.com/p/demo${i}/`,
+    timestamp: iso(i * 120),
+    preview_url: broken ? "https://invalid.example/broken.jpg" : swatch((i * 37) % 360),
+    child_count: media_type === "CAROUSEL_ALBUM" ? ((i % 6) + 2) : 0,
+    importable: !unimportable,
+    already_imported: alreadyImported,
   };
 }
 
-function dataFor(table: string, single: boolean, scenario: InstagramScenario): unknown {
-  switch (table) {
-    case "profiles":
-      return single ? PROFILE : [PROFILE];
-    case "artist_profiles":
-      return single ? ARTIST : [ARTIST];
-    case "instagram_import_runs":
-      return scenario === "connected" ? RUNS : [];
-    default:
-      return single ? null : [];
+const PAGE_1: MediaItem[] = Array.from({ length: 12 }, (_, i) => makeItem(i));
+const PAGE_2: MediaItem[] = Array.from({ length: 8 }, (_, i) => makeItem(i + 12));
+
+function statusPayload(scenario: InstagramScenario) {
+  if (scenario === "connected") {
+    return {
+      connected: true,
+      ig_username: "hemkerart",
+      connected_at: iso(60 * 24 * 3),
+      last_synced_at: iso(140),
+      token_expired: false,
+    };
   }
+  if (scenario === "token-expired") {
+    return {
+      connected: true,
+      ig_username: "hemkerart",
+      connected_at: iso(60 * 24 * 70),
+      last_synced_at: iso(60 * 24 * 40),
+      token_expired: true,
+    };
+  }
+  // not-connected
+  return {
+    connected: false,
+    ig_username: null,
+    connected_at: null,
+    last_synced_at: null,
+    token_expired: false,
+  };
 }
 
-function makeBuilder(table: string, scenario: InstagramScenario) {
-  function resolve(kind: "list" | "single") {
-    const d = dataFor(table, kind === "single", scenario);
-    return Promise.resolve({ data: d, error: null });
-  }
+function httpError(status: number, code: string, message: string) {
+  return {
+    data: null,
+    error: {
+      name: "FunctionsHttpError",
+      message,
+      context: {
+        status,
+        json: async () => ({ error: code, message }),
+      },
+    },
+  };
+}
+
+export function createFakeInstagramClient(scenario: InstagramScenario): InkdSupabaseClient {
+  const invoke = async (name: string, opts?: { body?: Record<string, unknown> }) => {
+    if (scenario === "coming-soon") {
+      return httpError(503, "instagram_not_configured", "Instagram import isn't available yet.");
+    }
+
+    switch (name) {
+      case "instagram-status":
+        return { data: statusPayload(scenario), error: null };
+
+      case "instagram-oauth-start":
+        return {
+          data: { url: "https://www.instagram.com/oauth/authorize?client_id=demo&scenario=" + scenario },
+          error: null,
+        };
+
+      case "instagram-media-list": {
+        if (scenario === "token-expired") {
+          return httpError(409, "conflict", "Instagram token expired — reconnect required");
+        }
+        const after = opts?.body?.after as string | undefined;
+        if (after === "cursor-2") return { data: { items: PAGE_2, next_cursor: null }, error: null };
+        return { data: { items: PAGE_1, next_cursor: "cursor-2" }, error: null };
+      }
+
+      case "instagram-import": {
+        const ids = (opts?.body?.media_ids as string[]) ?? [];
+        // Model a couple already-imported + one skipped out of the selection.
+        const already = ids.filter((id) => id === "media-1" || id === "media-6").length;
+        const skipped = ids.includes("media-3") ? 1 : 0;
+        const created = Math.max(0, ids.length - already - skipped);
+        return {
+          data: {
+            run: {
+              id: "run-preview",
+              artist_id: "demo-ig-artist",
+              status: "completed",
+              media_seen: ids.length,
+              posts_created: created,
+              pieces_created: created,
+              media_skipped: skipped,
+              already_imported: already,
+              error_message: null,
+              started_at: iso(1),
+              completed_at: now.toISOString(),
+              created_at: now.toISOString(),
+            },
+          },
+          error: null,
+        };
+      }
+
+      case "instagram-disconnect":
+        return { data: { ok: true, disconnected: true }, error: null };
+
+      default:
+        return { data: null, error: null };
+    }
+  };
+
   const builder: Record<string, unknown> = {
     select: () => builder,
     eq: () => builder,
     order: () => builder,
     limit: () => builder,
     not: () => builder,
-    maybeSingle: () => resolve("single"),
-    single: () => resolve("single"),
-    then: (onF: (v: unknown) => unknown, onR?: (e: unknown) => unknown) =>
-      resolve("list").then(onF, onR),
+    maybeSingle: async () => ({ data: null, error: null }),
+    single: async () => ({ data: null, error: null }),
+    then: (onF: (v: unknown) => unknown) => Promise.resolve({ data: [], error: null }).then(onF),
   };
-  return builder;
-}
 
-export function createFakeInstagramClient(scenario: InstagramScenario): InkdSupabaseClient {
   const client = {
-    from: (table: string) => makeBuilder(table, scenario),
-    functions: {
-      invoke: async (name: string, opts?: { body?: Record<string, unknown> }) => {
-        if (name === "instagram-oauth") {
-          const action = opts?.body?.action ?? "status";
-          if (action === "status") return { data: statusFor(scenario), error: null };
-          if (action === "authorize-url") {
-            return {
-              data: { url: "https://www.instagram.com/oauth/authorize?client_id=demo" },
-              error: null,
-            };
-          }
-          if (action === "disconnect") return { data: { ok: true }, error: null };
-        }
-        if (name === "instagram-import") {
-          return {
-            data: {
-              run_id: "run-preview",
-              status: "completed",
-              mediaSeen: 6,
-              postsCreated: 6,
-              piecesCreated: 6,
-              mediaSkipped: 0,
-              alreadyImported: 0,
-            },
-            error: null,
-          };
-        }
-        return { data: null, error: null };
-      },
-    },
+    from: () => builder,
+    functions: { invoke },
     auth: {
       getUser: async () => ({ data: { user: USER }, error: null }),
       getSession: async () => ({ data: { session: { user: USER } }, error: null }),
@@ -191,5 +195,3 @@ export function createFakeInstagramClient(scenario: InstagramScenario): InkdSupa
   };
   return client as unknown as InkdSupabaseClient;
 }
-
-export { PROFILE, ARTIST };
