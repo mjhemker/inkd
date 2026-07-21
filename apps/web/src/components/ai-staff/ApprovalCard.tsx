@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Badge,
   Button,
@@ -16,42 +17,138 @@ import {
 } from "@inkd/core";
 
 import { ProvenanceBlock } from "./ProvenanceBlock";
-import { TierStamp } from "./TierStamp";
-import { actionTypeMeta, formatRelative, formatSlot } from "./meta";
-import { StaffNameplate } from "./StaffNameplate";
+import {
+  STAFF,
+  actionDeepLink,
+  actionTypeMeta,
+  formatRelative,
+  formatSlot,
+  handoffCategory,
+  summarizeContextSources,
+} from "./meta";
+
+/** Short mono kind label for the tier chip ("TIER 1 · DRAFTS"). */
+const TIER_KIND: Record<string, string> = {
+  "reply.draft": "DRAFTS",
+  "reply.autosend": "AUTO",
+  "booking.propose_slots": "TIMES",
+  "flag.handoff": "HANDOFF",
+  "note.log": "NOTE",
+};
+
+function staffName(role: AgentActionView["agent_role"]): string {
+  return STAFF.find((s) => s.role === role)?.name ?? "AI staff";
+}
 
 /**
- * One item in the approvals inbox, as a placard card. The draft reply (or the
- * proposed slots) is front and center; the client message it answers, the tier
- * stamp, the provenance receipt, and the plain-language why sit around it. The
- * artist can approve & send, edit then send (inline), or dismiss — everything a
- * human needs to trust or correct the move before it goes out.
+ * One item in the approvals inbox — condensed. The draft (or proposed slots) is
+ * front and center with a violet left rule; the reasoning collapses to one line
+ * and the full provenance hides behind compact source-count chips (RATES 3 ·
+ * POLICY 1 · ALL N). Tier-3 handoffs get their own red-headed layout and are
+ * never auto-sent. Only the ONE top card's "Approve & send" is the screen hero.
  */
 export function ApprovalCard({
   action,
   onApprove,
   onReject,
   busy = false,
+  hero = false,
   now,
 }: {
   action: AgentActionView;
   onApprove: (input: { editedDraftText?: string }) => void;
   onReject: (reason?: string) => void;
   busy?: boolean;
+  /** True only on the single top card — its Approve & send is the screen hero. */
+  hero?: boolean;
   now?: Date;
 }) {
   const meta = actionTypeMeta(action.action_type);
   const draft = action.contract.draft_text ?? "";
   const slots = action.contract.proposed_slots ?? [];
   const isHandoff = action.action_type === "flag.handoff";
+  const sources = summarizeContextSources(action.contract.context_used);
+  const totalSources = action.contract.context_used.length;
 
   const [editing, setEditing] = useState(false);
   const [draftText, setDraftText] = useState(draft);
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
+  const [whyOpen, setWhyOpen] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
 
   const triggerMsg = useAgentActionTriggerMessage(action);
+  const link = actionDeepLink(action);
 
+  // ── Tier-3 handoff: its own red-headed placard, never auto-sent, no hero ──
+  if (isHandoff) {
+    return (
+      <Card
+        padding="none"
+        variant="raised"
+        className="overflow-hidden"
+        data-testid="approval-card"
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-danger-600/50 bg-surface-overlay px-4 py-2">
+          <span className="truncate font-mono text-[11px] uppercase tracking-[0.16em] text-danger-600">
+            {staffName(action.agent_role)} · Flagged for you ·{" "}
+            {formatRelative(action.created_at, now)}
+          </span>
+          <Badge variant="outline" size="sm" className="font-mono uppercase tracking-[0.12em]">
+            Tier 3 · Never auto-sent
+          </Badge>
+        </div>
+
+        <div className="flex flex-col gap-3.5 p-4">
+          {triggerMsg.data?.body && (
+            <div className="rounded-sm border border-border-subtle bg-surface-plate-ink/60 p-3">
+              <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.16em] text-content-muted">
+                Client wrote
+              </p>
+              <p className="text-sm italic leading-relaxed text-content-secondary">
+                &ldquo;{triggerMsg.data.body}&rdquo;
+              </p>
+            </div>
+          )}
+
+          {action.reasoning_summary && (
+            <p className="text-[13px] leading-relaxed text-content-secondary">
+              {action.reasoning_summary}
+            </p>
+          )}
+
+          <div>
+            <Badge variant="stamp" size="md">
+              {handoffCategory(action)}
+            </Badge>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 pt-0.5">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onApprove({})}
+              className="inline-flex h-9 items-center gap-2 rounded-lg bg-content-primary px-4 text-sm font-semibold text-surface-base outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base disabled:opacity-50"
+            >
+              <Icon name="check" size={15} />
+              Mark handled
+            </button>
+            {link && (
+              <Link
+                href={link.href}
+                className="inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-[0.12em] text-content-accent hover:underline"
+              >
+                Open thread
+                <Icon name="arrow-right" size={13} />
+              </Link>
+            )}
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  // ── Standard approval (draft / proposed times) — condensed ────────────────
   return (
     <Card
       padding="none"
@@ -61,105 +158,95 @@ export function ApprovalCard({
     >
       <CardPlacard
         meta={
-          <span className="flex items-center gap-2">
-            <Icon name={meta.icon} size={12} />
-            {meta.label}
+          <span className="font-mono uppercase tracking-[0.12em] text-content-accent">
+            Tier {action.tier} · {TIER_KIND[action.action_type] ?? "DRAFT"}
           </span>
         }
       >
-        {formatRelative(action.created_at, now)} · needs your ok
+        {staffName(action.agent_role)} · {meta.label} ·{" "}
+        {formatRelative(action.created_at, now)}
       </CardPlacard>
 
-      <div className="flex flex-col gap-4 p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <StaffNameplate role={action.agent_role} />
-          <TierStamp tier={action.tier} />
-        </div>
-
-        {/* The client message it responds to */}
-        {triggerMsg.data?.body && (
-          <div className="rounded-sm border border-border-subtle bg-surface-overlay/50 p-3">
-            <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.16em] text-content-muted">
-              Client wrote
-            </p>
-            <p className="text-sm italic leading-relaxed text-content-secondary">
-              &ldquo;{triggerMsg.data.body}&rdquo;
-            </p>
-          </div>
-        )}
-
-        {/* Front and center: the draft, or the proposed slots */}
+      <div className="flex flex-col gap-3 p-4">
+        {/* Proposed times → soft-gray date chips */}
         {slots.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-content-muted">
-              Proposed session times
-            </p>
-            <ul className="flex flex-col gap-1.5">
-              {slots.map((slot, i) => (
-                <li
-                  key={`${slot.starts_at}-${i}`}
-                  className="flex items-center gap-2 rounded-sm bg-surface-plate-ink px-3 py-2 text-sm text-content-primary"
-                >
-                  <Icon name="calendar" size={15} className="text-content-accent" />
-                  {formatSlot(slot.starts_at, slot.ends_at)}
-                </li>
-              ))}
-            </ul>
+          <div className="flex flex-wrap gap-1.5">
+            {slots.map((slot, i) => (
+              <Badge key={`${slot.starts_at}-${i}`} variant="date" size="md">
+                {formatSlot(slot.starts_at, slot.ends_at)}
+              </Badge>
+            ))}
           </div>
         )}
 
-        {(draft || editing) && (
-          <div className="flex flex-col gap-2">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-content-muted">
-              {isHandoff ? "What it prepared" : "Drafted reply"}
+        {/* The draft, with a violet left rule (or the inline editor) */}
+        {editing ? (
+          <TextArea
+            value={draftText}
+            onChange={(e) => setDraftText(e.target.value)}
+            rows={5}
+            autoFocus
+            aria-label="Edit draft reply"
+          />
+        ) : (
+          draft && (
+            <p className="border-l-2 border-border-accent pl-3 text-sm leading-relaxed text-content-primary">
+              {draft}
             </p>
-            {editing ? (
-              <TextArea
-                value={draftText}
-                onChange={(e) => setDraftText(e.target.value)}
-                rows={5}
-                autoFocus
-                aria-label="Edit draft reply"
-              />
-            ) : (
-              <div
-                className={cx(
-                  "rounded-sm border p-3.5 text-sm leading-relaxed text-content-primary",
-                  isHandoff
-                    ? "border-warning-600/40 bg-warning-600/5"
-                    : "border-border-accent bg-surface-plate-ink",
-                )}
-              >
-                <p className="whitespace-pre-wrap break-words">{draft}</p>
-              </div>
-            )}
-          </div>
+          )
         )}
 
-        {/* Why — plain language */}
+        {/* Why — one line, expandable */}
         {action.reasoning_summary && (
-          <div className="flex items-start gap-2">
+          <button
+            type="button"
+            onClick={() => setWhyOpen((v) => !v)}
+            className="flex items-start gap-2 text-left outline-none"
+          >
             <Icon
               name="sparkles"
-              size={14}
+              size={13}
               className="mt-0.5 shrink-0 text-content-accent"
             />
-            <p className="text-[13px] leading-relaxed text-content-secondary">
+            <span
+              className={cx(
+                "text-[13px] leading-relaxed text-content-secondary",
+                !whyOpen && "line-clamp-1",
+              )}
+            >
               {action.reasoning_summary}
-            </p>
-          </div>
+            </span>
+          </button>
         )}
 
-        {/* Provenance */}
-        <ProvenanceBlock context={action.contract.context_used} />
-
-        {isHandoff && (
-          <div className="flex items-center gap-2 rounded-sm border border-warning-600/40 bg-warning-600/5 px-3 py-2">
-            <Icon name="shield" size={14} className="text-warning-600" />
-            <p className="text-[13px] text-content-secondary">
-              Your staff won&rsquo;t reply to this on its own — it&rsquo;s here for
-              you to handle.
-            </p>
+        {/* Compact source-count chips; ALL expands the full provenance */}
+        {totalSources > 0 && (
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {sources.map((s) => (
+                <span
+                  key={s.source}
+                  className="inline-flex items-center gap-1 rounded-sm bg-surface-plate-ink px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-content-muted"
+                >
+                  {s.short} {s.count}
+                </span>
+              ))}
+              <button
+                type="button"
+                onClick={() => setSourcesOpen((v) => !v)}
+                className="inline-flex items-center gap-1 rounded-sm border border-border-subtle px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-content-accent outline-none hover:border-border-accent"
+              >
+                All {totalSources}
+                <Icon
+                  name="chevron-down"
+                  size={11}
+                  className={cx("transition-transform", sourcesOpen && "rotate-180")}
+                />
+              </button>
+            </div>
+            {sourcesOpen && (
+              <ProvenanceBlock context={action.contract.context_used} />
+            )}
           </div>
         )}
 
@@ -196,23 +283,26 @@ export function ApprovalCard({
           </div>
         ) : (
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            {!isHandoff && (
-              <Button
-                size="sm"
-                loading={busy && !editing}
-                onClick={() =>
-                  onApprove(
-                    editing && draftText !== draft
-                      ? { editedDraftText: draftText }
-                      : {},
-                  )
-                }
-              >
-                <Icon name="check" size={15} />
-                {editing ? "Send edited" : slots.length > 0 ? "Approve times" : "Approve & send"}
-              </Button>
-            )}
-            {draft && !isHandoff && (
+            <Button
+              hero={hero}
+              size="sm"
+              loading={busy && !editing}
+              onClick={() =>
+                onApprove(
+                  editing && draftText !== draft
+                    ? { editedDraftText: draftText }
+                    : {},
+                )
+              }
+            >
+              <Icon name="check" size={15} />
+              {editing
+                ? "Send edited"
+                : slots.length > 0
+                  ? "Approve times"
+                  : "Approve & send"}
+            </Button>
+            {draft && (
               <Button
                 variant="outline"
                 size="sm"
@@ -223,28 +313,17 @@ export function ApprovalCard({
                 disabled={busy}
               >
                 <Icon name="settings" size={15} />
-                {editing ? "Cancel edit" : "Edit then send"}
+                {editing ? "Cancel edit" : "Edit"}
               </Button>
             )}
-            {isHandoff ? (
-              <Button
-                size="sm"
-                loading={busy}
-                onClick={() => onApprove({})}
-              >
-                <Icon name="check" size={15} />
-                Mark handled
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setRejecting(true)}
-                disabled={busy}
-              >
-                Dismiss
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setRejecting(true)}
+              disabled={busy}
+            >
+              Dismiss
+            </Button>
           </div>
         )}
       </div>
@@ -256,7 +335,9 @@ export function ApprovalCard({
 export function ActionMetaRow({ action }: { action: AgentActionView }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <TierStamp tier={action.tier} withLabel={false} />
+      <Badge variant="outline" size="sm" className="font-mono uppercase tracking-[0.12em]">
+        Tier {action.tier}
+      </Badge>
       <Badge variant="neutral" size="sm">
         {action.contract.context_used.length} sources
       </Badge>

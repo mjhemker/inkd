@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { Badge, Card, Icon, cx } from "@inkd/ui/web";
+import { Badge, Card, Icon, StatusDot } from "@inkd/ui/web";
 import type { AgentSettings } from "@inkd/core";
 
 import { AUTONOMY_LABEL, STAFF } from "./meta";
 
 /**
- * The staff overview — Front Desk, Booking Manager + Studio Manager presented
- * as your team, with mono nameplates, an on/off state, the current autonomy
- * level (linking to the settings slider), and the count of things waiting on
- * you. Renders one card per STAFF role; the layout flows to any staff count.
+ * The staff overview — Front Desk, Booking Manager + Studio Manager presented as
+ * your team. Zine pass: the header carries a mono "AUTONOMY · <level>" link and,
+ * when anything's waiting, a red "N AWAITING YOU" stamp (red = counts & medical
+ * only). The team reads as a compact status row — a StatusDot + mono nameplate +
+ * ON/OFF + one line of role copy per staff, all flat hairline cards.
  */
 export function StaffOverviewHeader({
   settings,
@@ -28,7 +29,7 @@ export function StaffOverviewHeader({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1.5">
           <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-content-muted">
             Your studio · AI staff
@@ -42,67 +43,54 @@ export function StaffOverviewHeader({
             approve, or correct.
           </p>
         </div>
-        <Link
-          href="/settings?tab=ai"
-          className="inline-flex items-center gap-2 rounded-sm border border-border-subtle bg-surface-raised px-3 py-2 transition-colors hover:border-border-accent"
-        >
-          <span className="flex flex-col">
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-content-muted">
-              Autonomy
-            </span>
-            <span className="text-sm font-semibold text-content-primary">
-              {AUTONOMY_LABEL[autonomy] ?? autonomy}
-            </span>
-          </span>
-          <Icon name="settings" size={16} className="text-content-muted" />
-        </Link>
+        <div className="flex flex-wrap items-center gap-2.5">
+          {pendingCount > 0 && (
+            <Badge variant="stamp" size="md">
+              {pendingCount} awaiting you
+            </Badge>
+          )}
+          <Link
+            href="/settings?tab=ai"
+            className="inline-flex items-center gap-2 rounded-sm border border-border-subtle bg-surface-raised px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-content-secondary transition-colors hover:border-border-accent hover:text-content-primary"
+          >
+            Autonomy · {AUTONOMY_LABEL[autonomy] ?? autonomy}
+            <Icon name="settings" size={13} className="text-content-muted" />
+          </Link>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
-        <div className="grid flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-2.5 sm:grid-cols-3">
         {STAFF.map((staff) => {
           const on = enabledByRole[staff.role] ?? true;
           return (
-            <Card key={staff.role} padding="md" className="flex items-start gap-3">
-              <span
-                className={cx(
-                  "grid h-10 w-10 shrink-0 place-items-center rounded-sm",
-                  on
-                    ? "bg-surface-ember text-brand-on-ember"
-                    : "bg-surface-overlay text-content-muted",
-                )}
-              >
-                <Icon name={staff.icon} size={19} />
-              </span>
+            <Card
+              key={staff.role}
+              padding="sm"
+              className="flex items-start gap-2.5"
+            >
+              <StatusDot on={on} className="mt-1" />
               <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="flex items-center gap-2">
-                  <span className="font-mono text-[12px] uppercase tracking-[0.14em] text-content-primary">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-content-primary">
                     {staff.name}
                   </span>
-                  <Badge variant={on ? "success" : "neutral"} size="sm">
+                  <span
+                    className={
+                      on
+                        ? "font-mono text-[10px] uppercase tracking-[0.16em] text-success-600"
+                        : "font-mono text-[10px] uppercase tracking-[0.16em] text-content-muted"
+                    }
+                  >
                     {on ? "On" : "Off"}
-                  </Badge>
+                  </span>
                 </span>
                 <span className="text-xs leading-snug text-content-muted">
-                  {staff.title}
+                  {staff.short}
                 </span>
               </div>
             </Card>
           );
         })}
-        </div>
-
-        <Card
-          padding="md"
-          className="flex flex-col items-start justify-center gap-0.5 lg:min-w-[8rem]"
-        >
-          <span className="font-display text-3xl font-bold tracking-tight text-content-primary">
-            {pendingCount}
-          </span>
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-content-muted">
-            Awaiting your ok
-          </span>
-        </Card>
       </div>
     </div>
   );

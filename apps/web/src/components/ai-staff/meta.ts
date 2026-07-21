@@ -92,10 +92,64 @@ export const CONTEXT_SOURCE_LABEL: Record<AgentContextEntry["source"], string> =
   profile: "FROM YOUR PROFILE",
 };
 
+/** Compact mono labels for the source-count chips ("RATES 3 · POLICY 1"). */
+export const CONTEXT_SOURCE_SHORT: Record<AgentContextEntry["source"], string> = {
+  services: "RATES",
+  availability: "AVAIL",
+  booking_policy: "POLICY",
+  playbook: "PLAYBOOK",
+  profile: "PROFILE",
+};
+
+const CONTEXT_SOURCE_ORDER: AgentContextEntry["source"][] = [
+  "services",
+  "booking_policy",
+  "playbook",
+  "availability",
+  "profile",
+];
+
+/** Roll a context list into ordered per-source counts for the compact chips. */
+export function summarizeContextSources(
+  context: AgentContextEntry[],
+): { source: AgentContextEntry["source"]; short: string; count: number }[] {
+  const counts = new Map<AgentContextEntry["source"], number>();
+  for (const entry of context)
+    counts.set(entry.source, (counts.get(entry.source) ?? 0) + 1);
+  return CONTEXT_SOURCE_ORDER.filter((s) => counts.has(s)).map((source) => ({
+    source,
+    short: CONTEXT_SOURCE_SHORT[source],
+    count: counts.get(source) ?? 0,
+  }));
+}
+
+/**
+ * The plain-language category a Tier-3 handoff belongs to, for the red stamp on
+ * the handoff card. Medical is the one we name explicitly (safety-critical);
+ * everything else is a generic "yours to handle". Derived from the reasoning +
+ * the data it cited — no behavior change, just presentation.
+ */
+export function handoffCategory(action: {
+  reasoning_summary?: string | null;
+  contract: { context_used: AgentContextEntry[] };
+}): string {
+  const haystack = [
+    action.reasoning_summary ?? "",
+    ...action.contract.context_used.map((c) => c.detail),
+  ]
+    .join(" ")
+    .toLowerCase();
+  if (/\bmedical\b|blood thinner|heart condition|medication|allergy|pregnan/.test(haystack))
+    return "MEDICAL — YOURS TO HANDLE";
+  return "YOURS TO HANDLE";
+}
+
 export interface StaffMeta {
   role: AgentRole;
   name: string;
   title: string;
+  /** One-line role copy for the compact staff status row. */
+  short: string;
   icon: IconName;
 }
 
@@ -111,18 +165,21 @@ export const STAFF: StaffMeta[] = [
     role: "front_desk",
     name: "Front Desk",
     title: "Triages inbound messages, answers from your published info",
+    short: "Triages & answers from your published info",
     icon: "message-circle",
   },
   {
     role: "booking_manager",
     name: "Booking Manager",
     title: "Proposes session times, holds, and deposit steps",
+    short: "Times, holds & deposit steps",
     icon: "calendar",
   },
   {
     role: "studio_manager",
     name: "Studio Manager",
     title: "Chases deposits, nudges rebooks, writes your weekly digest",
+    short: "Deposit chasing & weekly digest",
     icon: "trending-up",
   },
 ];
