@@ -4,9 +4,8 @@
  * date, title/body, and a nested artist response (used on the public profile
  * Reviews tab and on booking detail). Purely display — mutations happen in
  * the container that renders this (booking-detail / review-form-modal). */
-import { Avatar } from "@inkd/ui/web";
+import { Avatar, StarRating } from "@inkd/ui/web";
 import { formatReviewDate, type Review } from "@inkd/core";
-import { RatingStamps } from "./rating-stamps";
 
 export function ReviewCard({
   review,
@@ -31,7 +30,7 @@ export function ReviewCard({
             </span>
           </div>
         </div>
-        <RatingStamps value={review.rating} readOnly size="sm" />
+        <StarRating value={review.rating} readOnly size="sm" />
       </div>
 
       {review.title && (

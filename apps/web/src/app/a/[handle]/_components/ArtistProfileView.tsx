@@ -147,12 +147,9 @@ export function ArtistProfileView({ data }: { data: PublicArtistData }) {
                 ))}
                 {reviewSummary.count > 0 && (
                   <Badge variant="ember" size="sm">
-                    {/* Stamped pip — same rating-mark family as <RatingStamps>,
-                        not a generic star, so reviews iconography is uniform. */}
-                    <span
-                      aria-hidden
-                      className="inline-block h-2 w-2 shrink-0 rotate-[-6deg] rounded-[2px] bg-current"
-                    />
+                    {/* Classic star glyph — same 5-star family as <StarRating>,
+                        so reviews iconography is uniform across the app. */}
+                    <Icon name="star" size={12} />
                     {formatRatingAvg(reviewSummary.avg)} · {reviewSummary.count} review
                     {reviewSummary.count === 1 ? "" : "s"}
                   </Badge>

@@ -136,11 +136,8 @@ function Hero({ data }: { data: PublicArtistProfileData }) {
         ))}
         {reviewSummary.count > 0 && (
           <Badge variant="ember" size="sm" className="gap-1.5">
-            {/* Stamped pip — same rating-mark family as <RatingStamps>. */}
-            <View
-              className="h-2 w-2 rounded-[2px] bg-brand-on-ember"
-              style={{ transform: [{ rotate: "-6deg" }] }}
-            />
+            {/* Classic star glyph — same 5-star family as <StarRating>. */}
+            <Icon name="star" size={12} color={colors.brand.onEmber} />
             <Text className="font-sans-semibold text-xs text-brand-on-ember">
               {`${formatRatingAvg(reviewSummary.avg)} · ${reviewSummary.count} review${reviewSummary.count === 1 ? "" : "s"}`}
             </Text>

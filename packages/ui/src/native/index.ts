@@ -34,6 +34,17 @@ export {
   type RegionShape,
 } from "../bodyMap/regions";
 
+export { StarRating, type StarRatingProps } from "./StarRating";
+export {
+  STAR_COUNT,
+  clampRating,
+  roundToHalf,
+  starFillFractions,
+  ratingFromStar,
+  ratingFromRatio,
+  stepRating,
+} from "../starRating/starMath";
+
 export { Eyebrow, type EyebrowProps } from "./Eyebrow";
 
 export {

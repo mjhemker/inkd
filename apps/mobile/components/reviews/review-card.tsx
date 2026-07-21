@@ -2,9 +2,8 @@
  * avatar, mono date, title/body, and a nested artist response. Mirrors
  * apps/web/src/components/reviews/review-card.tsx. */
 import { Text, View } from "react-native";
-import { Avatar } from "@inkd/ui/native";
+import { Avatar, StarRating } from "@inkd/ui/native";
 import { formatReviewDate, type Review } from "@inkd/core";
-import { RatingStamps } from "./rating-stamps";
 
 export function ReviewCard({
   review,
@@ -29,7 +28,7 @@ export function ReviewCard({
             </Text>
           </View>
         </View>
-        <RatingStamps value={review.rating} readOnly size="sm" />
+        <StarRating value={review.rating} readOnly size="sm" />
       </View>
 
       {review.title ? (

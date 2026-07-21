@@ -5,8 +5,7 @@
  */
 import { useEffect, useState } from "react";
 import { ScrollView } from "react-native";
-import { Button, FormField, Input, Modal, TextArea } from "@inkd/ui/native";
-import { RatingStamps } from "./rating-stamps";
+import { Button, FormField, Input, Modal, StarRating, TextArea } from "@inkd/ui/native";
 
 export interface ReviewFormValues {
   rating: number;
@@ -71,7 +70,9 @@ export function ReviewFormModal({
     >
       <ScrollView className="max-h-96" contentContainerClassName="gap-4" showsVerticalScrollIndicator={false}>
         <FormField label="Rating">
-          <RatingStamps value={rating} onChange={setRating} size="lg" showLabel />
+          {/* Native authoring is whole-star taps (DB rating is smallint 1–5);
+              half-stars are display-only. */}
+          <StarRating value={rating} onChange={setRating} size="lg" showLabel />
         </FormField>
         <FormField label="Title" description="Optional">
           <Input

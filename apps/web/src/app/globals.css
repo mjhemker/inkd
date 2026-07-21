@@ -19,8 +19,11 @@
   --color-surface-overlay: 26 26 29;
   --color-surface-chrome: 13 13 15;
   --color-surface-inverse: 250 250 250;
-  --color-surface-plate: 124 58 237;
-  --color-surface-plate-active: 109 40 217;
+  /* Dark-mode violet lift (2026-07): plates/brand brightened one ramp step so
+     solid violet reads off the near-black canvas on phones. Mirrors themes.dark
+     in @inkd/ui/tokens. Light theme (below) keeps 124 58 237. */
+  --color-surface-plate: 139 92 246;
+  --color-surface-plate-active: 124 58 237;
   --color-surface-plate-ink: 46 16 101;
   --color-surface-ember: 232 161 92;
   --color-content-primary: 250 250 250;
@@ -32,11 +35,11 @@
   --color-border-subtle: 26 26 29;
   --color-border-default: 39 39 42;
   --color-border-strong: 63 63 70;
-  --color-border-accent: 124 58 237;
+  --color-border-accent: 139 92 246;
   --color-border-ember: 211 129 63;
-  --color-brand: 124 58 237;
-  --color-brand-hover: 139 92 246;
-  --color-brand-active: 109 40 217;
+  --color-brand: 139 92 246;
+  --color-brand-hover: 167 139 250;
+  --color-brand-active: 124 58 237;
   --color-brand-on: 250 250 250;
   --color-brand-on-ember: 10 10 11;
   --color-status-success: 34 197 94;
@@ -91,8 +94,9 @@
   --color-surface-raised: 17 17 19;
   --color-surface-overlay: 26 26 29;
   --color-surface-inverse: 250 250 250;
-  --color-surface-plate: 124 58 237;
-  --color-surface-plate-active: 109 40 217;
+  /* Dark-mode violet lift — kept in sync with :root above. */
+  --color-surface-plate: 139 92 246;
+  --color-surface-plate-active: 124 58 237;
   --color-surface-plate-ink: 46 16 101;
   --color-surface-ember: 232 161 92;
   --color-content-primary: 250 250 250;
@@ -104,11 +108,11 @@
   --color-border-subtle: 26 26 29;
   --color-border-default: 39 39 42;
   --color-border-strong: 63 63 70;
-  --color-border-accent: 124 58 237;
+  --color-border-accent: 139 92 246;
   --color-border-ember: 211 129 63;
-  --color-brand: 124 58 237;
-  --color-brand-hover: 139 92 246;
-  --color-brand-active: 109 40 217;
+  --color-brand: 139 92 246;
+  --color-brand-hover: 167 139 250;
+  --color-brand-active: 124 58 237;
   --color-brand-on: 250 250 250;
   --color-brand-on-ember: 10 10 11;
   --color-status-success: 34 197 94;

@@ -1,7 +1,7 @@
 /** Public-profile Reviews tab (native): aggregate placard + review list.
  * Mirrors apps/web/src/components/reviews/reviews-tab.tsx. */
 import { Text, View } from "react-native";
-import { Card, CardPlacard, Icon } from "@inkd/ui/native";
+import { Card, CardPlacard, Icon, StarRating } from "@inkd/ui/native";
 import {
   formatRatingAvg,
   reviewerFirstName,
@@ -9,7 +9,6 @@ import {
   type Profile,
   type Review,
 } from "@inkd/core";
-import { RatingStamps } from "./rating-stamps";
 import { ReviewCard } from "./review-card";
 import { useTheme } from "@/providers/theme";
 
@@ -47,7 +46,7 @@ export function ReviewsTab({
           <Text className="font-display text-4xl text-content-primary">
             {formatRatingAvg(summary.avg)}
           </Text>
-          <RatingStamps value={Math.round(summary.avg)} readOnly size="md" />
+          <StarRating value={summary.avg} readOnly size="md" />
         </View>
       </Card>
 
