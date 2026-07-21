@@ -472,7 +472,7 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
 
         {variant === "settings" && (
           <div className="flex justify-end">
-            <Button onClick={() => void save()} loading={saving}>
+            <Button hero onClick={() => void save()} loading={saving}>
               Save changes
             </Button>
           </div>
