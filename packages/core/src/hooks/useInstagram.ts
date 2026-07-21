@@ -30,9 +30,6 @@ import {
   importMedia,
   disconnect,
   deriveInstagramState,
-  listInstagramImportRuns,
-  getInstagramAuthorizeUrl,
-  startInstagramImport,
   type InstagramStatus,
   type InstagramMediaPage,
   type InstagramImportRunResult,
@@ -215,48 +212,6 @@ export function useInstagramDisconnect(artistId: string | undefined) {
     onSuccess: () => {
       invalidate();
       if (artistId) qc.invalidateQueries({ queryKey: instagramQueryKeys.media(artistId) });
-    },
-  });
-}
-
-// ===========================================================================
-// LEGACY-compat hooks (mobile scaffold) — DEPRECATED
-// ===========================================================================
-
-/** @deprecated Legacy alias for {@link useInstagramDisconnect}. */
-export const useDisconnectInstagram = useInstagramDisconnect;
-
-/** @deprecated Use {@link useInstagramStartOAuth}. */
-export function useInstagramAuthorizeUrl() {
-  const client = useInkdClient();
-  return useMutation({ mutationFn: () => getInstagramAuthorizeUrl(client) });
-}
-
-/** @deprecated Recent import runs, newest first (RLS read). */
-export function useInstagramImportRuns(artistId: string | undefined) {
-  const client = useInkdClient();
-  return useQuery({
-    queryKey: instagramQueryKeys.importRuns(artistId ?? ""),
-    queryFn: () => listInstagramImportRuns(client, artistId as string),
-    enabled: Boolean(artistId),
-  });
-}
-
-/**
- * @deprecated Use {@link useInstagramImport} with an explicit selection. This
- * legacy shim (mobile scaffold) has no selection to pass — the new endpoint
- * requires explicit media ids, so it rejects until the mobile lane wires the
- * picker. Kept only so the untouched mobile screens keep typechecking.
- */
-export function useStartInstagramImport(artistId: string | undefined) {
-  const client = useInkdClient();
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => startInstagramImport(client, []),
-    onSuccess: () => {
-      if (!artistId) return;
-      qc.invalidateQueries({ queryKey: instagramQueryKeys.status(artistId) });
-      qc.invalidateQueries({ queryKey: instagramQueryKeys.importRuns(artistId) });
     },
   });
 }

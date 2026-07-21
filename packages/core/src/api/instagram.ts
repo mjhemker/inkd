@@ -447,64 +447,6 @@ export function deriveInstagramState(input: {
 }
 
 // ===========================================================================
-// Legacy-compat surface (mobile scaffold) — DEPRECATED
-// ---------------------------------------------------------------------------
-// The mobile connected-accounts / identity-editor still import the old hooks
-// (see hooks/useInstagram.ts). These thin adapters keep them typechecking
-// against the new endpoints until the mobile lane migrates. Web does NOT use
-// them.
-// ===========================================================================
-
-/** @deprecated Use the finished `InstagramImportRunResult` instead. */
-export interface InstagramImportSummary {
-  run_id: string;
-  status: "completed" | "failed";
-  mediaSeen: number;
-  postsCreated: number;
-  piecesCreated: number;
-  mediaSkipped: number;
-  alreadyImported: number;
-}
-
-/** @deprecated Map a run to the legacy summary shape. */
-export function runToSummary(run: InstagramImportRunResult): InstagramImportSummary {
-  return {
-    run_id: run.id,
-    status: run.status,
-    mediaSeen: run.media_seen,
-    postsCreated: run.posts_created,
-    piecesCreated: run.pieces_created,
-    mediaSkipped: run.media_skipped,
-    alreadyImported: run.already_imported,
-  };
-}
-
-/** @deprecated Use {@link getStatus}. */
-export const getInstagramStatus = getStatus;
-
-/** @deprecated Use {@link startOAuth}. */
-export async function getInstagramAuthorizeUrl(
-  client: InkdSupabaseClient,
-): Promise<InstagramAuthorizeUrlResult> {
-  return startOAuth(client);
-}
-
-/** @deprecated Use {@link disconnect}. */
-export async function disconnectInstagram(
-  client: InkdSupabaseClient,
-): Promise<InstagramDisconnectResult> {
-  return disconnect(client);
-}
-
-/** @deprecated Use {@link importMedia} with an explicit selection. */
-export async function startInstagramImport(
-  client: InkdSupabaseClient,
-  mediaIds: string[] = [],
-): Promise<InstagramImportSummary> {
-  return runToSummary(await importMedia(client, mediaIds));
-}
-
-// ===========================================================================
 // RLS-scoped reads (no service role) — kept for the settings import history.
 // ===========================================================================
 

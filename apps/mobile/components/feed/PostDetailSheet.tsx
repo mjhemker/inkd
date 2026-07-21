@@ -40,15 +40,13 @@ export function PostDetailSheet({ item, onClose, signedIn = true }: PostDetailSh
   const toggleFollow = useToggleFollow();
 
   const imageUrl = item ? (item.kind === "post" ? item.coverUrl : item.imageUrl) : null;
-  // MERGE: core's FeedPostItem should expose `source` + `instagramPermalink`
-  // (from posts.source / posts.instagram_permalink). Until it does, these read
-  // as undefined and the "View original" row simply doesn't render.
-  const igFields =
-    item?.kind === "post"
-      ? (item as unknown as { source?: string | null; instagramPermalink?: string | null })
-      : null;
+  // IG-imported posts carry `source: "instagram"` + `instagramPermalink`
+  // (from posts.source / posts.instagram_permalink via core's FeedPostItem);
+  // native posts leave the "View original" row unrendered.
   const instagramPermalink =
-    igFields && igFields.source === "instagram" ? igFields.instagramPermalink ?? null : null;
+    item?.kind === "post" && item.source === "instagram"
+      ? item.instagramPermalink ?? null
+      : null;
   const handle = item?.artist.handle ?? null;
   const artistLabel =
     item?.artist.displayName || (handle ? `@${handle}` : "Artist");

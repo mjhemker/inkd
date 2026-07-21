@@ -1,25 +1,23 @@
 /**
- * Instagram import — mobile client surface (SINGLE SWAP POINT).
+ * Instagram import — mobile client surface (THIN ADAPTER over `@inkd/core`).
  *
  * ─────────────────────────────────────────────────────────────────────────
- * MERGE: replace this whole module with the real `@inkd/core` instagram
- * exports. A parallel agent owns packages/core's rewritten surface:
- *   getStatus / startOAuth({return_to?}) / listMedia / importMedia / disconnect
- *   + hooks useInstagramStatus / useInstagramMedia / useInstagramImport
- *     / useInstagramDisconnect
- *   + error kinds notConnected | tokenExpired | comingSoon | forbidden | error
- * Every mobile IG screen/component imports ONLY from this file, so the
- * integrator swaps these implementations for `@inkd/core` re-exports in one
- * place. Names/shapes here mirror the deployed edge-function contract
- * (INKD_Instagram_UI_Implementation_Guide §2) so this stub is also functional
- * against the LIVE functions for real-device QA.
+ * This module is the single import point for every mobile IG screen. It no
+ * longer duplicates the edge-function transport / error-mapping: that lives in
+ * `@inkd/core` (`packages/core/src/api/instagram.ts`). Here we only:
+ *   - re-export the shared `InstagramError` / `InstagramErrorKind`, and
+ *   - adapt core's snake_case wire shapes into the camelCase shapes the mobile
+ *     screens already consume (and derive the `status.state` the settings /
+ *     onboarding cards read).
+ * Core is the source of truth; when a name/shape differs, this file bridges it
+ * so the mobile screens stay untouched.
  * ─────────────────────────────────────────────────────────────────────────
  *
  * Hard don'ts honored here (guide §7):
  *  - never persists/caches `previewUrl` (ephemeral IG CDN) — callers render it
  *    and drop it; nothing here writes it to storage.
  *  - never reads `instagram_connections` from the client — status/disconnect go
- *    through the JWT edge functions only.
+ *    through the JWT edge functions (via core) only.
  *  - the authorize URL is minted fresh per call (`startOAuth`) — never cached.
  */
 import {
@@ -30,37 +28,34 @@ import {
 } from "@tanstack/react-query";
 import type { InkdSupabaseClient } from "@inkd/core/supabase";
 import { useInkdClient } from "@inkd/core/hooks";
+import {
+  InstagramError,
+  IG_IMPORT_MAX,
+  getStatus as coreGetStatus,
+  startOAuth as coreStartOAuth,
+  listMedia as coreListMedia,
+  importMedia as coreImportMedia,
+  disconnect as coreDisconnect,
+  type InstagramErrorKind,
+  type InstagramMediaType as CoreInstagramMediaType,
+  type InstagramStatus as CoreInstagramStatus,
+  type InstagramMediaItem as CoreInstagramMediaItem,
+  type InstagramImportRunResult as CoreInstagramImportRun,
+} from "@inkd/core/api";
 
 // ===========================================================================
-// Error model
+// Error model — shared with core so `instanceof InstagramError` matches
+// across the app (core throws it, this adapter re-exports it).
 // ===========================================================================
 
-/** The five documented failure states, plus they double as connection states. */
-export type InstagramErrorKind =
-  | "notConnected"
-  | "tokenExpired"
-  | "comingSoon"
-  | "forbidden"
-  | "error";
+export { InstagramError };
+export type { InstagramErrorKind };
 
 /** Connection state used to drive the settings section + onboarding card. */
 export type InstagramState = "connected" | InstagramErrorKind;
 
-export class InstagramError extends Error {
-  readonly kind: InstagramErrorKind;
-  readonly status: number;
-  readonly code: string;
-  constructor(kind: InstagramErrorKind, message: string, status = 0, code = "") {
-    super(message);
-    this.name = "InstagramError";
-    this.kind = kind;
-    this.status = status;
-    this.code = code;
-  }
-}
-
 // ===========================================================================
-// Wire types (camelCased from the deployed contract, guide §2)
+// Wire types (camelCased from core's deployed contract, guide §2)
 // ===========================================================================
 
 export interface InstagramStatus {
@@ -75,7 +70,7 @@ export interface InstagramStatus {
   tokenExpired: boolean;
 }
 
-export type InstagramMediaType = "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM" | null;
+export type InstagramMediaType = CoreInstagramMediaType;
 
 export interface InstagramMediaItem {
   /** IG media id — pass to importMedia. */
@@ -118,188 +113,37 @@ export interface InstagramImportRun {
 // ===========================================================================
 
 /** Server hard cap per import run (guide §2.4) — enforce in the picker UI. */
-export const INSTAGRAM_IMPORT_CAP = 50;
+export const INSTAGRAM_IMPORT_CAP = IG_IMPORT_MAX;
 export const INSTAGRAM_MEDIA_PAGE_SIZE = 24;
 
-/** Deployed edge-function names (guide §1 / §6). Central so the integrator can
- *  reconcile if core names differ. */
-const FN = {
-  status: "instagram-status", // §6.1 (JWT)
-  oauthStart: "instagram-oauth-start", // §2.1 (JWT)
-  mediaList: "instagram-media-list", // §2.3 (JWT)
-  import: "instagram-import", // §2.4 (JWT)
-  disconnect: "instagram-disconnect", // §6.3 (JWT)
-} as const;
-
 // ===========================================================================
-// Invoke helper — maps the standard `{error: <code>, message}` envelope
-// (and HTTP status) onto InstagramErrorKind.
+// snake_case (core) → camelCase (mobile) mappers
 // ===========================================================================
 
-function kindFor(code: string, status: number): InstagramErrorKind {
-  switch (code) {
-    case "instagram_not_configured":
-    case "not_configured":
-      return "comingSoon";
-    case "not_found":
-      return "notConnected";
-    case "conflict":
-      return "tokenExpired";
-    case "forbidden":
-      return "forbidden";
-  }
-  switch (status) {
-    case 503:
-      return "comingSoon";
-    case 404:
-      return "notConnected";
-    case 409:
-      return "tokenExpired";
-    case 403:
-      return "forbidden";
-  }
-  return "error";
-}
-
-async function invokeIg<T>(
-  client: InkdSupabaseClient,
-  name: string,
-  body?: Record<string, unknown>,
-): Promise<T> {
-  const { data, error } = await client.functions.invoke<T & { error?: unknown }>(
-    name,
-    { body: body ?? {} },
-  );
-
-  if (error) {
-    const ctx = (error as { context?: Response }).context;
-    let status = 0;
-    let code = "";
-    let message = error.message || "Something went wrong with Instagram.";
-    if (ctx && typeof ctx.json === "function") {
-      status = typeof ctx.status === "number" ? ctx.status : 0;
-      try {
-        const parsed = (await ctx.clone().json()) as {
-          error?: string | { code?: string; message?: string };
-          message?: string;
-        };
-        if (typeof parsed.error === "string") code = parsed.error;
-        else if (parsed.error && typeof parsed.error === "object")
-          code = parsed.error.code ?? "";
-        if (typeof parsed.message === "string") message = parsed.message;
-        else if (parsed.error && typeof parsed.error === "object" && parsed.error.message)
-          message = parsed.error.message;
-      } catch {
-        /* non-JSON body — keep defaults */
-      }
-    }
-    throw new InstagramError(kindFor(code, status), message, status, code);
-  }
-
-  if (!data) throw new InstagramError("error", `Empty response from ${name}.`);
-  const envelope = data as { error?: string | { code?: string; message?: string } };
-  if (envelope.error) {
-    const code =
-      typeof envelope.error === "string" ? envelope.error : envelope.error.code ?? "";
-    const message =
-      typeof envelope.error === "object" && envelope.error.message
-        ? envelope.error.message
-        : `Error from ${name}.`;
-    throw new InstagramError(kindFor(code, 0), message, 0, code);
-  }
-  return data as T;
-}
-
-// ===========================================================================
-// API functions
-// ===========================================================================
-
-/** Config + connection status. NEVER throws for the expected states — resolves
- *  to a status whose `state` drives the UI (comingSoon / notConnected /
- *  tokenExpired / forbidden / connected). Only genuine network failures land as
- *  `state: "error"`. */
-export async function getStatus(client: InkdSupabaseClient): Promise<InstagramStatus> {
-  try {
-    const raw = await invokeIg<{
-      connected?: boolean;
-      configured?: boolean;
-      ig_username?: string | null;
-      connected_at?: string | null;
-      last_synced_at?: string | null;
-      token_expired?: boolean;
-    }>(client, FN.status);
-
-    const connected = Boolean(raw.connected);
-    const tokenExpired = Boolean(raw.token_expired);
-    const state: InstagramState = !connected
-      ? "notConnected"
-      : tokenExpired
-        ? "tokenExpired"
-        : "connected";
-    return {
-      state,
-      connected,
-      configured: raw.configured ?? true,
-      igUsername: raw.ig_username ?? null,
-      connectedAt: raw.connected_at ?? null,
-      lastSyncedAt: raw.last_synced_at ?? null,
-      tokenExpired,
-    };
-  } catch (err) {
-    const kind = err instanceof InstagramError ? err.kind : "error";
-    // comingSoon / forbidden / (network) error → surface as a resolved status
-    // state so the settings section renders honestly instead of erroring out.
-    return {
-      state: kind,
-      connected: false,
-      configured: kind !== "comingSoon",
-      igUsername: null,
-      connectedAt: null,
-      lastSyncedAt: null,
-      tokenExpired: kind === "tokenExpired",
-    };
-  }
-}
-
-/** Mint a FRESH authorize URL (guide §7: never cache). `returnTo` is a relative
- *  in-app path the callback appends (guide §6.2, optional server support). */
-export async function startOAuth(
-  client: InkdSupabaseClient,
-  opts: { returnTo?: string } = {},
-): Promise<{ url: string }> {
-  const body: Record<string, unknown> = {};
-  if (opts.returnTo) body.return_to = opts.returnTo;
-  const raw = await invokeIg<{ url?: string }>(client, FN.oauthStart, body);
-  if (!raw.url) throw new InstagramError("error", "No authorize URL returned.");
-  return { url: raw.url };
-}
-
-/** One page of the artist's IG media for the picker. Throws InstagramError
- *  (tokenExpired on 409, notConnected on 404, …). */
-export async function listMedia(
-  client: InkdSupabaseClient,
-  opts: { after?: string | null; limit?: number } = {},
-): Promise<InstagramMediaPage> {
-  const body: Record<string, unknown> = {
-    limit: opts.limit ?? INSTAGRAM_MEDIA_PAGE_SIZE,
+function toStatus(raw: CoreInstagramStatus): InstagramStatus {
+  const connected = Boolean(raw.connected);
+  const tokenExpired = Boolean(raw.token_expired);
+  const state: InstagramState =
+    raw.configured === false
+      ? "comingSoon"
+      : !connected
+        ? "notConnected"
+        : tokenExpired
+          ? "tokenExpired"
+          : "connected";
+  return {
+    state,
+    connected,
+    configured: raw.configured ?? true,
+    igUsername: raw.ig_username ?? null,
+    connectedAt: raw.connected_at ?? null,
+    lastSyncedAt: raw.last_synced_at ?? null,
+    tokenExpired,
   };
-  if (opts.after) body.after = opts.after;
-  const raw = await invokeIg<{
-    items?: {
-      id: string;
-      caption?: string | null;
-      media_type?: InstagramMediaType;
-      permalink?: string | null;
-      timestamp?: string | null;
-      preview_url?: string | null;
-      child_count?: number;
-      importable?: boolean;
-      already_imported?: boolean;
-    }[];
-    next_cursor?: string | null;
-  }>(client, FN.mediaList, body);
+}
 
-  const items: InstagramMediaItem[] = (raw.items ?? []).map((it) => ({
+function toItem(it: CoreInstagramMediaItem): InstagramMediaItem {
+  return {
     id: it.id,
     caption: it.caption ?? null,
     mediaType: it.media_type ?? null,
@@ -309,36 +153,10 @@ export async function listMedia(
     childCount: it.child_count ?? 0,
     importable: it.importable ?? true,
     alreadyImported: it.already_imported ?? false,
-  }));
-  return { items, nextCursor: raw.next_cursor ?? null };
+  };
 }
 
-/** Import the selected media (≤50 enforced here + server-side). Synchronous —
- *  resolves with the finished run. */
-export async function importMedia(
-  client: InkdSupabaseClient,
-  opts: { mediaIds: string[] },
-): Promise<InstagramImportRun> {
-  const mediaIds = opts.mediaIds.slice(0, INSTAGRAM_IMPORT_CAP);
-  const raw = await invokeIg<{
-    run?: {
-      id: string;
-      artist_id: string;
-      status: "completed" | "failed";
-      media_seen?: number;
-      posts_created?: number;
-      pieces_created?: number;
-      media_skipped?: number;
-      already_imported?: number;
-      error_message?: string | null;
-      started_at?: string | null;
-      completed_at?: string | null;
-      created_at?: string | null;
-    };
-  }>(client, FN.import, { media_ids: mediaIds });
-
-  const run = raw.run;
-  if (!run) throw new InstagramError("error", "Import returned no run.");
+function toRun(run: CoreInstagramImportRun): InstagramImportRun {
   return {
     id: run.id,
     artistId: run.artist_id,
@@ -355,9 +173,69 @@ export async function importMedia(
   };
 }
 
+// ===========================================================================
+// API functions — delegate to core, adapt the shape.
+// ===========================================================================
+
+/** Config + connection status. NEVER throws for the expected states — resolves
+ *  to a status whose `state` drives the UI (comingSoon / notConnected /
+ *  tokenExpired / forbidden / connected). Only genuine network failures land as
+ *  `state: "error"`. Core's `getStatus` throws typed `InstagramError`s (e.g. 503
+ *  → comingSoon); we catch and reflect them as a resolved status here. */
+export async function getStatus(client: InkdSupabaseClient): Promise<InstagramStatus> {
+  try {
+    return toStatus(await coreGetStatus(client));
+  } catch (err) {
+    const kind = err instanceof InstagramError ? err.kind : "error";
+    return {
+      state: kind,
+      connected: false,
+      configured: kind !== "comingSoon",
+      igUsername: null,
+      connectedAt: null,
+      lastSyncedAt: null,
+      tokenExpired: kind === "tokenExpired",
+    };
+  }
+}
+
+/** Mint a FRESH authorize URL (guide §7: never cache). `returnTo` is a relative
+ *  in-app path the callback appends (guide §6.2). Bridges mobile's `returnTo`
+ *  onto core's `return_to`. */
+export async function startOAuth(
+  client: InkdSupabaseClient,
+  opts: { returnTo?: string } = {},
+): Promise<{ url: string }> {
+  const { url } = await coreStartOAuth(client, opts.returnTo ? { return_to: opts.returnTo } : {});
+  if (!url) throw new InstagramError("error", "No authorize URL returned.");
+  return { url };
+}
+
+/** One page of the artist's IG media for the picker. Throws InstagramError
+ *  (tokenExpired on 409, notConnected on 404, …). */
+export async function listMedia(
+  client: InkdSupabaseClient,
+  opts: { after?: string | null; limit?: number } = {},
+): Promise<InstagramMediaPage> {
+  const page = await coreListMedia(client, {
+    after: opts.after ?? null,
+    limit: opts.limit ?? INSTAGRAM_MEDIA_PAGE_SIZE,
+  });
+  return { items: page.items.map(toItem), nextCursor: page.next_cursor ?? null };
+}
+
+/** Import the selected media (≤50 enforced by core). Synchronous — resolves
+ *  with the finished run. */
+export async function importMedia(
+  client: InkdSupabaseClient,
+  opts: { mediaIds: string[] },
+): Promise<InstagramImportRun> {
+  return toRun(await coreImportMedia(client, opts.mediaIds));
+}
+
 /** Delete the caller's connection row (imported posts stay). */
 export async function disconnect(client: InkdSupabaseClient): Promise<{ ok: true }> {
-  await invokeIg<{ ok?: boolean }>(client, FN.disconnect);
+  await coreDisconnect(client);
   return { ok: true };
 }
 
