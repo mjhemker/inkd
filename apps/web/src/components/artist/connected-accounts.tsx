@@ -1,53 +1,56 @@
 "use client";
 
+import { useState } from "react";
 import {
   Badge,
-  type BadgeVariant,
   Button,
   Card,
   CardPlacard,
-  Icon,
+  Modal,
   Spinner,
   useToast,
 } from "@inkd/ui/web";
 import type { ArtistProfile } from "@inkd/core";
 import {
-  useInstagramStatus,
-  useInstagramAuthorizeUrl,
-  useDisconnectInstagram,
-  useStartInstagramImport,
-  useInstagramImportRuns,
+  useInstagramConnectionState,
+  useInstagramStartOAuth,
+  useInstagramDisconnect,
 } from "@inkd/core/hooks";
+
+import { InstagramImportModal } from "./instagram/InstagramImportModal";
+import { InstagramGlyph } from "./instagram/glyphs";
+import { formatRelativeTime } from "./instagram/relativeTime";
 
 export interface ConnectedAccountsEditorProps {
   artist: ArtistProfile;
 }
 
-const RUN_STATUS_VARIANT: Record<string, BadgeVariant> = {
-  pending: "neutral",
-  running: "brand",
-  completed: "success",
-  failed: "danger",
-};
+const REQUIREMENT_COPY =
+  "Requires an Instagram Business or Creator account — free to switch in Instagram → Settings → Account type.";
+const READ_ONLY_COPY =
+  "We import only the posts you choose. We never post, message, or change anything on your Instagram.";
 
 /**
- * Settings → "Connected accounts": Instagram connect/disconnect, connection
- * details, an "Import posts" trigger, and the import-run history. Reads the
- * same `useInstagramStatus` state as onboarding's portfolio row (see
- * identity-editor.tsx) — the "coming soon" state only ever shows while
- * Michael hasn't set the Meta app secrets (docs/instagram-integration.md §5).
+ * Settings → "Share & connect": the Instagram section. The rendered state is
+ * ALWAYS re-derived from `instagram-status` (never from the `?instagram=` URL
+ * param, which only drives a one-time toast in settings-view). Four server
+ * states per UI guide §3.B: not connected · connected · token expired ·
+ * coming soon, plus loading/forbidden/error edges.
  */
 export function ConnectedAccountsEditor({ artist }: ConnectedAccountsEditorProps) {
   const { toast } = useToast();
-  const { data: status, isLoading } = useInstagramStatus(artist.id);
-  const { data: runs } = useInstagramImportRuns(artist.id);
-  const authorizeUrl = useInstagramAuthorizeUrl();
-  const disconnect = useDisconnectInstagram(artist.id);
-  const startImport = useStartInstagramImport(artist.id);
+  const { state } = useInstagramConnectionState(artist.id);
+  const startOAuth = useInstagramStartOAuth();
+  const disconnect = useInstagramDisconnect(artist.id);
 
-  async function connect() {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
+
+  async function connect(returnTo?: string) {
     try {
-      const { url } = await authorizeUrl.mutateAsync();
+      // Mint a FRESH url every tap (15-min state) — never cache it.
+      const { url } = await startOAuth.mutateAsync(returnTo ? { return_to: returnTo } : {});
+      // Full-page redirect (never a popup — Instagram consent blocks some popup contexts).
       window.location.href = url;
     } catch (err) {
       toast({
@@ -58,9 +61,10 @@ export function ConnectedAccountsEditor({ artist }: ConnectedAccountsEditorProps
     }
   }
 
-  async function disconnectAccount() {
+  async function doDisconnect() {
     try {
       await disconnect.mutateAsync();
+      setConfirmDisconnect(false);
       toast({ title: "Instagram disconnected", variant: "success" });
     } catch (err) {
       toast({
@@ -71,144 +75,150 @@ export function ConnectedAccountsEditor({ artist }: ConnectedAccountsEditorProps
     }
   }
 
-  async function runImport() {
-    try {
-      const summary = await startImport.mutateAsync();
-      const more = summary.mediaSeen >= summary.postsCreated + summary.alreadyImported + summary.mediaSkipped
-        && summary.mediaSeen > 0
-        && summary.postsCreated + summary.alreadyImported < summary.mediaSeen;
-      toast({
-        title: "Instagram import ran",
-        description:
-          summary.postsCreated > 0
-            ? `${summary.postsCreated} new ${summary.postsCreated === 1 ? "piece" : "pieces"} imported.${more ? " More to go — run it again to continue." : ""}`
-            : "Everything is already imported.",
-        variant: "success",
-      });
-    } catch (err) {
-      toast({
-        title: "Import failed",
-        description: err instanceof Error ? err.message : "Try again.",
-        variant: "danger",
-      });
+  const meta = (() => {
+    switch (state.kind) {
+      case "connected":
+        return <Badge variant="success">Connected</Badge>;
+      case "tokenExpired":
+        return <Badge variant="warning">Reconnect</Badge>;
+      case "comingSoon":
+        return <Badge variant="outline">Coming soon</Badge>;
+      case "loading":
+        return null;
+      default:
+        return <Badge variant="neutral">Not connected</Badge>;
     }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="grid min-h-[20vh] place-items-center">
-        <Spinner size={22} />
-      </div>
-    );
-  }
-
-  const configured = status?.configured ?? false;
-  const connected = status?.connected ?? false;
+  })();
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1.5">
         <h2 className="font-display text-xl font-bold tracking-tight">Connected accounts</h2>
         <p className="text-content-secondary">
-          Pull your Instagram posts in as portfolio pieces automatically.
+          Pull your Instagram posts in as portfolio pieces — you pick which ones.
         </p>
       </div>
 
       <Card padding="none" className="overflow-hidden">
-        <CardPlacard
-          meta={
-            !configured ? (
-              <Badge variant="outline">Coming soon</Badge>
-            ) : connected ? (
-              <Badge variant="success">Connected</Badge>
-            ) : (
-              <Badge variant="neutral">Not connected</Badge>
-            )
-          }
-        >
-          Instagram
-        </CardPlacard>
+        <CardPlacard meta={meta}>Instagram</CardPlacard>
 
         <div className="flex flex-col gap-4 p-5">
-          {!configured ? (
+          {state.kind === "loading" ? (
+            <div className="grid min-h-[6rem] place-items-center">
+              <Spinner size={20} />
+            </div>
+          ) : state.kind === "comingSoon" ? (
             <p className="text-sm text-content-secondary">
-              Instagram import requires Meta app approval — coming soon. It'll show up
-              here the moment it's ready, no update needed.
+              Instagram import requires Meta app approval — coming soon. It&apos;ll show up here
+              the moment it&apos;s ready, no update needed.
             </p>
-          ) : connected ? (
-            <>
+          ) : state.kind === "forbidden" ? (
+            <p className="text-sm text-content-secondary">
+              Finish setting up your artist profile to import from Instagram.
+            </p>
+          ) : state.kind === "error" ? (
+            <p className="text-sm text-content-secondary">
+              We couldn&apos;t check your Instagram connection right now. Refresh to try again.
+            </p>
+          ) : state.kind === "connected" ? (
+            <div className="flex flex-col gap-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-content-primary">
-                    @{status?.ig_username ?? "connected"}
+                <div className="flex items-center gap-3">
+                  <span className="grid h-9 w-9 place-items-center rounded-sm bg-surface-ember text-brand-on-ember">
+                    <InstagramGlyph size={18} />
                   </span>
-                  <span className="text-xs text-content-muted">
-                    {status?.last_synced_at
-                      ? `Last imported ${new Date(status.last_synced_at).toLocaleString()}`
-                      : "Not imported yet."}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-content-primary">
+                      Connected as @{state.username ?? "instagram"}
+                    </span>
+                    <span className="text-xs text-content-muted">
+                      {state.lastSyncedAt
+                        ? `Last synced ${formatRelativeTime(state.lastSyncedAt)}`
+                        : "Not imported yet"}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={() => void runImport()} loading={startImport.isPending}>
+                  <Button size="sm" onClick={() => setPickerOpen(true)}>
                     Import posts
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => void disconnectAccount()}
-                    loading={disconnect.isPending}
+                    onClick={() => setConfirmDisconnect(true)}
                   >
                     Disconnect
                   </Button>
                 </div>
               </div>
-
-              {runs && runs.length > 0 && (
-                <div className="flex flex-col gap-2 border-t border-border-subtle pt-4">
-                  <span className="text-xs font-medium uppercase tracking-wide text-content-muted">
-                    Import history
-                  </span>
-                  <div className="flex flex-col gap-1.5">
-                    {runs.map((run) => (
-                      <div
-                        key={run.id}
-                        className="flex items-center justify-between gap-3 rounded-lg bg-surface-overlay px-3 py-2 text-sm"
-                      >
-                        <span className="text-content-secondary">
-                          {new Date(run.created_at).toLocaleString()}
-                        </span>
-                        <span className="flex items-center gap-2">
-                          <span className="font-mono text-xs text-content-muted">
-                            {run.status === "completed"
-                              ? `${run.posts_created} new · ${run.already_imported} up to date`
-                              : run.status === "failed"
-                                ? (run.error_message ?? "Failed")
-                                : ""}
-                          </span>
-                          <Badge size="sm" variant={RUN_STATUS_VARIANT[run.status] ?? "neutral"}>
-                            {run.status}
-                          </Badge>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="max-w-md text-sm text-content-secondary">
-                Connect your Instagram business/creator account to pull your posts in
-                as portfolio pieces.
+              <p className="text-xs text-content-muted">{READ_ONLY_COPY}</p>
+            </div>
+          ) : state.kind === "tokenExpired" ? (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-content-secondary">
+                Your Instagram connection expired. Reconnect to keep importing — your imported
+                posts stay in your portfolio.
               </p>
-              <Button size="sm" onClick={() => void connect()} loading={authorizeUrl.isPending}>
-                <Icon name="image" size={14} />
-                Connect Instagram
-              </Button>
+              <div>
+                <Button size="sm" onClick={() => void connect()} loading={startOAuth.isPending}>
+                  <InstagramGlyph size={15} />
+                  Reconnect to Instagram
+                </Button>
+              </div>
+            </div>
+          ) : (
+            /* notConnected */
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-content-secondary">
+                Connect your Instagram to pull your posts in as portfolio pieces.
+              </p>
+              <p className="text-xs text-content-muted">{REQUIREMENT_COPY}</p>
+              <p className="text-xs text-content-muted">{READ_ONLY_COPY}</p>
+              <div>
+                <Button size="sm" onClick={() => void connect()} loading={startOAuth.isPending}>
+                  <InstagramGlyph size={15} />
+                  Connect Instagram
+                </Button>
+              </div>
             </div>
           )}
         </div>
       </Card>
+
+      {state.kind === "connected" && (
+        <InstagramImportModal
+          artistId={artist.id}
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          portfolioHref="/profile"
+        />
+      )}
+
+      <Modal
+        open={confirmDisconnect}
+        onClose={() => setConfirmDisconnect(false)}
+        title="Disconnect Instagram?"
+        size="sm"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => setConfirmDisconnect(false)}>
+              Keep connected
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => void doDisconnect()}
+              loading={disconnect.isPending}
+            >
+              Disconnect
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-content-secondary">
+          Your imported posts stay in your portfolio. You can reconnect anytime to import more.
+        </p>
+      </Modal>
     </div>
   );
 }
