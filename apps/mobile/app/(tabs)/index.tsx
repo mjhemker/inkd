@@ -17,6 +17,7 @@ import {
 import {
   todayDropDate,
   useCurrentProfile,
+  useCurrentArtistProfile,
   useFeedItems,
   useStyleFilters,
   useTodayDropLive,
@@ -61,6 +62,9 @@ export default function HomeScreen() {
 
   const { data: profile } = useCurrentProfile();
   const signedIn = Boolean(profile);
+  // Artists' own profile styles rank high in the filter chip ordering.
+  const { data: artist } = useCurrentArtistProfile();
+  const profileStyles = artist?.styles ?? [];
   const { data: styleData } = useStyleFilters();
   const styles = styleData ?? [];
   const drop = useTodayDropLive();
@@ -201,6 +205,38 @@ export default function HomeScreen() {
     </View>
   );
 
+  // The filter sheet + post-detail sheet must stay mounted across loading/error
+  // state changes: they live OUTSIDE the loading/error branches below. Tying the
+  // sheet's RN Modal to the feed's `isLoading` (which flips on every filter
+  // change) unmounted and remounted it mid-edit, replaying the slide animation —
+  // the "sheet closes then reopens" bug. `keepPreviousData` (see useFeed) plus
+  // this always-mounted structure fix it: the sheet stays open and smooth while
+  // filters apply live behind it.
+  const overlays = (
+    <>
+      <PostDetailSheet item={selected} onClose={() => setSelected(null)} signedIn={signedIn} />
+
+      {showReveal && drop.card && (
+        <DailyDropReveal
+          card={drop.card}
+          onDismiss={() => {
+            void markDailyDropRevealed(dropDate).then(() => setRevealDismissed(true));
+          }}
+        />
+      )}
+
+      <FeedFilterSheet
+        open={filtersOpen}
+        filter={filter}
+        styles={styles}
+        preferredStyles={profileStyles}
+        onChange={setFilter}
+        onReset={() => setFilter(EMPTY_FEED_FILTER)}
+        onClose={() => setFiltersOpen(false)}
+      />
+    </>
+  );
+
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
@@ -212,6 +248,7 @@ export default function HomeScreen() {
             <Skeleton className="aspect-[4/5] w-full rounded-sm" />
           </View>
         </View>
+        {overlays}
       </SafeAreaView>
     );
   }
@@ -232,6 +269,7 @@ export default function HomeScreen() {
             }
           />
         </View>
+        {overlays}
       </SafeAreaView>
     );
   }
@@ -313,25 +351,7 @@ export default function HomeScreen() {
         contentContainerClassName="pb-10 pt-2"
       />
 
-      <PostDetailSheet item={selected} onClose={() => setSelected(null)} signedIn={signedIn} />
-
-      {showReveal && drop.card && (
-        <DailyDropReveal
-          card={drop.card}
-          onDismiss={() => {
-            void markDailyDropRevealed(dropDate).then(() => setRevealDismissed(true));
-          }}
-        />
-      )}
-
-      <FeedFilterSheet
-        open={filtersOpen}
-        filter={filter}
-        styles={styles}
-        onChange={setFilter}
-        onReset={() => setFilter(EMPTY_FEED_FILTER)}
-        onClose={() => setFiltersOpen(false)}
-      />
+      {overlays}
     </SafeAreaView>
   );
 }
