@@ -33,6 +33,7 @@ import {
 } from "@inkd/core";
 
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { useSearchModal } from "@/providers/search";
 import { DailyDropCard } from "@/components/daily-drop/DailyDropCard";
 import {
   DailyDropReveal,
@@ -55,6 +56,7 @@ const SCOPE_TABS: TabItem[] = [
 export default function HomeScreen() {
   const { colors } = useTheme();
   const router = useRouter();
+  const search = useSearchModal();
   const [scope, setScope] = useState<FeedScope>("discover");
   const [filter, setFilter] = useState<FeedFilterState>(EMPTY_FEED_FILTER);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -118,7 +120,7 @@ export default function HomeScreen() {
           }
           action={
             <Pressable
-              onPress={() => router.push("/search")}
+              onPress={search.open}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Search INKD"
