@@ -1,12 +1,13 @@
 "use client";
 
 /**
- * Global search overlay — a header-anchored dropdown (⌘K / Ctrl+K, or the
- * top-bar search button). It renders as an absolutely-positioned panel beneath
- * the header search control (its `relative` wrapper), expanding downward over
- * the header: input on top, grouped results below, footer hints at the bottom.
- * Searches across artists, shops, styles and cities (see `globalSearch` in
- * @inkd/core for the deliberate client-account exclusion).
+ * Global search overlay — a header-anchored, two-stage expander (⌘K / Ctrl+K,
+ * or the top-bar search button). On open it plays as: (1) the compact search
+ * bar GROWS ~3x wider leftward from its right-anchored position (a ~200ms width
+ * transition), THEN (2) the results / empty-state panel drops down beneath the
+ * now-wide bar. Esc or an outside click reverses it — panel up, bar back to
+ * compact. Searches across artists, shops, styles and cities (see `globalSearch`
+ * in @inkd/core for the deliberate client-account exclusion).
  *
  * Grouped placard results, full keyboard navigation (↑/↓ to move, ↵ to open,
  * esc to close), debounced queries, trgm typo-tolerance from the RPCs, and
@@ -14,9 +15,9 @@
  * public entities (artists / shops) and the taxonomy/geo that route into
  * discovery.
  *
- * NOTE: because it positions with `absolute`, callers must render it inside a
- * `position: relative` container (the app TopBar and the /dev/search-preview
- * harness both do).
+ * NOTE: because it positions with `absolute` (bar overlays the trigger, panel
+ * drops beneath), callers must render it inside a `position: relative` container
+ * (the app TopBar and the /dev/search-preview harness both do).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -48,34 +49,59 @@ export function SearchOverlay({ open, onClose, initialQuery = "" }: SearchOverla
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
+  // Two-stage open animation: `render` keeps the DOM mounted through the exit
+  // transition; `expanded` drives the bar's width (compact ↔ ~3x); `panelOpen`
+  // drives the results panel dropping in *after* the bar has finished widening.
+  const [render, setRender] = useState(open);
+  const [expanded, setExpanded] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
+
   const { results, count, isLoading, isFetching, isEmpty, query: debounced } =
     useGlobalSearch(query);
   const flat = useMemo(() => flattenSearchResults(results), [results]);
   const showingResults = debounced.length >= 2 && count > 0;
 
-  // Load recent searches from localStorage whenever the palette opens.
+  const BAR_MS = 200;
+
+  // Drive the open/close choreography off `open`.
   useEffect(() => {
-    if (!open) return;
-    try {
-      setRecents(parseRecentSearches(window.localStorage.getItem(RECENT_SEARCHES_KEY)));
-    } catch {
-      setRecents([]);
+    if (open) {
+      setRender(true);
+      // Reset the query + recents on each open.
+      try {
+        setRecents(parseRecentSearches(window.localStorage.getItem(RECENT_SEARCHES_KEY)));
+      } catch {
+        setRecents([]);
+      }
+      setQuery(initialQuery);
+      setActiveIndex(0);
+      // Next frame: widen the bar. After it finishes: drop the panel + focus.
+      const raf = requestAnimationFrame(() => setExpanded(true));
+      const t = setTimeout(() => {
+        setPanelOpen(true);
+        inputRef.current?.focus();
+      }, BAR_MS + 10);
+      return () => {
+        cancelAnimationFrame(raf);
+        clearTimeout(t);
+      };
     }
-    setQuery(initialQuery);
-    setActiveIndex(0);
-    const t = setTimeout(() => inputRef.current?.focus(), 30);
+    // Closing: panel up first, then bar collapses, then unmount.
+    setPanelOpen(false);
+    setExpanded(false);
+    const t = setTimeout(() => setRender(false), BAR_MS + 10);
     return () => clearTimeout(t);
   }, [open, initialQuery]);
 
-  // Lock the page scroll while open.
+  // Lock the page scroll while mounted.
   useEffect(() => {
-    if (!open) return;
+    if (!render) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [open]);
+  }, [render]);
 
   // Keep the active index in range as results change.
   useEffect(() => {
@@ -130,7 +156,7 @@ export function SearchOverlay({ open, onClose, initialQuery = "" }: SearchOverla
     el?.scrollIntoView({ block: "nearest" });
   }, [activeIndex]);
 
-  if (!open) return null;
+  if (!render) return null;
 
   // A running index so each row knows its position in the flattened nav order.
   let idx = -1;
@@ -139,22 +165,31 @@ export function SearchOverlay({ open, onClose, initialQuery = "" }: SearchOverla
   return (
     <>
       {/* Transparent click-catcher: closes on any outside click without dimming
-          the page — this reads as a header dropdown, not a full-screen modal. */}
+          the page — this reads as a header control, not a full-screen modal. */}
       <div
         className="fixed inset-0 z-40"
         aria-hidden
         onMouseDown={onClose}
       />
+      {/* Anchored to the trigger's `relative` wrapper: the bar overlays the
+          trigger (right-0 top-0) and grows leftward; the panel drops beneath. */}
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Search INKD"
-        className="absolute right-0 top-[calc(100%+8px)] z-50 flex max-h-[min(72vh,34rem)] w-[min(92vw,34rem)] flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface-raised shadow-2xl"
+        className="absolute right-0 top-0 z-50"
         onKeyDown={onKeyDown}
       >
-        {/* Search field */}
-        <div className="flex items-center gap-3 border-b border-border-subtle px-4">
-          <Icon name="search" size={18} className="shrink-0 text-content-muted" />
+        {/* Stage 1 — the search bar, growing ~3x wider leftward on open. */}
+        <div
+          className={cx(
+            "flex h-10 items-center gap-2.5 rounded-lg border bg-surface-raised px-3 shadow-lg transition-[width,border-color] duration-200 ease-[cubic-bezier(0.2,0,0,1)]",
+            expanded
+              ? "w-[min(92vw,34rem)] border-border-strong"
+              : "w-[190px] border-border-subtle",
+          )}
+        >
+          <Icon name="search" size={17} className="shrink-0 text-content-muted" />
           <input
             ref={inputRef}
             value={query}
@@ -163,22 +198,32 @@ export function SearchOverlay({ open, onClose, initialQuery = "" }: SearchOverla
               setActiveIndex(0);
             }}
             placeholder="Search artists, shops, styles, cities…"
-            className="h-14 flex-1 bg-transparent text-base text-content-primary outline-none placeholder:text-content-muted"
+            className="h-10 flex-1 bg-transparent text-sm text-content-primary outline-none placeholder:text-content-muted"
             aria-label="Search query"
             autoComplete="off"
             spellCheck={false}
           />
-          {isFetching && <Spinner size={16} />}
+          {isFetching && <Spinner size={15} />}
           <button
             type="button"
             onClick={onClose}
             aria-label="Close search"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-content-muted outline-none transition-colors hover:bg-surface-overlay hover:text-content-primary focus-visible:ring-2 focus-visible:ring-brand"
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-content-muted outline-none transition-colors hover:bg-surface-overlay hover:text-content-primary focus-visible:ring-2 focus-visible:ring-brand"
           >
-            <Icon name="x" size={16} />
+            <Icon name="x" size={15} />
           </button>
         </div>
 
+        {/* Stage 2 — the results / empty-state panel, dropping in beneath the
+            bar once it has finished widening. */}
+        <div
+          className={cx(
+            "absolute right-0 top-[calc(100%+8px)] flex max-h-[min(72vh,34rem)] w-[min(92vw,34rem)] flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface-raised shadow-2xl transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)]",
+            panelOpen
+              ? "pointer-events-auto translate-y-0 opacity-100"
+              : "pointer-events-none -translate-y-1.5 opacity-0",
+          )}
+        >
         {/* Body */}
         <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto p-2">
           {debounced.length < 2 ? (
@@ -300,6 +345,7 @@ export function SearchOverlay({ open, onClose, initialQuery = "" }: SearchOverla
             <Icon name="shield" size={11} className="shrink-0" />
             Clients aren&apos;t searchable — INKD keeps them private
           </span>
+        </div>
         </div>
       </div>
     </>
