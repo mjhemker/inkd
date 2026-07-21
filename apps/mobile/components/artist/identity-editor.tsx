@@ -1,11 +1,15 @@
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useMemo,
   useState,
 } from "react";
-import { Image, Linking, Pressable, Text, View } from "react-native";
+import { Image, Pressable, Text, View } from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import {
   Avatar,
@@ -28,13 +32,16 @@ import {
   useUploadMedia,
   usePortfolioPieces,
   usePortfolioMutations,
-  useInstagramStatus,
-  useInstagramAuthorizeUrl,
-  useStartInstagramImport,
 } from "@inkd/core/hooks";
 
 import type { EditorHandle } from "./types";
 import { useTheme } from "@/providers/theme";
+import { useInstagramStatus } from "@/lib/instagram";
+import {
+  consumeImportResult,
+  stashOnboardingResume,
+  useInstagramConnect,
+} from "@/lib/instagramConnect";
 
 type HandleState = "idle" | "checking" | "available" | "taken" | "invalid";
 
@@ -61,10 +68,15 @@ export interface IdentityEditorProps {
   profile: Profile;
   artist: ArtistProfile;
   variant?: "onboarding" | "settings";
+  /** In onboarding, the step to resume at after the Instagram round-trip. */
+  onboardingResumeStep?: number;
 }
 
 export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
-  function IdentityEditor({ profile, artist, variant = "onboarding" }, ref) {
+  function IdentityEditor(
+    { profile, artist, variant = "onboarding", onboardingResumeStep },
+    ref,
+  ) {
     const { colors } = useTheme();
     const { toast } = useToast();
     const client = useInkdClient();
@@ -489,7 +501,11 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
             </Pressable>
           </View>
 
-          <InstagramImportRow artistId={artist.id} />
+          <InstagramCard
+            artistId={artist.id}
+            variant={variant}
+            onboardingResumeStep={onboardingResumeStep}
+          />
         </View>
 
         {variant === "settings" && (
@@ -505,91 +521,118 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
 );
 
 /**
- * The portfolio section's Instagram row — shared by onboarding + settings.
- * Reads the same config/connection state the full "Connected accounts"
- * settings section does (`useInstagramStatus`), so this affordance is never
- * out of sync with reality: "Coming soon" only shows while Michael hasn't set
- * the Meta app secrets (see docs/instagram-integration.md §5); once
- * configured it's a real Connect / Import control.
+ * "Import your work from Instagram" — shown in the portfolio section beside
+ * manual upload, in both onboarding Step 1 and settings (guide §3.A). State
+ * comes from `useInstagramStatus` so the affordance is never out of sync:
+ * "Coming soon" only while the Meta app secrets are unset; otherwise a real
+ * Connect / Import control. Connect runs the auth-session handoff, polls the
+ * true status, then drops the artist into the selection picker; on return the
+ * picker's imported-count surfaces here as "N pieces added to your portfolio".
  */
-function InstagramImportRow({ artistId }: { artistId: string }) {
+function InstagramCard({
+  artistId,
+  variant,
+  onboardingResumeStep,
+}: {
+  artistId: string;
+  variant: "onboarding" | "settings";
+  onboardingResumeStep?: number;
+}) {
   const { colors } = useTheme();
   const { toast } = useToast();
+  const router = useRouter();
+  const qc = useQueryClient();
   const { data: status } = useInstagramStatus(artistId);
-  const authorizeUrl = useInstagramAuthorizeUrl();
-  const startImport = useStartInstagramImport(artistId);
+  const { connect, connecting } = useInstagramConnect(
+    artistId,
+    variant === "onboarding" ? "/onboarding" : undefined,
+  );
 
-  async function connect() {
-    try {
-      const { url } = await authorizeUrl.mutateAsync();
-      await Linking.openURL(url);
-    } catch (err) {
-      toast({
-        title: "Couldn't start Instagram connect",
-        description: err instanceof Error ? err.message : "Try again.",
-        variant: "danger",
-      });
+  // On return from the picker, surface "N pieces added" + refresh the grid.
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      void (async () => {
+        const added = await consumeImportResult();
+        if (!active || !added || added <= 0) return;
+        toast({
+          title: `${added} ${added === 1 ? "piece" : "pieces"} added to your portfolio`,
+          variant: "success",
+        });
+        qc.invalidateQueries({ queryKey: ["portfolioPieces", artistId] });
+      })();
+      return () => {
+        active = false;
+      };
+    }, [artistId, qc, toast]),
+  );
+
+  function markResume() {
+    if (variant === "onboarding" && onboardingResumeStep != null) {
+      void stashOnboardingResume(onboardingResumeStep);
     }
   }
 
-  async function runImport() {
-    try {
-      const summary = await startImport.mutateAsync();
+  function goToPicker() {
+    markResume();
+    router.push(`/instagram/import?origin=${variant === "onboarding" ? "onboarding" : "settings"}` as never);
+  }
+
+  async function handleConnect() {
+    markResume();
+    const outcome = await connect();
+    if (outcome.ok) {
       toast({
-        title: "Instagram import ran",
-        description:
-          summary.postsCreated > 0
-            ? `${summary.postsCreated} new ${summary.postsCreated === 1 ? "piece" : "pieces"} imported.`
-            : "Everything is already imported.",
+        title: `Connected as @${outcome.status.igUsername ?? "instagram"}`,
         variant: "success",
       });
-    } catch (err) {
+      goToPicker(); // straight into selection
+    } else if (outcome.reason === "error") {
       toast({
-        title: "Import failed",
-        description: err instanceof Error ? err.message : "Try again.",
+        title: "Couldn't connect to Instagram",
+        description: outcome.message ?? "Try again.",
         variant: "danger",
       });
     }
+    // "not_connected" (cancelled / stranded) → quiet.
   }
 
-  const configured = status?.configured ?? false;
-  const connected = status?.connected ?? false;
+  const state = status?.state ?? "notConnected";
+
+  const subtitle =
+    state === "connected"
+      ? `Connected as @${status?.igUsername ?? "instagram"}`
+      : state === "tokenExpired"
+        ? "Reconnect to import your posts."
+        : state === "comingSoon"
+          ? "Available soon — no update needed."
+          : "Requires an Instagram Business or Creator account.";
 
   return (
     <View className="flex-row items-center justify-between rounded-xl border border-border-subtle bg-surface-raised/40 px-4 py-3">
       <View className="flex-1 flex-row items-center gap-3">
         <View className="h-8 w-8 items-center justify-center rounded-lg bg-surface-overlay">
-          <Icon name="image" size={16} color={colors.text.muted} />
+          <Feather name="instagram" size={16} color={colors.text.muted} />
         </View>
         <View className="flex-1">
           <Text className="text-sm font-sans-medium text-content-secondary">
-            Import from Instagram
+            Import your work from Instagram
           </Text>
-          <Text className="text-xs text-content-muted">
-            {connected && status?.ig_username
-              ? `Connected as @${status.ig_username}`
-              : "Pull your posts in as portfolio pieces."}
-          </Text>
+          <Text className="text-xs text-content-muted">{subtitle}</Text>
         </View>
       </View>
-      {!configured ? (
+      {state === "comingSoon" ? (
         <Badge variant="outline">Coming soon</Badge>
-      ) : connected ? (
-        <Button
-          size="sm"
-          variant="outline"
-          onPress={() => void runImport()}
-          loading={startImport.isPending}
-        >
+      ) : state === "connected" ? (
+        <Button size="sm" variant="outline" onPress={goToPicker}>
           Import
         </Button>
+      ) : state === "tokenExpired" ? (
+        <Button size="sm" variant="outline" onPress={() => void handleConnect()} loading={connecting}>
+          Reconnect
+        </Button>
       ) : (
-        <Button
-          size="sm"
-          variant="outline"
-          onPress={() => void connect()}
-          loading={authorizeUrl.isPending}
-        >
+        <Button size="sm" variant="outline" onPress={() => void handleConnect()} loading={connecting}>
           Connect
         </Button>
       )}

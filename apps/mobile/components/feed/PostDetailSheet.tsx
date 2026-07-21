@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Image, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
+import { Image, Linking, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import {
   Avatar,
   Badge,
@@ -40,6 +40,15 @@ export function PostDetailSheet({ item, onClose, signedIn = true }: PostDetailSh
   const toggleFollow = useToggleFollow();
 
   const imageUrl = item ? (item.kind === "post" ? item.coverUrl : item.imageUrl) : null;
+  // MERGE: core's FeedPostItem should expose `source` + `instagramPermalink`
+  // (from posts.source / posts.instagram_permalink). Until it does, these read
+  // as undefined and the "View original" row simply doesn't render.
+  const igFields =
+    item?.kind === "post"
+      ? (item as unknown as { source?: string | null; instagramPermalink?: string | null })
+      : null;
+  const instagramPermalink =
+    igFields && igFields.source === "instagram" ? igFields.instagramPermalink ?? null : null;
   const handle = item?.artist.handle ?? null;
   const artistLabel =
     item?.artist.displayName || (handle ? `@${handle}` : "Artist");
@@ -83,6 +92,22 @@ export function PostDetailSheet({ item, onClose, signedIn = true }: PostDetailSh
 
             {item.kind === "post" && item.caption ? (
               <Text className="text-sm text-content-primary">{item.caption}</Text>
+            ) : null}
+
+            {item.kind === "post" && instagramPermalink ? (
+              <Pressable
+                onPress={() => void Linking.openURL(instagramPermalink)}
+                accessibilityRole="link"
+                accessibilityLabel="View original on Instagram"
+                hitSlop={6}
+                className="flex-row items-center gap-1.5 self-start"
+              >
+                <Feather name="instagram" size={15} color={colors.text.muted} />
+                <Text className="text-xs font-sans-medium text-content-secondary">
+                  View original
+                </Text>
+                <Feather name="external-link" size={12} color={colors.text.muted} />
+              </Pressable>
             ) : null}
 
             {item.kind === "flash" && item.title ? (

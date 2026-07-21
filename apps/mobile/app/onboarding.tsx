@@ -34,6 +34,7 @@ import {
   type EditorHandle,
 } from "@/components/artist";
 import { useTheme } from "@/providers/theme";
+import { consumeOnboardingResume } from "@/lib/instagramConnect";
 
 const STEP_COPY = [
   {
@@ -82,6 +83,7 @@ function OnboardingFlow() {
   const primaryRef = useRef<EditorHandle>(null);
   const autonomyRef = useRef<EditorHandle>(null);
   const ensuredRef = useRef(false);
+  const resolvedRef = useRef(false);
   const scrollRef = useRef<ScrollView>(null);
 
   const setOnboardingStep = useSetOnboardingStep(artist?.id ?? "");
@@ -101,8 +103,15 @@ function OnboardingFlow() {
       return;
     }
     if (artist) {
-      setStep(Math.max(0, Math.min(artist.onboarding_step, 4)));
-      setReady(true);
+      if (resolvedRef.current) return;
+      resolvedRef.current = true;
+      // Honor a resume flag stashed before the Instagram round-trip (guide
+      // §3.A); otherwise resume at the server-saved onboarding step.
+      const fallback = artist.onboarding_step;
+      void consumeOnboardingResume().then((resumed) => {
+        setStep(Math.max(0, Math.min(resumed ?? fallback, 4)));
+        setReady(true);
+      });
     }
   }, [artist, profileLoading, artistLoading, ready, ensureArtist]);
 
@@ -179,7 +188,14 @@ function OnboardingFlow() {
         </View>
 
         <View className="rounded-2xl border border-border-subtle bg-surface-raised/50 p-4">
-          {step === 0 && <IdentityEditor ref={primaryRef} profile={profile} artist={artist} />}
+          {step === 0 && (
+            <IdentityEditor
+              ref={primaryRef}
+              profile={profile}
+              artist={artist}
+              onboardingResumeStep={0}
+            />
+          )}
           {step === 1 && <LocationsEditor ref={primaryRef} artist={artist} />}
           {step === 2 && (
             <View className="gap-8">
