@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Modal as RNModal, Pressable, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { cx } from "../cx";
 import { Icon } from "./Icon";
 
@@ -11,8 +12,10 @@ export interface SheetProps {
   className?: string;
 }
 
-/** Bottom sheet built on RN <Modal>, transparent + slide. */
+/** Bottom sheet built on RN <Modal>, transparent + slide. Bottom padding is
+ *  safe-area aware so footer controls clear the home indicator. */
 export function Sheet({ open, onClose, title, children, className }: SheetProps) {
+  const insets = useSafeAreaInsets();
   return (
     <RNModal
       visible={open}
@@ -28,8 +31,9 @@ export function Sheet({ open, onClose, title, children, className }: SheetProps)
       >
         <Pressable
           onPress={(e) => e.stopPropagation()}
+          style={{ paddingBottom: Math.max(insets.bottom, 16) }}
           className={cx(
-            "rounded-t-2xl border-t border-border-subtle bg-surface-raised px-4 pb-8 pt-3",
+            "rounded-t-2xl border-t border-border-subtle bg-surface-raised px-4 pt-3",
             className,
           )}
         >
