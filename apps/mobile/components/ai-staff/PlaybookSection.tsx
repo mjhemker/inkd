@@ -78,7 +78,7 @@ export function PlaybookSection({ artistId }: { artistId: string }) {
           {`Entries${entries.length ? ` (${entries.length})` : ""}`}
         </Text>
         {!adding ? (
-          <Button size="sm" onPress={() => setAdding(true)}>
+          <Button hero onPress={() => setAdding(true)}>
             Add entry
           </Button>
         ) : null}
@@ -187,7 +187,17 @@ function PlaybookRow({
 
   return (
     <Card padding="none" className="overflow-hidden">
-      <CardPlacard>{PLAYBOOK_CATEGORY_LABEL[entry.category] ?? entry.category}</CardPlacard>
+      <CardPlacard
+        meta={
+          entry.source === "onboarding"
+            ? "from onboarding"
+            : entry.source === "agent_suggested"
+              ? "suggested"
+              : undefined
+        }
+      >
+        {PLAYBOOK_CATEGORY_LABEL[entry.category] ?? entry.category}
+      </CardPlacard>
       <View className="gap-3 p-4">
         {entry.title ? (
           <Text className="text-sm font-semibold text-content-primary">{entry.title}</Text>
@@ -209,7 +219,7 @@ function PlaybookRow({
             </>
           ) : (
             <>
-              <Button variant="outline" size="sm" onPress={() => setEditing(true)}>
+              <Button variant="ghost" size="sm" onPress={() => setEditing(true)}>
                 Edit
               </Button>
               <Button variant="ghost" size="sm" loading={deleting} onPress={onDelete}>

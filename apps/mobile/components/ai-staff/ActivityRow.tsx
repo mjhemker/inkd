@@ -1,12 +1,20 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { router } from "expo-router";
-import { Badge, Card, CardPlacard, Icon } from "@inkd/ui/native";
-import type { AgentActionView } from "@inkd/core";
+import { Badge, Icon } from "@inkd/ui/native";
+import type { AgentActionStatus, AgentActionView } from "@inkd/core";
 
-import { STATUS_META, actionTypeMeta, formatRelative } from "@/lib/aiStaff";
-import { useAiColors, ProvenanceBlock, TierStamp } from "./shared";
-import { StaffNameplate } from "./StaffNameplate";
+import { actionTypeMeta, formatRelative, staffName } from "@/lib/aiStaff";
+import { useAiColors, ProvenanceBlock } from "./shared";
+
+const STATUS_STAMP: Record<AgentActionStatus, string> = {
+  proposed: "Awaiting you",
+  approved: "Approved",
+  executed: "Sent",
+  rejected: "Dismissed",
+  failed: "Failed",
+  superseded: "Superseded",
+};
 
 function deepLink(action: AgentActionView): { href: string; label: string } | null {
   if (action.thread_id)
@@ -18,7 +26,25 @@ function deepLink(action: AgentActionView): { href: string; label: string } | nu
   return null;
 }
 
-/** One row of the activity ledger — what happened, why, data used, outcome. */
+/** Red AWAITING stamp / gray everything else (red = counts & medical only). */
+function StatusStamp({ status }: { status: AgentActionStatus }) {
+  if (status === "proposed") {
+    return <Badge variant="stamp" size="sm">{STATUS_STAMP.proposed}</Badge>;
+  }
+  return (
+    <View className="rounded-sm bg-surface-overlay px-2 py-0.5">
+      <Text className="font-mono text-[10px] uppercase tracking-wider text-content-muted">
+        {STATUS_STAMP[status]}
+      </Text>
+    </View>
+  );
+}
+
+/**
+ * One condensed row of the activity ledger — a status stamp + mono "AGENT ·
+ * KIND" + one-line summary + tier chip. Tapping the row expands the full why +
+ * provenance receipt + deep link.
+ */
 export function ActivityRow({
   action,
   highlighted = false,
@@ -28,7 +54,6 @@ export function ActivityRow({
 }) {
   const AI_COLORS = useAiColors();
   const meta = actionTypeMeta(action.action_type);
-  const statusMeta = STATUS_META[action.status];
   const link = deepLink(action);
   const [open, setOpen] = useState(false);
   const summary =
@@ -38,43 +63,54 @@ export function ActivityRow({
       : action.reasoning_summary ?? meta.blurb);
 
   return (
-    <Card
-      padding="none"
-      className={highlighted ? "overflow-hidden border-brand" : "overflow-hidden"}
+    <View
+      className={`overflow-hidden rounded-sm border bg-surface-raised ${highlighted ? "border-brand" : "border-border-subtle"}`}
     >
-      <CardPlacard meta={<Badge variant={statusMeta.variant} size="sm">{statusMeta.label}</Badge>}>
-        {meta.label}
-      </CardPlacard>
-      <View className="gap-3 p-4">
-        <View className="flex-row items-center justify-between">
-          <StaffNameplate role={action.agent_role} />
-          <Text className="font-mono text-[11px] text-content-muted">
-            {formatRelative(action.created_at)}
+      <Pressable
+        onPress={() => setOpen((v) => !v)}
+        className="flex-row items-center gap-3 px-4 py-3"
+        accessibilityRole="button"
+      >
+        <StatusStamp status={action.status} />
+        <View className="flex-1">
+          <Text className="font-mono text-[11px] uppercase tracking-wider text-content-primary">
+            {`${staffName(action.agent_role)} · ${meta.label}`}
+          </Text>
+          <Text className="text-sm text-content-secondary" numberOfLines={1}>
+            {summary}
           </Text>
         </View>
-
-        <Text className="text-sm leading-relaxed text-content-secondary" numberOfLines={3}>
-          {summary}
-        </Text>
-
-        <Pressable
-          onPress={() => setOpen((v) => !v)}
-          className="flex-row items-center gap-1.5"
-          accessibilityRole="button"
-        >
-          <Icon name={open ? "chevron-down" : "chevron-right"} size={12} color={AI_COLORS.muted} />
-          <Text className="font-mono text-[10px] uppercase tracking-widest text-content-muted">
-            {`Data it used (${action.contract.context_used.length})`}
+        <View className="flex-row items-center gap-2">
+          <Text className="font-mono text-[10px] uppercase tracking-wider text-content-muted">
+            {`TIER ${action.tier}`}
           </Text>
-        </Pressable>
-        {open ? <ProvenanceBlock context={action.contract.context_used} /> : null}
+          <Icon name={open ? "chevron-down" : "chevron-right"} size={14} color={AI_COLORS.muted} />
+        </View>
+      </Pressable>
 
-        <View className="flex-row items-center justify-between">
-          <TierStamp tier={action.tier} withLabel={false} />
+      {open ? (
+        <View className="gap-3 border-t border-border-subtle px-4 py-3">
+          <View className="flex-row items-center justify-between">
+            <Text className="font-mono text-[10px] uppercase tracking-wider text-content-muted">
+              {`TIER ${action.tier}`}
+            </Text>
+            <Text className="font-mono text-[10px] text-content-muted">
+              {formatRelative(action.created_at)}
+            </Text>
+          </View>
+          {action.reasoning_summary && action.reasoning_summary !== summary ? (
+            <View className="flex-row items-start gap-1.5">
+              <Icon name="sparkles" size={13} color={AI_COLORS.accent} />
+              <Text className="flex-1 text-[13px] leading-relaxed text-content-secondary">
+                {action.reasoning_summary}
+              </Text>
+            </View>
+          ) : null}
+          <ProvenanceBlock context={action.contract.context_used} />
           {link ? (
             <Pressable
               onPress={() => router.push(link.href as never)}
-              className="flex-row items-center gap-1"
+              className="flex-row items-center gap-1 self-start"
               accessibilityRole="link"
             >
               <Text className="font-mono text-[11px] uppercase tracking-wider text-content-accent">
@@ -84,7 +120,7 @@ export function ActivityRow({
             </Pressable>
           ) : null}
         </View>
-      </View>
-    </Card>
+      ) : null}
+    </View>
   );
 }

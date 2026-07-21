@@ -119,10 +119,11 @@ export function AiStaffBody() {
           />
         ) : (
           <View className="gap-3">
-            {proposed.map((action) => (
+            {proposed.map((action, i) => (
               <ApprovalCard
                 key={action.id}
                 action={action}
+                hero={i === 0}
                 busy={busyId === action.id}
                 onApprove={(input) => void handleApprove(action, input)}
                 onReject={(reason) => void handleReject(action, reason)}
