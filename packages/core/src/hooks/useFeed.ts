@@ -7,6 +7,7 @@
  * `FeedItem`s and wire buttons to these mutations.
  */
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -72,6 +73,13 @@ export function useFeed(scope: FeedScope, options: UseFeedOptions = {}) {
   return useInfiniteQuery({
     queryKey: feedQueryKeys.list(scope, styleSlug, viewerId, { styleSlugs, styleQuery, artistFilters }),
     enabled: (options.enabled ?? true) && !viewerLoading,
+    // Keep the previous results on screen while a new filter/scope key loads.
+    // Two reasons: (1) no jarring skeleton flash every time a filter is tuned,
+    // and (2) — the round-6 bug — `isLoading` no longer flips back to true on a
+    // filter change, so the mobile Home screen never drops into its loading
+    // early-return (which unmounted the filter sheet's RN Modal and replayed the
+    // slide animation, reading as "the sheet closed then reopened").
+    placeholderData: keepPreviousData,
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
       listFeedItems(client, {

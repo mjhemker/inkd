@@ -20,6 +20,7 @@ import * as Location from "expo-location";
 import { Avatar, Chip, Icon, Input, RangeSlider, Slider, Spinner, Toggle } from "@inkd/ui/native";
 import { useDiscover, useStyles } from "@inkd/core/hooks";
 import { useTheme } from "@/providers/theme";
+import { useSearchModal } from "@/providers/search";
 import {
   DISCOVER_CITIES,
   DEFAULT_RADIUS_MI,
@@ -136,6 +137,7 @@ function ArtistPlacardCard({ card }: { card: ArtistCard }) {
 
 export default function DiscoverScreen() {
   const { colors } = useTheme();
+  const search = useSearchModal();
   // Seed from deep-link params (global search "style"/"city" hits route here,
   // e.g. /discover?styles=fine-line or /discover?city=baltimore).
   const routeParams = useLocalSearchParams<{ styles?: string; city?: string; state?: string; q?: string }>();
@@ -242,7 +244,7 @@ export default function DiscoverScreen() {
           <Text className="font-display text-3xl text-content-primary">Find your artist</Text>
         </View>
         <Pressable
-          onPress={() => router.push("/search")}
+          onPress={search.open}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Search INKD"

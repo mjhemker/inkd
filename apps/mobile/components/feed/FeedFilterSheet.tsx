@@ -4,9 +4,10 @@
  * a books-open toggle. Styles apply at the post level (in sync with the chip
  * row); location/price/books resolve to eligible artists via the feed RPC.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import * as Location from "expo-location";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Chip, Icon, Input, RangeSlider, Sheet, Spinner, Toggle } from "@inkd/ui/native";
 import {
   DISCOVER_CITIES,
@@ -15,6 +16,11 @@ import {
   formatPriceUsd,
   hasActiveFeedFilters,
   hasStyleQuery,
+  rankStyles,
+  collapsedStyleCount,
+  addRecentStyles,
+  parseRecentStyles,
+  RECENT_STYLES_KEY,
   PRICE_SLIDER_MIN_USD,
   PRICE_SLIDER_MAX_USD,
   PRICE_SLIDER_STEP_USD,
@@ -29,6 +35,7 @@ export function FeedFilterSheet({
   open,
   filter,
   styles,
+  preferredStyles,
   onChange,
   onReset,
   onClose,
@@ -36,6 +43,8 @@ export function FeedFilterSheet({
   open: boolean;
   filter: FeedFilterState;
   styles: Style[];
+  /** Viewer's preferred styles (e.g. an artist's own profile styles) — ranked high. */
+  preferredStyles?: string[];
   onChange: (next: FeedFilterState) => void;
   onReset: () => void;
   onClose: () => void;
@@ -43,6 +52,32 @@ export function FeedFilterSheet({
   const { colors } = useTheme();
   const patch = (p: Partial<FeedFilterState>) => onChange({ ...filter, ...p });
   const activeStyles = new Set(filter.styles);
+
+  // Recently-used styles (local-only) drive the collapsed chip ordering.
+  const [recent, setRecent] = useState<string[]>([]);
+  useEffect(() => {
+    AsyncStorage.getItem(RECENT_STYLES_KEY)
+      .then((raw) => setRecent(parseRecentStyles(raw)))
+      .catch(() => setRecent([]));
+  }, []);
+  const recordRecent = (slug: string) => {
+    setRecent((prev) => {
+      const next = addRecentStyles(prev, [slug]);
+      AsyncStorage.setItem(RECENT_STYLES_KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  };
+
+  // Show ~6 chips (selected first, then preferred/recent, then popularity),
+  // with a "View more" expander for the full list + the "Other" free-text.
+  const [stylesExpanded, setStylesExpanded] = useState(() => hasStyleQuery(filter));
+  const orderedStyles = useMemo(
+    () => rankStyles(styles, { selected: filter.styles, preferred: preferredStyles, recent }),
+    [styles, filter.styles, preferredStyles, recent],
+  );
+  const collapsedCount = collapsedStyleCount(filter.styles.length);
+  const visibleStyles = stylesExpanded ? orderedStyles : orderedStyles.slice(0, collapsedCount);
+  const hiddenCount = Math.max(0, orderedStyles.length - collapsedCount);
   const nearMeActive = filter.lat != null && filter.lng != null && !filter.city;
   const [locating, setLocating] = useState(false);
 
@@ -73,7 +108,10 @@ export function FeedFilterSheet({
   const toggleStyle = (slug: string) => {
     const next = new Set(activeStyles);
     if (next.has(slug)) next.delete(slug);
-    else next.add(slug);
+    else {
+      next.add(slug);
+      recordRecent(slug);
+    }
     patch({ styles: [...next] });
   };
 
@@ -192,14 +230,28 @@ export function FeedFilterSheet({
           Styles{filter.styles.length > 0 ? ` · ${filter.styles.length}` : ""}
         </Text>
         <View className="flex-row flex-wrap gap-2">
-          {styles.map((s) => (
+          {visibleStyles.map((s) => (
             <Chip key={s.slug} selected={activeStyles.has(s.slug)} onPress={() => toggleStyle(s.slug)}>
               {s.name}
             </Chip>
           ))}
-          <Chip selected={otherOpen} onPress={toggleOther}>
-            Other
-          </Chip>
+          {stylesExpanded && (
+            <Chip selected={otherOpen} onPress={toggleOther}>
+              Other
+            </Chip>
+          )}
+          {(hiddenCount > 0 || stylesExpanded) && (
+            <Pressable
+              onPress={() => setStylesExpanded((v) => !v)}
+              accessibilityRole="button"
+              accessibilityLabel={stylesExpanded ? "View fewer styles" : "View more styles"}
+              className="rounded-sm border border-dashed border-border-strong px-3 py-1.5"
+            >
+              <Text className="font-sans-semibold text-xs uppercase tracking-wide text-content-secondary">
+                {stylesExpanded ? "View less" : `View more · ${hiddenCount}`}
+              </Text>
+            </Pressable>
+          )}
         </View>
         {otherOpen && (
           <Input
@@ -214,15 +266,25 @@ export function FeedFilterSheet({
         )}
       </ScrollView>
 
-      {/* Footer */}
-      <View className="mt-4 flex-row items-center justify-between border-t border-border-subtle pt-3">
-        <Pressable onPress={onReset} disabled={!hasActiveFeedFilters(filter)} hitSlop={8}>
-          <Text className={hasActiveFeedFilters(filter) ? "font-mono text-xs uppercase tracking-wider text-content-muted" : "font-mono text-xs uppercase tracking-wider text-content-muted opacity-40"}>
+      {/* Footer — larger tap targets with comfortable padding. The Sheet
+          primitive adds the safe-area / home-indicator inset below this. */}
+      <View className="mt-4 flex-row items-center justify-between gap-3 border-t border-border-subtle px-1 pt-4">
+        <Pressable
+          onPress={onReset}
+          disabled={!hasActiveFeedFilters(filter)}
+          hitSlop={8}
+          className="rounded-sm border border-border-strong px-5 py-3.5 active:opacity-80"
+          style={!hasActiveFeedFilters(filter) ? { opacity: 0.4 } : undefined}
+        >
+          <Text className="font-mono text-sm uppercase tracking-wider text-content-secondary">
             Clear all
           </Text>
         </Pressable>
-        <Pressable onPress={onClose} className="rounded-sm bg-brand px-5 py-2 active:opacity-90">
-          <Text className="font-sans-semibold text-sm text-brand-on">Done</Text>
+        <Pressable
+          onPress={onClose}
+          className="flex-1 items-center rounded-sm bg-brand px-6 py-3.5 active:opacity-90"
+        >
+          <Text className="font-sans-semibold text-base text-brand-on">Done</Text>
         </Pressable>
       </View>
     </Sheet>

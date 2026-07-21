@@ -7,6 +7,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { SessionProvider } from "@/providers/session";
 import { ThemeProvider, useTheme } from "@/providers/theme";
+import { SearchModalProvider } from "@/providers/search";
 import { PushSync } from "@/components/PushSync";
 import {
   useFonts,
@@ -79,12 +80,14 @@ function ThemedRoot() {
       <StatusBar style={resolved === "light" ? "dark" : "light"} />
       {/* Headless: registers the Expo push token on login + routes taps. */}
       <PushSync />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.surface.base },
-        }}
-      />
+      <SearchModalProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.surface.base },
+          }}
+        />
+      </SearchModalProvider>
     </>
   );
 }

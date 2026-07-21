@@ -24,6 +24,12 @@ const STYLES = [
   { id: "st4", slug: "neo-traditional", name: "Neo Traditional", sort_order: 4 },
   { id: "st5", slug: "japanese", name: "Japanese", sort_order: 5 },
   { id: "st6", slug: "traditional", name: "Traditional", sort_order: 6 },
+  { id: "st7", slug: "blackwork", name: "Blackwork", sort_order: 7 },
+  { id: "st8", slug: "dotwork", name: "Dotwork", sort_order: 8 },
+  { id: "st9", slug: "watercolor", name: "Watercolor", sort_order: 9 },
+  { id: "st10", slug: "tribal", name: "Tribal", sort_order: 10 },
+  { id: "st11", slug: "illustrative", name: "Illustrative", sort_order: 11 },
+  { id: "st12", slug: "lettering", name: "Lettering", sort_order: 12 },
 ] as unknown as Style[];
 
 const PRESET: FeedFilterState = {

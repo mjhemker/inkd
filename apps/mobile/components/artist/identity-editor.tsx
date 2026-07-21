@@ -38,6 +38,25 @@ import { useTheme } from "@/providers/theme";
 
 type HandleState = "idle" | "checking" | "available" | "taken" | "invalid";
 
+/** Normalize free-text into a slug-like token stored alongside taxonomy slugs. */
+function slugifyStyle(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+}
+
+/** Prettify a slug (taxonomy or custom) for display, e.g. "neo-traditional". */
+function prettifyStyle(slug: string): string {
+  return slug
+    .split("-")
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
 export interface IdentityEditorProps {
   profile: Profile;
   artist: ArtistProfile;
@@ -247,6 +266,26 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
       );
     }
 
+    // Custom ("add your own") styles: free text a taxonomy chip can't cover.
+    // They persist in the same artist_profiles.styles text[] as taxonomy slugs
+    // (no FK, no migration) — see updateArtistProfile.
+    const taxonomySlugs = useMemo(
+      () => new Set((styles ?? []).map((s) => s.slug)),
+      [styles],
+    );
+    const customStyles = selectedStyles.filter((s) => !taxonomySlugs.has(s));
+    const [customOpen, setCustomOpen] = useState(false);
+    const [customInput, setCustomInput] = useState("");
+
+    function addCustomStyle() {
+      const slug = slugifyStyle(customInput);
+      setCustomInput("");
+      if (!slug) return;
+      setSelectedStyles((prev) =>
+        prev.includes(slug) || prev.length >= 8 ? prev : [...prev, slug],
+      );
+    }
+
     return (
       <View className="gap-7">
         {/* Avatar + name */}
@@ -344,7 +383,55 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
                   {s.name}
                 </Chip>
               ))}
+              {/* Custom styles the artist added themselves. */}
+              {customStyles.map((slug) => (
+                <Chip key={`custom:${slug}`} selected onPress={() => toggleStyle(slug)}>
+                  {prettifyStyle(slug)}
+                </Chip>
+              ))}
+              {!customOpen && (
+                <Pressable
+                  onPress={() => setCustomOpen(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Add your own style"
+                  className="flex-row items-center gap-1 rounded-sm border border-dashed border-border-strong px-3 py-1.5"
+                >
+                  <Icon name="plus" size={13} color={colors.text.muted} />
+                  <Text className="text-xs font-sans-medium text-content-secondary">Add your own</Text>
+                </Pressable>
+              )}
             </View>
+            {customOpen && (
+              <View className="flex-row items-center gap-2">
+                <View className="flex-1">
+                  <Input
+                    size="sm"
+                    value={customInput}
+                    onChangeText={setCustomInput}
+                    onSubmitEditing={addCustomStyle}
+                    placeholder="e.g. Chicano, dotwork…"
+                    autoFocus
+                    returnKeyType="done"
+                    accessibilityLabel="Add a custom style"
+                  />
+                </View>
+                <Button size="sm" variant="outline" onPress={addCustomStyle}>
+                  Add
+                </Button>
+                <Pressable
+                  onPress={() => {
+                    setCustomOpen(false);
+                    setCustomInput("");
+                  }}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Cancel"
+                  className="h-8 w-8 items-center justify-center"
+                >
+                  <Icon name="x" size={15} color={colors.text.muted} />
+                </Pressable>
+              </View>
+            )}
           </View>
         )}
 

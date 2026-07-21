@@ -8,7 +8,7 @@
  * The panel edits a `DiscoverFilterState` (reused as `FeedFilterState`); the feed
  * applies styles at the post level and location/price/books via the RPC.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon, RangeSlider, Toggle, cx } from "@inkd/ui/web";
 import {
   DISCOVER_CITIES,
@@ -20,6 +20,11 @@ import {
   PRICE_SLIDER_STEP_USD,
   hasActiveFeedFilters,
   hasStyleQuery,
+  rankStyles,
+  collapsedStyleCount,
+  addRecentStyles,
+  parseRecentStyles,
+  RECENT_STYLES_KEY,
   type FeedFilterState,
 } from "@inkd/core";
 import type { Style } from "@inkd/core/types";
@@ -55,18 +60,55 @@ function Chip({
 export function FeedFilterPanel({
   filter,
   styles,
+  preferredStyles,
   onChange,
   onReset,
   onClose,
 }: {
   filter: FeedFilterState;
   styles: Style[];
+  /** Viewer's preferred styles (e.g. an artist's own profile styles) — ranked high. */
+  preferredStyles?: string[];
   onChange: (next: FeedFilterState) => void;
   onReset: () => void;
   onClose: () => void;
 }) {
   const patch = (p: Partial<FeedFilterState>) => onChange({ ...filter, ...p });
   const activeStyles = new Set(filter.styles);
+
+  // Recently-used styles (local-only) drive the collapsed chip ordering.
+  const [recent, setRecent] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      setRecent(parseRecentStyles(window.localStorage.getItem(RECENT_STYLES_KEY)));
+    } catch {
+      setRecent([]);
+    }
+  }, []);
+  const recordRecent = (slug: string) => {
+    setRecent((prev) => {
+      const next = addRecentStyles(prev, [slug]);
+      try {
+        window.localStorage.setItem(RECENT_STYLES_KEY, JSON.stringify(next));
+      } catch {
+        /* storage may be unavailable (private mode) — recency is best-effort */
+      }
+      return next;
+    });
+  };
+
+  // Show ~6 chips (selected first, then preferred/recent, then popularity),
+  // with a "View more" expander for the full list + the "Other" free-text.
+  // Start expanded if an "Other" free-text query is already active, so its chip
+  // (and input) are reachable without first hunting for "View more".
+  const [stylesExpanded, setStylesExpanded] = useState(() => hasStyleQuery(filter));
+  const orderedStyles = useMemo(
+    () => rankStyles(styles, { selected: filter.styles, preferred: preferredStyles, recent }),
+    [styles, filter.styles, preferredStyles, recent],
+  );
+  const collapsedCount = collapsedStyleCount(filter.styles.length);
+  const visibleStyles = stylesExpanded ? orderedStyles : orderedStyles.slice(0, collapsedCount);
+  const hiddenCount = Math.max(0, orderedStyles.length - collapsedCount);
   const [geoBusy, setGeoBusy] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
   const nearMeActive = filter.lat != null && filter.lng != null && !filter.city;
@@ -99,7 +141,10 @@ export function FeedFilterPanel({
   const toggleStyle = (slug: string) => {
     const next = new Set(activeStyles);
     if (next.has(slug)) next.delete(slug);
-    else next.add(slug);
+    else {
+      next.add(slug);
+      recordRecent(slug);
+    }
     patch({ styles: [...next] });
   };
 
@@ -245,15 +290,27 @@ export function FeedFilterPanel({
         <span className="font-mono text-[10px] uppercase tracking-widest text-content-muted">
           Styles{filter.styles.length > 0 ? ` · ${filter.styles.length}` : ""}
         </span>
-        <div className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto">
-          {styles.map((s) => (
+        <div className={cx("flex flex-wrap gap-1.5", stylesExpanded && "max-h-40 overflow-y-auto")}>
+          {visibleStyles.map((s) => (
             <Chip key={s.slug} selected={activeStyles.has(s.slug)} onClick={() => toggleStyle(s.slug)}>
               {s.name}
             </Chip>
           ))}
-          <Chip selected={otherOpen} onClick={toggleOther}>
-            Other
-          </Chip>
+          {stylesExpanded && (
+            <Chip selected={otherOpen} onClick={toggleOther}>
+              Other
+            </Chip>
+          )}
+          {(hiddenCount > 0 || stylesExpanded) && (
+            <button
+              type="button"
+              onClick={() => setStylesExpanded((v) => !v)}
+              aria-expanded={stylesExpanded}
+              className="shrink-0 rounded-sm border border-dashed border-border-strong px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-content-secondary outline-none transition-colors hover:border-brand hover:text-content-primary focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              {stylesExpanded ? "View less" : `View more · ${hiddenCount}`}
+            </button>
+          )}
         </div>
         {otherOpen && (
           <input

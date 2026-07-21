@@ -377,7 +377,13 @@ function SectionToc({
   }, [sections]);
 
   return (
-    <aside className="hidden w-44 shrink-0 lg:block">
+    // `self-stretch` is load-bearing: the parent flex row uses `items-start`, so
+    // without it this aside collapses to the ToC's own height and the inner
+    // `sticky` element has zero travel room — it silently scrolls away instead of
+    // sticking. Stretching the aside to the (tall) content column's height gives
+    // the sticky index room to pin. (The page scroll container is the window; no
+    // ancestor sets overflow, so sticky's containing block is fine.)
+    <aside className="hidden w-44 shrink-0 self-stretch lg:block">
       <div className="sticky top-24 flex flex-col gap-2">
         <span className="px-3 font-mono text-[11px] uppercase tracking-[0.18em] text-content-muted">
           On this page

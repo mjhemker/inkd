@@ -38,6 +38,25 @@ import type { EditorHandle } from "./types";
 
 type HandleState = "idle" | "checking" | "available" | "taken" | "invalid";
 
+/** Normalize free-text into a slug-like token stored alongside taxonomy slugs. */
+function slugifyStyle(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+}
+
+/** Prettify a slug (taxonomy or custom) for display, e.g. "neo-traditional". */
+function prettifyStyle(slug: string): string {
+  return slug
+    .split("-")
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
 export interface IdentityEditorProps {
   profile: Profile;
   artist: ArtistProfile;
@@ -199,6 +218,26 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
       );
     }
 
+    // Custom ("add your own") styles: free text a taxonomy chip can't cover.
+    // They persist in the same artist_profiles.styles text[] as taxonomy slugs
+    // (no FK, no migration) — see updateArtistProfile.
+    const taxonomySlugs = useMemo(
+      () => new Set((styles ?? []).map((s) => s.slug)),
+      [styles],
+    );
+    const customStyles = selectedStyles.filter((s) => !taxonomySlugs.has(s));
+    const [customOpen, setCustomOpen] = useState(false);
+    const [customInput, setCustomInput] = useState("");
+
+    function addCustomStyle() {
+      const slug = slugifyStyle(customInput);
+      setCustomInput("");
+      if (!slug) return;
+      setSelectedStyles((prev) =>
+        prev.includes(slug) || prev.length >= 8 ? prev : [...prev, slug],
+      );
+    }
+
     return (
       <div className="flex flex-col gap-7">
         {/* Avatar + name */}
@@ -309,7 +348,54 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
                   {s.name}
                 </Chip>
               ))}
+              {/* Custom styles the artist added themselves. */}
+              {customStyles.map((slug) => (
+                <Chip key={`custom:${slug}`} selected onClick={() => toggleStyle(slug)}>
+                  {prettifyStyle(slug)}
+                </Chip>
+              ))}
+              {!customOpen && (
+                <button
+                  type="button"
+                  onClick={() => setCustomOpen(true)}
+                  className="inline-flex items-center gap-1 rounded-sm border border-dashed border-border-strong px-2.5 py-1 text-xs font-medium text-content-secondary outline-none transition-colors hover:border-brand hover:text-content-primary focus-visible:ring-2 focus-visible:ring-brand"
+                >
+                  <Icon name="plus" size={13} /> Add your own
+                </button>
+              )}
             </div>
+            {customOpen && (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={customInput}
+                  onChange={(e) => setCustomInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addCustomStyle();
+                    }
+                  }}
+                  placeholder="e.g. Chicano, dotwork…"
+                  aria-label="Add a custom style"
+                  autoFocus
+                  className="max-w-56"
+                />
+                <Button type="button" size="sm" variant="outline" onClick={addCustomStyle}>
+                  Add
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomOpen(false);
+                    setCustomInput("");
+                  }}
+                  aria-label="Cancel"
+                  className="grid h-8 w-8 place-items-center rounded-lg text-content-muted outline-none hover:bg-surface-overlay hover:text-content-primary focus-visible:ring-2 focus-visible:ring-brand"
+                >
+                  <Icon name="x" size={15} />
+                </button>
+              </div>
+            )}
           </div>
         )}
 

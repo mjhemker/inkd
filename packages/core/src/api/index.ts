@@ -11,6 +11,7 @@ export * from "./services";
 export * from "./discover";
 export * from "./search";
 export * from "./feedFilters";
+export * from "./styleOrdering";
 export * from "./availability";
 export * from "./booking";
 export * from "./bookingFlow";

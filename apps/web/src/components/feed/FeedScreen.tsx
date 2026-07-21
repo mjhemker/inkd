@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Eyebrow, Icon, LogoDropMark, Skeleton, cx } from "@inkd/ui/web";
 import {
   useCurrentProfile,
+  useCurrentArtistProfile,
   useFeedItems,
   useStyleFilters,
   useToggleFollow,
@@ -71,6 +72,9 @@ export function FeedScreen() {
 
   const { data: profile, isLoading: profileLoading } = useCurrentProfile();
   const signedIn = Boolean(profile);
+  // Artists' own profile styles rank high in the filter chip ordering.
+  const { data: viewerArtist } = useCurrentArtistProfile();
+  const preferredStyles = viewerArtist?.styles ?? undefined;
 
   const { data: styles } = useStyleFilters();
   const drop = useTodayDropLive();
@@ -192,6 +196,7 @@ export function FeedScreen() {
                     <FeedFilterPanel
                       filter={filter}
                       styles={styles ?? []}
+                      preferredStyles={preferredStyles}
                       onChange={setFilter}
                       onReset={() => setFilter(EMPTY_FEED_FILTER)}
                       onClose={() => setFiltersOpen(false)}
