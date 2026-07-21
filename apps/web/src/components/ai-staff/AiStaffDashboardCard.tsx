@@ -7,15 +7,43 @@ import {
   EmptyState,
   Icon,
   Skeleton,
-  cx,
 } from "@inkd/ui/web";
 import {
   useAgentActions,
   useCurrentArtistProfile,
 } from "@inkd/core/hooks";
+import type { AgentActionStatus, AgentActionView } from "@inkd/core";
 
-import { STATUS_META, actionTypeMeta, formatRelative } from "./meta";
-import { StaffNameplate } from "./StaffNameplate";
+import { STAFF, actionTypeMeta, formatRelative } from "./meta";
+
+const STATUS_STAMP: Record<AgentActionStatus, string> = {
+  proposed: "Awaiting you",
+  approved: "Approved",
+  executed: "Sent",
+  rejected: "Dismissed",
+  failed: "Failed",
+  superseded: "Superseded",
+};
+
+function staffName(role: AgentActionView["agent_role"]): string {
+  return STAFF.find((s) => s.role === role)?.name ?? "AI staff";
+}
+
+/** Red AWAITING stamp / gray everything else (red = counts & medical only). */
+function StatusStamp({ status }: { status: AgentActionStatus }) {
+  if (status === "proposed") {
+    return (
+      <Badge variant="stamp" size="sm">
+        {STATUS_STAMP.proposed}
+      </Badge>
+    );
+  }
+  return (
+    <span className="inline-flex h-5 shrink-0 items-center rounded-sm bg-surface-overlay px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-content-muted">
+      {STATUS_STAMP[status]}
+    </span>
+  );
+}
 
 /**
  * The dashboard's "AI staff activity" card, wired to real data: the pending
@@ -44,7 +72,11 @@ export function AiStaffDashboardCard() {
             AI staff activity
           </h2>
         </Link>
-        {pending > 0 && <Badge variant="warning" size="sm">{pending} to review</Badge>}
+        {pending > 0 && (
+          <Badge variant="stamp" size="sm">
+            {pending} awaiting
+          </Badge>
+        )}
       </div>
 
       {actionsQ.isLoading ? (
@@ -65,38 +97,25 @@ export function AiStaffDashboardCard() {
           <ul className="divide-y divide-border-subtle">
             {latest.map((action) => {
               const meta = actionTypeMeta(action.action_type);
-              const statusMeta = STATUS_META[action.status];
               const line =
                 action.contract.draft_text ??
                 (action.contract.proposed_slots?.length
                   ? `${action.contract.proposed_slots.length} times proposed`
                   : action.reasoning_summary ?? meta.blurb);
               return (
-                <li key={action.id} className="flex items-start gap-3 px-5 py-3">
-                  <span
-                    className={cx(
-                      "mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-sm",
-                      action.status === "proposed"
-                        ? "bg-surface-ember text-brand-on-ember"
-                        : "bg-surface-overlay text-content-muted",
-                    )}
-                  >
-                    <Icon name={meta.icon} size={14} />
-                  </span>
+                <li key={action.id} className="flex items-center gap-3 px-5 py-3">
+                  <StatusStamp status={action.status} />
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <StaffNameplate role={action.agent_role} />
-                      <span className="font-mono text-[10px] text-content-muted">
-                        {formatRelative(action.created_at)}
-                      </span>
-                    </div>
+                    <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-content-primary">
+                      {staffName(action.agent_role)} · {meta.label}
+                    </span>
                     <p className="line-clamp-1 text-sm text-content-secondary">
                       {line}
                     </p>
                   </div>
-                  <Badge variant={statusMeta.variant} size="sm">
-                    {statusMeta.label}
-                  </Badge>
+                  <span className="shrink-0 font-mono text-[10px] text-content-muted">
+                    {formatRelative(action.created_at)}
+                  </span>
                 </li>
               );
             })}

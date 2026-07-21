@@ -1,18 +1,19 @@
 "use client";
 
+import Link from "next/link";
 import {
   Badge,
   Card,
   EmptyState,
   Icon,
   Skeleton,
-  type IconName,
 } from "@inkd/ui/web";
 import {
   useCurrentArtistProfile,
   useDashboardStats,
   useArtistSessions,
   useAgentSettings,
+  useAgentActions,
   SESSION_STATUS_META,
 } from "@inkd/core";
 import { LinkButton } from "@/components/link-button";
@@ -22,17 +23,15 @@ import { StatusBadge, formatTime } from "@/components/bookings/shared";
 import { formatMoney } from "@/components/artist/money";
 import { AUTONOMY_LABEL } from "@/components/ai-staff/meta";
 
-interface StatDef {
-  label: string;
-  icon: IconName;
-}
+const STAT_LABELS = [
+  "Open inquiries",
+  "Booked sessions",
+  "Deposits held",
+  "Rebook rate",
+] as const;
 
-const STAT_DEFS: StatDef[] = [
-  { label: "Open inquiries", icon: "message-circle" },
-  { label: "Booked sessions", icon: "calendar" },
-  { label: "Deposits held", icon: "credit-card" },
-  { label: "Rebook rate", icon: "trending-up" },
-];
+/** Deposits-held is money → renders in ember (text-money). */
+const MONEY_STAT_INDEX = 2;
 
 /**
  * Artist dashboard body. Shared by /dashboard and the /dev/shell preview so the
@@ -53,6 +52,14 @@ export function DashboardPreview({
 
   const statsQ = useDashboardStats(artistId);
   const statsLoading = statsQ.isLoading && Boolean(artistId);
+
+  // The screen hero: a violet "N approvals waiting for you" banner, shown only
+  // when the real AI staff data is wired (offline shell preview passes false)
+  // and something is actually pending. Zero pending → no banner, no hero.
+  const pendingQ = useAgentActions(liveAiStaff ? artistId : undefined, {
+    status: "proposed",
+  });
+  const pending = liveAiStaff ? (pendingQ.data?.length ?? 0) : 0;
 
   const stats = statsQ.data;
   const values: { value: string; delta?: string }[] = [
@@ -76,6 +83,23 @@ export function DashboardPreview({
 
   return (
     <div className="flex flex-col gap-8">
+      {pending > 0 && (
+        <Link
+          href="/studio/ai"
+          className="hero-offset flex w-full items-center justify-between gap-3 rounded-lg bg-brand px-5 py-4 text-brand-on"
+        >
+          <span className="flex flex-col gap-0.5">
+            <span className="font-display text-lg font-bold tracking-tight">
+              {pending} approval{pending > 1 ? "s" : ""} waiting for you
+            </span>
+            <span className="text-sm text-brand-on/80">
+              Drafts ready for your ok before anything reaches a client.
+            </span>
+          </span>
+          <Icon name="arrow-right" size={20} className="shrink-0" />
+        </Link>
+      )}
+
       <header className="flex flex-col gap-2">
         <DashboardEyebrow fallbackName={liveAiStaff ? undefined : "Jayden Cole"} />
         <h1 className="font-display text-3xl font-bold tracking-tight text-content-primary sm:text-4xl">
@@ -88,30 +112,32 @@ export function DashboardPreview({
       </header>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {STAT_DEFS.map((stat, i) => {
+        {STAT_LABELS.map((label, i) => {
           const statValue = values[i] ?? { value: "0" };
+          const isMoney = i === MONEY_STAT_INDEX;
           return (
-            <Card key={stat.label} padding="md" className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <span className="grid h-9 w-9 place-items-center rounded-lg bg-surface-overlay text-content-accent">
-                  <Icon name={stat.icon} size={18} />
+            <Card key={label} padding="md" className="flex flex-col gap-1.5">
+              <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-content-muted">
+                {label}
+              </span>
+              {statsLoading ? (
+                <Skeleton className="h-8 w-16 rounded-sm" />
+              ) : (
+                <span
+                  className={
+                    isMoney
+                      ? "text-money text-2xl"
+                      : "font-display text-2xl font-bold tracking-tight text-content-primary"
+                  }
+                >
+                  {statValue.value}
                 </span>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                {statsLoading ? (
-                  <Skeleton className="h-8 w-16 rounded-sm" />
-                ) : (
-                  <span className="font-display text-2xl font-bold tracking-tight text-content-primary">
-                    {statValue.value}
-                  </span>
-                )}
-                <span className="text-sm text-content-secondary">{stat.label}</span>
-                {statValue.delta && !statsLoading && (
-                  <span className="mt-1 font-mono text-[11px] uppercase tracking-widest text-content-muted">
-                    {statValue.delta}
-                  </span>
-                )}
-              </div>
+              )}
+              {statValue.delta && !statsLoading && (
+                <span className="font-mono text-[11px] uppercase tracking-widest text-content-muted">
+                  {statValue.delta}
+                </span>
+              )}
             </Card>
           );
         })}

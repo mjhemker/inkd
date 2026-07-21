@@ -1,11 +1,34 @@
 import { Text, View } from "react-native";
 import { Badge, Card, Icon } from "@inkd/ui/native";
 import { useAgentActions, useCurrentArtistProfile } from "@inkd/core/hooks";
+import type { AgentActionStatus } from "@inkd/core";
 
-import { STATUS_META, actionTypeMeta, formatRelative } from "@/lib/aiStaff";
+import { actionTypeMeta, formatRelative, staffName } from "@/lib/aiStaff";
 import { useStudioNav } from "@/components/studio/StudioNav";
 import { useAiColors } from "./shared";
-import { StaffNameplate } from "./StaffNameplate";
+
+const STATUS_STAMP: Record<AgentActionStatus, string> = {
+  proposed: "Awaiting you",
+  approved: "Approved",
+  executed: "Sent",
+  rejected: "Dismissed",
+  failed: "Failed",
+  superseded: "Superseded",
+};
+
+/** Red AWAITING stamp / gray everything else (red = counts & medical only). */
+function StatusStamp({ status }: { status: AgentActionStatus }) {
+  if (status === "proposed") {
+    return <Badge variant="stamp" size="sm">{STATUS_STAMP.proposed}</Badge>;
+  }
+  return (
+    <View className="rounded-sm bg-surface-overlay px-2 py-0.5">
+      <Text className="font-mono text-[10px] uppercase tracking-wider text-content-muted">
+        {STATUS_STAMP[status]}
+      </Text>
+    </View>
+  );
+}
 
 /** Dashboard "AI staff activity" card — pending count + latest. Taps switch to
  * the AI staff segment in place (or push /studio/ai from outside the Studio
@@ -28,7 +51,9 @@ export function AiStaffDashboardCard() {
             AI staff activity
           </Text>
         </View>
-        {pending > 0 ? <Badge variant="warning" size="sm">{`${pending} to review`}</Badge> : (
+        {pending > 0 ? (
+          <Badge variant="stamp" size="sm">{`${pending} awaiting`}</Badge>
+        ) : (
           <Icon name="chevron-right" size={16} color={AI_COLORS.muted} />
         )}
       </View>
@@ -44,29 +69,25 @@ export function AiStaffDashboardCard() {
         <View>
           {latest.map((action) => {
             const meta = actionTypeMeta(action.action_type);
-            const statusMeta = STATUS_META[action.status];
             const line =
               action.contract.draft_text ??
               (action.contract.proposed_slots?.length
                 ? `${action.contract.proposed_slots.length} times proposed`
                 : action.reasoning_summary ?? meta.blurb);
             return (
-              <View key={action.id} className="flex-row items-start gap-3 border-b border-border-subtle px-4 py-3">
-                <View className="mt-0.5 h-7 w-7 items-center justify-center rounded-sm bg-surface-overlay">
-                  <Icon name={meta.icon} size={14} color={AI_COLORS.muted} />
-                </View>
+              <View key={action.id} className="flex-row items-center gap-3 border-b border-border-subtle px-4 py-3">
+                <StatusStamp status={action.status} />
                 <View className="flex-1 gap-0.5">
-                  <View className="flex-row items-center justify-between">
-                    <StaffNameplate role={action.agent_role} />
-                    <Text className="font-mono text-[10px] text-content-muted">
-                      {formatRelative(action.created_at)}
-                    </Text>
-                  </View>
+                  <Text className="font-mono text-[11px] uppercase tracking-wider text-content-primary">
+                    {`${staffName(action.agent_role)} · ${meta.label}`}
+                  </Text>
                   <Text className="text-sm text-content-secondary" numberOfLines={1}>
                     {line}
                   </Text>
                 </View>
-                <Badge variant={statusMeta.variant} size="sm">{statusMeta.label}</Badge>
+                <Text className="font-mono text-[10px] text-content-muted">
+                  {formatRelative(action.created_at)}
+                </Text>
               </View>
             );
           })}

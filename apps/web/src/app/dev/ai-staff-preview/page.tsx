@@ -13,6 +13,7 @@ import { InkdProvider } from "@inkd/core/hooks";
 import { ToastProvider } from "@inkd/ui/web";
 import { AiStaffView } from "@/components/ai-staff/AiStaffView";
 import { AiStaffDashboardCard } from "@/components/ai-staff/AiStaffDashboardCard";
+import { DashboardPreview } from "@/components/dashboard-preview";
 import { createMockAiStaffClient, type AiStaffSeed } from "./mockAiStaffClient";
 
 const NOW = new Date("2026-07-15T20:00:00.000Z");
@@ -366,6 +367,57 @@ const playbooks = [
   },
 ];
 
+// ── Dashboard fixtures: enough for DashboardPreview's stat reads to render.
+// Deposits held sums succeeded deposit payments (session_id null → held) →
+// $450 in ember. Sessions are dated off the REAL clock so they land inside the
+// next-30-days window whenever the harness is screenshotted.
+function realDaysFromNow(d: number): string {
+  return new Date(Date.now() + d * 24 * 60 * 60 * 1000).toISOString();
+}
+
+const bookingRequests = [
+  { id: "req-1", artist_id: ARTIST_ID, status: "pending", created_at: hoursAgo(3) },
+  { id: "req-2", artist_id: ARTIST_ID, status: "pending", created_at: hoursAgo(9) },
+];
+
+const sessions = [
+  {
+    id: "sess-1",
+    artist_id: ARTIST_ID,
+    status: "confirmed",
+    scheduled_start: realDaysFromNow(4),
+    session_number: 1,
+    duration_minutes: 240,
+  },
+  {
+    id: "sess-2",
+    artist_id: ARTIST_ID,
+    status: "scheduled",
+    scheduled_start: realDaysFromNow(11),
+    session_number: 2,
+    duration_minutes: 180,
+  },
+];
+
+const payments = [
+  {
+    id: "pay-1",
+    artist_id: ARTIST_ID,
+    kind: "deposit",
+    status: "succeeded",
+    amount_cents: 15000,
+    session_id: null,
+  },
+  {
+    id: "pay-2",
+    artist_id: ARTIST_ID,
+    kind: "deposit",
+    status: "succeeded",
+    amount_cents: 30000,
+    session_id: null,
+  },
+];
+
 const seed: AiStaffSeed = {
   profileId: PROFILE_ID,
   profile: {
@@ -405,6 +457,10 @@ const seed: AiStaffSeed = {
   agentActions,
   playbooks,
   messages,
+  bookingRequests,
+  sessions,
+  payments,
+  bookings: [],
 };
 
 const mockClient = createMockAiStaffClient(seed);
@@ -415,6 +471,12 @@ export default function AiStaffPreviewPage() {
       <ToastProvider>
         <div className="min-h-dvh bg-surface-base text-content-primary">
           <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-10">
+            <section data-testid="dashboard-preview" className="flex flex-col gap-2">
+              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-content-muted">
+                Dashboard (banner + flat stats + condensed AI activity)
+              </p>
+              <DashboardPreview />
+            </section>
             <section data-testid="dashboard-card-preview" className="max-w-md">
               <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.2em] text-content-muted">
                 Dashboard card (wired to real data)

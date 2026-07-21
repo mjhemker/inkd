@@ -93,8 +93,8 @@ export function PlaybookEditor({ artistId }: { artistId: string }) {
           Entries {entries.length > 0 && `(${entries.length})`}
         </h3>
         {!adding && (
-          <Button size="sm" onClick={() => setAdding(true)}>
-            <Icon name="plus" size={15} />
+          <Button hero onClick={() => setAdding(true)}>
+            <Icon name="plus" size={16} />
             Add entry
           </Button>
         )}
@@ -276,8 +276,8 @@ function PlaybookRow({
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-content-secondary">
                 {entry.content}
               </p>
-              <div className="flex items-center gap-2 pt-0.5">
-                <Button variant="outline" size="sm" onClick={onEdit}>
+              <div className="flex items-center gap-3 pt-0.5">
+                <Button variant="ghost" size="sm" onClick={onEdit}>
                   <Icon name="settings" size={14} />
                   Edit
                 </Button>

@@ -139,7 +139,7 @@ export function AiStaffView() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8" data-testid="ai-staff-view">
       <StaffOverviewHeader settings={settings} pendingCount={proposed.length} />
 
       <Tabs
@@ -151,7 +151,7 @@ export function AiStaffView() {
             ? {
                 ...t,
                 icon: (
-                  <Badge variant="warning" size="sm">
+                  <Badge variant="danger" size="sm">
                     {proposed.length}
                   </Badge>
                 ),
@@ -175,11 +175,12 @@ export function AiStaffView() {
               description="When your staff drafts a reply or proposes times, it lands here for your ok before anything reaches a client."
             />
           ) : (
-            <div className="grid gap-3 lg:grid-cols-2">
-              {proposed.map((action) => (
+            <div className="grid items-start gap-3 lg:grid-cols-2">
+              {proposed.map((action, i) => (
                 <ApprovalCard
                   key={action.id}
                   action={action}
+                  hero={i === 0}
                   busy={busyId === action.id}
                   onApprove={(input) => void handleApprove(action, input)}
                   onReject={(reason) => void handleReject(action, reason)}

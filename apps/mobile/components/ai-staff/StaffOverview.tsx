@@ -1,13 +1,17 @@
 import { Pressable, Text, View } from "react-native";
-import { Badge, Card, Icon } from "@inkd/ui/native";
+import { Badge, Card, Icon, StatusDot } from "@inkd/ui/native";
 import type { AgentSettings } from "@inkd/core";
 
 import { AUTONOMY_LABEL, STAFF } from "@/lib/aiStaff";
 import { useStudioNav } from "@/components/studio/StudioNav";
 import { useAiColors } from "./shared";
 
-/** Front Desk, Booking Manager + Studio Manager as staff, with autonomy +
- * pending count. Renders one card per STAFF role in a vertical stack. */
+/**
+ * Front Desk, Booking Manager + Studio Manager as a compact status row — a
+ * StatusDot + mono nameplate + ON/OFF + one line of role copy per staff, all
+ * flat hairline cards. The header carries a compact "AUTONOMY · <level>" link
+ * and a red "N AWAITING YOU" stamp when anything's waiting (red = counts only).
+ */
 export function StaffOverview({
   settings,
   pendingCount,
@@ -26,47 +30,43 @@ export function StaffOverview({
 
   return (
     <View className="gap-3">
-      <Pressable
-        onPress={() => goToSegment("settings")}
-        className="flex-row items-center justify-between rounded-sm border border-border-subtle bg-surface-raised px-3 py-2.5"
-        accessibilityRole="button"
-      >
-        <View>
-          <Text className="font-mono text-[10px] uppercase tracking-widest text-content-muted">
-            Autonomy
+      <View className="flex-row items-center justify-between gap-2">
+        {pendingCount > 0 ? (
+          <Badge variant="stamp" size="md">{`${pendingCount} AWAITING YOU`}</Badge>
+        ) : (
+          <View />
+        )}
+        <Pressable
+          onPress={() => goToSegment("settings")}
+          className="flex-row items-center gap-2 rounded-sm border border-border-subtle bg-surface-raised px-3 py-1.5"
+          accessibilityRole="button"
+        >
+          <Text className="font-mono text-[11px] uppercase tracking-widest text-content-secondary">
+            {`Autonomy · ${AUTONOMY_LABEL[autonomy] ?? autonomy}`}
           </Text>
-          <Text className="text-sm font-semibold text-content-primary">
-            {AUTONOMY_LABEL[autonomy] ?? autonomy}
-          </Text>
-        </View>
-        <View className="flex-row items-center gap-2">
-          <View className="items-end">
-            <Text className="font-display text-xl text-content-primary">{pendingCount}</Text>
-            <Text className="font-mono text-[9px] uppercase tracking-widest text-content-muted">
-              awaiting you
-            </Text>
-          </View>
-          <Icon name="settings" size={16} color={AI_COLORS.muted} />
-        </View>
-      </Pressable>
+          <Icon name="settings" size={13} color={AI_COLORS.muted} />
+        </Pressable>
+      </View>
 
       {STAFF.map((staff) => {
         const on = enabled[staff.role] ?? true;
         return (
-          <Card key={staff.role} padding="md" className="flex-row items-start gap-3">
-            <View className={`h-10 w-10 items-center justify-center rounded-sm ${on ? "bg-surface-ember" : "bg-surface-overlay"}`}>
-              <Icon name={staff.icon} size={19} color={on ? AI_COLORS.emberInk : AI_COLORS.muted} />
+          <Card key={staff.role} padding="sm" className="flex-row items-start gap-2.5">
+            <View className="mt-1">
+              <StatusDot on={on} />
             </View>
             <View className="flex-1 gap-0.5">
               <View className="flex-row items-center gap-2">
-                <Text className="font-mono text-[12px] uppercase tracking-wider text-content-primary">
+                <Text className="font-mono text-[11px] uppercase tracking-wider text-content-primary">
                   {staff.name}
                 </Text>
-                <Badge variant={on ? "success" : "neutral"} size="sm">
+                <Text
+                  className={`font-mono text-[10px] uppercase tracking-widest ${on ? "text-success-600" : "text-content-muted"}`}
+                >
                   {on ? "On" : "Off"}
-                </Badge>
+                </Text>
               </View>
-              <Text className="text-xs leading-snug text-content-muted">{staff.title}</Text>
+              <Text className="text-xs leading-snug text-content-muted">{staff.short}</Text>
             </View>
           </Card>
         );

@@ -23,6 +23,9 @@ class MockBuilder
   implements PromiseLike<{ data: unknown; error: null; count?: number }>
 {
   private filters: [string, unknown][] = [];
+  private inFilters: [string, unknown[]][] = [];
+  private gteFilters: [string, unknown][] = [];
+  private lteFilters: [string, unknown][] = [];
   private mode: "select" | "insert" | "update" | "delete" = "select";
   private patch: Row | null = null;
   private inserted: Row[] = [];
@@ -71,6 +74,18 @@ class MockBuilder
     this.filters.push([column, value]);
     return this;
   }
+  in(column: string, values: unknown[]) {
+    this.inFilters.push([column, values]);
+    return this;
+  }
+  gte(column: string, value: unknown) {
+    this.gteFilters.push([column, value]);
+    return this;
+  }
+  lte(column: string, value: unknown) {
+    this.lteFilters.push([column, value]);
+    return this;
+  }
   order(column: string, opts?: { ascending?: boolean }) {
     this.orderCol = column;
     this.orderAscending = opts?.ascending ?? true;
@@ -95,8 +110,12 @@ class MockBuilder
   }
 
   private matched(): Row[] {
-    return this.rows.filter((row) =>
-      this.filters.every(([k, v]) => row[k] === v),
+    return this.rows.filter(
+      (row) =>
+        this.filters.every(([k, v]) => row[k] === v) &&
+        this.inFilters.every(([k, vs]) => vs.includes(row[k])) &&
+        this.gteFilters.every(([k, v]) => (row[k] as never) >= (v as never)) &&
+        this.lteFilters.every(([k, v]) => (row[k] as never) <= (v as never)),
     );
   }
 
@@ -171,6 +190,11 @@ export interface AiStaffSeed {
   agentActions: Row[];
   playbooks: Row[];
   messages: Row[];
+  /** Optional dashboard fixtures so DashboardPreview renders in the harness. */
+  bookingRequests?: Row[];
+  sessions?: Row[];
+  payments?: Row[];
+  bookings?: Row[];
 }
 
 export function createMockAiStaffClient(seed: AiStaffSeed): InkdSupabaseClient {
@@ -182,6 +206,10 @@ export function createMockAiStaffClient(seed: AiStaffSeed): InkdSupabaseClient {
     agent_playbooks: seed.playbooks.map((r) => ({ ...r })),
     messages: seed.messages.map((r) => ({ ...r })),
     threads: [],
+    booking_requests: (seed.bookingRequests ?? []).map((r) => ({ ...r })),
+    sessions: (seed.sessions ?? []).map((r) => ({ ...r })),
+    payments: (seed.payments ?? []).map((r) => ({ ...r })),
+    bookings: (seed.bookings ?? []).map((r) => ({ ...r })),
   };
 
   const client = {

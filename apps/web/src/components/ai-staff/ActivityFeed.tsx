@@ -4,20 +4,16 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Badge,
-  Card,
-  CardPlacard,
   EmptyState,
   Icon,
   Skeleton,
   cx,
 } from "@inkd/ui/web";
-import type { AgentActionView } from "@inkd/core";
+import type { AgentActionStatus, AgentActionView } from "@inkd/core";
 
 import { ProvenanceBlock } from "./ProvenanceBlock";
-import { TierStamp } from "./TierStamp";
-import { StaffNameplate } from "./StaffNameplate";
 import {
-  STATUS_META,
+  STAFF,
   actionDeepLink,
   actionTypeMeta,
   formatRelative,
@@ -40,10 +36,25 @@ const TYPE_FILTERS: { value: TypeFilter; label: string }[] = [
   { value: "flag.handoff", label: "Handoffs" },
 ];
 
+/** Gray sent/dismissed label + red AWAITING stamp (red = counts & medical). */
+const STATUS_STAMP: Record<AgentActionStatus, string> = {
+  proposed: "Awaiting you",
+  approved: "Approved",
+  executed: "Sent",
+  rejected: "Dismissed",
+  failed: "Failed",
+  superseded: "Superseded",
+};
+
+function staffName(role: AgentActionView["agent_role"]): string {
+  return STAFF.find((s) => s.role === role)?.name ?? "AI staff";
+}
+
 /**
- * The activity ledger — every move the staff made, newest first, with the why,
- * the data consulted, the outcome, tier stamps and deep-links. This is the
- * "every action visible" requirement (SPEC §5) made literal.
+ * The activity ledger — every move the staff made, newest first. Zine pass: each
+ * row condenses to a status stamp + mono "AGENT · KIND" + one-line summary + a
+ * tier chip; tapping a row expands the full why + provenance receipt + deep
+ * link. No more full-height cards in the list.
  */
 export function ActivityFeed({
   actions,
@@ -86,8 +97,8 @@ export function ActivityFeed({
 
       {isLoading ? (
         <div className="flex flex-col gap-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 w-full rounded-sm" />
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-14 w-full rounded-sm" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -98,7 +109,7 @@ export function ActivityFeed({
           description="Every reply, proposed time and handoff your staff makes will appear here — with the reason and the data behind it."
         />
       ) : (
-        <ol className="flex flex-col gap-2.5">
+        <ol className="flex flex-col gap-2">
           {filtered.map((action) => (
             <ActivityItem
               key={action.id}
@@ -143,6 +154,21 @@ function FilterRow({
   );
 }
 
+function StatusStamp({ status }: { status: AgentActionStatus }) {
+  if (status === "proposed") {
+    return (
+      <Badge variant="stamp" size="sm">
+        {STATUS_STAMP.proposed}
+      </Badge>
+    );
+  }
+  return (
+    <span className="inline-flex h-5 shrink-0 items-center rounded-sm bg-surface-overlay px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-content-muted">
+      {STATUS_STAMP[status]}
+    </span>
+  );
+}
+
 function ActivityItem({
   action,
   now,
@@ -152,8 +178,8 @@ function ActivityItem({
   now?: Date;
   highlighted?: boolean;
 }) {
+  const [open, setOpen] = useState(false);
   const meta = actionTypeMeta(action.action_type);
-  const statusMeta = STATUS_META[action.status];
   const link = actionDeepLink(action);
   const summaryLine =
     action.contract.draft_text ??
@@ -163,72 +189,71 @@ function ActivityItem({
 
   return (
     <li id={`action-${action.id}`} className="scroll-mt-24">
-      <Card
-        padding="none"
+      <div
         className={cx(
-          "overflow-hidden",
-          highlighted && "ring-2 ring-brand ring-offset-2 ring-offset-surface-base",
+          "overflow-hidden rounded-sm border bg-surface-raised",
+          highlighted ? "border-brand" : "border-border-subtle",
         )}
       >
-        <CardPlacard
-          meta={
-            <Badge variant={statusMeta.variant} size="sm">
-              {statusMeta.label}
-            </Badge>
-          }
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex w-full items-center gap-3 px-4 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
-          <span className="flex items-center gap-1.5">
-            <Icon name={meta.icon} size={12} />
-            {meta.label}
-          </span>
-        </CardPlacard>
-        <div className="flex flex-col gap-3 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <StaffNameplate role={action.agent_role} />
-            <span className="font-mono text-[11px] text-content-muted">
-              {formatRelative(action.created_at, now)}
+          <StatusStamp status={action.status} />
+          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-content-primary">
+              {staffName(action.agent_role)} · {meta.label}
             </span>
-          </div>
+            <span className="line-clamp-1 text-sm text-content-secondary">
+              {summaryLine}
+            </span>
+          </span>
+          <span className="flex shrink-0 items-center gap-2">
+            <span className="hidden font-mono text-[10px] uppercase tracking-[0.12em] text-content-muted sm:inline">
+              Tier {action.tier}
+            </span>
+            <Icon
+              name="chevron-down"
+              size={14}
+              className={cx(
+                "text-content-muted transition-transform",
+                open && "rotate-180",
+              )}
+            />
+          </span>
+        </button>
 
-          <p className="line-clamp-3 text-sm leading-relaxed text-content-secondary">
-            {summaryLine}
-          </p>
-
-          {action.reasoning_summary && summaryLine !== action.reasoning_summary && (
-            <p className="flex items-start gap-1.5 text-[13px] text-content-muted">
-              <Icon name="sparkles" size={13} className="mt-0.5 shrink-0 text-content-accent" />
-              {action.reasoning_summary}
-            </p>
-          )}
-
-          <details className="group">
-            <summary className="flex cursor-pointer list-none items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-content-muted hover:text-content-secondary">
-              <Icon
-                name="chevron-right"
-                size={12}
-                className="transition-transform group-open:rotate-90"
-              />
-              Data it used ({action.contract.context_used.length})
-            </summary>
-            <div className="pt-2">
-              <ProvenanceBlock context={action.contract.context_used} />
-            </div>
-          </details>
-
-          <div className="flex items-center justify-between gap-2 pt-0.5">
-            <TierStamp tier={action.tier} />
+        {open && (
+          <div className="flex flex-col gap-3 border-t border-border-subtle px-4 py-3">
+            <span className="flex items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-content-muted">
+              <span>Tier {action.tier}</span>
+              <span>{formatRelative(action.created_at, now)}</span>
+            </span>
+            {action.reasoning_summary &&
+              action.reasoning_summary !== summaryLine && (
+                <p className="flex items-start gap-1.5 text-[13px] leading-relaxed text-content-secondary">
+                  <Icon
+                    name="sparkles"
+                    size={13}
+                    className="mt-0.5 shrink-0 text-content-accent"
+                  />
+                  {action.reasoning_summary}
+                </p>
+              )}
+            <ProvenanceBlock context={action.contract.context_used} />
             {link && (
               <Link
                 href={link.href}
-                className="inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-[0.1em] text-content-accent hover:underline"
+                className="inline-flex items-center gap-1 self-start font-mono text-[11px] uppercase tracking-[0.1em] text-content-accent hover:underline"
               >
                 {link.label}
                 <Icon name="arrow-right" size={12} />
               </Link>
             )}
           </div>
-        </div>
-      </Card>
+        )}
+      </div>
     </li>
   );
 }
