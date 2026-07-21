@@ -39,20 +39,22 @@ const TABS: TabItem[] = [
 // hero is theme-aware (no longer a fixed dark island): a deep violet-leaning
 // wash on the near-black wall in DARK, a soft paper-tinted wash in LIGHT. Both
 // variants share the same per-handle index so the identity stays consistent
-// across a theme flip; the active one is chosen by `.profile-hero` CSS.
+// across a theme flip; the active one is chosen by `.profile-hero` CSS. Per the
+// zine pass the wash is kept SUBTLE — a flat, hairline-separated header area,
+// not a heavy matte island — so the one hero (Request a booking) owns the eye.
 const HERO_GRADIENTS_DARK = [
-  "linear-gradient(160deg,#241733,#0a0a0b 70%)",
-  "linear-gradient(160deg,#1c1340,#0a0a0b 70%)",
-  "linear-gradient(160deg,#331327,#0a0a0b 70%)",
-  "linear-gradient(160deg,#15213a,#0a0a0b 70%)",
-  "linear-gradient(160deg,#2a1030,#0a0a0b 70%)",
+  "linear-gradient(160deg,#1c1526,#0a0a0b 68%)",
+  "linear-gradient(160deg,#181530,#0a0a0b 68%)",
+  "linear-gradient(160deg,#26141f,#0a0a0b 68%)",
+  "linear-gradient(160deg,#131b2c,#0a0a0b 68%)",
+  "linear-gradient(160deg,#1f1326,#0a0a0b 68%)",
 ];
 const HERO_GRADIENTS_LIGHT = [
-  "linear-gradient(160deg,#ece3f7,#f6f2e9 72%)",
-  "linear-gradient(160deg,#e6e2f8,#f6f2e9 72%)",
-  "linear-gradient(160deg,#f4e2ee,#f6f2e9 72%)",
-  "linear-gradient(160deg,#e2ebf6,#f6f2e9 72%)",
-  "linear-gradient(160deg,#efe1f2,#f6f2e9 72%)",
+  "linear-gradient(160deg,#efe9f6,#f6f2e9 70%)",
+  "linear-gradient(160deg,#eae7f6,#f6f2e9 70%)",
+  "linear-gradient(160deg,#f3e9f0,#f6f2e9 70%)",
+  "linear-gradient(160deg,#e8eef6,#f6f2e9 70%)",
+  "linear-gradient(160deg,#f0e8f2,#f6f2e9 70%)",
 ];
 
 function gradientIndexFor(seed: string): number {
@@ -102,7 +104,8 @@ export function ArtistProfileView({ data }: { data: PublicArtistData }) {
       {/* Hero — theme-aware (NOT a fixed dark island). Descendants use ordinary
           theme tokens, so text is light-on-dark in dark mode and ink-on-paper in
           light mode. `.profile-hero` picks the matching per-handle gradient var
-          for the active theme (see globals.css). */}
+          for the active theme (see globals.css). Flat, hairline-separated per the
+          zine: the ONE hero here is the Request-a-booking button, top-right. */}
       <section
         className="profile-hero relative overflow-hidden border-b border-border-subtle text-content-primary"
         style={
@@ -112,58 +115,84 @@ export function ArtistProfileView({ data }: { data: PublicArtistData }) {
           } as CSSProperties
         }
       >
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-12 md:px-8 md:py-16">
-          <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-end">
-            <Avatar
-              src={profile.avatar_url ?? undefined}
-              name={displayName}
-              size="xl"
-              className="border-4 border-surface-base sm:h-24 sm:w-24 lg:h-28 lg:w-28 lg:text-4xl"
-            />
-            <div className="flex flex-1 flex-col gap-2">
-              <h1 className="font-display text-4xl font-extrabold tracking-tight text-content-primary sm:text-5xl">
-                {displayName}
-              </h1>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-content-secondary">
-                {profile.handle && <span className="font-mono text-content-muted">@{profile.handle}</span>}
-                {artist.tagline && <span>{artist.tagline}</span>}
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                {primaryLocation && (
-                  <Badge variant="outline" size="sm">
-                    <Icon name="map-pin" size={12} />
-                    {[primaryLocation.city, primaryLocation.state].filter(Boolean).join(", ")}
-                  </Badge>
-                )}
-                <Badge variant="outline" size="sm">
-                  {classificationLabel(artist.classification)}
-                </Badge>
-                {data.shopBadges.map((badge) => (
-                  <Link key={badge.shop_id} href={`/s/${badge.handle}`}>
-                    <Badge variant="ember" size="sm" className="hover:opacity-90">
-                      <Icon name="layout-grid" size={12} />@ {badge.name}
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-12 md:px-8 md:py-14">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+            {/* Identity cluster — avatar + name/handle/tagline + meta chips. */}
+            <div className="flex flex-1 flex-col items-start gap-5 sm:flex-row sm:items-end">
+              <Avatar
+                src={profile.avatar_url ?? undefined}
+                name={displayName}
+                size="xl"
+                className="border-4 border-surface-base sm:h-24 sm:w-24 lg:h-28 lg:w-28 lg:text-4xl"
+              />
+              <div className="flex flex-1 flex-col gap-2">
+                <h1 className="font-display text-4xl font-extrabold tracking-tight text-content-primary sm:text-5xl">
+                  {displayName}
+                </h1>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-content-secondary">
+                  {profile.handle && (
+                    <span className="font-mono text-content-muted">@{profile.handle}</span>
+                  )}
+                  {artist.tagline && <span>{artist.tagline}</span>}
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  {primaryLocation && (
+                    <Badge variant="outline" size="sm">
+                      <Icon name="map-pin" size={12} />
+                      {[primaryLocation.city, primaryLocation.state].filter(Boolean).join(", ")}
                     </Badge>
-                  </Link>
-                ))}
-                {reviewSummary.count > 0 && (
-                  <Badge variant="ember" size="sm">
-                    {/* Classic star glyph — same 5-star family as <StarRating>,
-                        so reviews iconography is uniform across the app. */}
-                    <Icon name="star" size={12} />
-                    {formatRatingAvg(reviewSummary.avg)} · {reviewSummary.count} review
-                    {reviewSummary.count === 1 ? "" : "s"}
+                  )}
+                  <Badge variant="outline" size="sm">
+                    {classificationLabel(artist.classification)}
                   </Badge>
-                )}
-                {travelBadges(artist).map((label) => (
-                  <Badge key={label} variant="outline" size="sm">
-                    {label}
+                  {data.shopBadges.map((badge) => (
+                    <Link key={badge.shop_id} href={`/s/${badge.handle}`}>
+                      <Badge variant="outline" size="sm" className="hover:border-border-accent">
+                        <Icon name="layout-grid" size={12} />@ {badge.name}
+                      </Badge>
+                    </Link>
+                  ))}
+                  {reviewSummary.count > 0 && (
+                    <Badge variant="ember" size="sm">
+                      {/* Classic star glyph — same 5-star family as <StarRating>,
+                          so reviews iconography is uniform across the app. */}
+                      <Icon name="star" size={12} />
+                      {formatRatingAvg(reviewSummary.avg)} · {reviewSummary.count} review
+                      {reviewSummary.count === 1 ? "" : "s"}
+                    </Badge>
+                  )}
+                  {travelBadges(artist).map((label) => (
+                    <Badge key={label} variant="outline" size="sm">
+                      {label}
+                    </Badge>
+                  ))}
+                  {/* Books-open reads as a solid GREEN status chip (open) or a
+                      muted neutral chip (closed) — never violet. */}
+                  <Badge variant={artist.accepts_new_clients ? "success" : "neutral"} size="sm">
+                    {artist.accepts_new_clients ? "Books open" : "Books closed"}
                   </Badge>
-                ))}
-                <Badge variant={artist.accepts_new_clients ? "brand" : "neutral"} size="sm">
-                  {artist.accepts_new_clients ? "Accepting new clients" : "Books closed"}
-                </Badge>
+                </div>
               </div>
             </div>
+
+            {/* THE hero of this screen — Request a booking, top-right. Message is
+                a flat outline sibling; only the hero carries the offset shadow. */}
+            {!isOwnProfile && (
+              <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:items-end">
+                <LinkButton href={`/book/${profile.handle}`} hero className="w-full sm:w-auto">
+                  <Icon name="calendar" size={18} />
+                  Request a booking
+                </LinkButton>
+                <LinkButton
+                  href={`/messages/new?to=${profile.id}`}
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                >
+                  <Icon name="message-circle" size={18} />
+                  Message
+                </LinkButton>
+              </div>
+            )}
           </div>
 
           {data.styles.length > 0 && (
@@ -176,19 +205,6 @@ export function ArtistProfileView({ data }: { data: PublicArtistData }) {
                   {style.name}
                 </span>
               ))}
-            </div>
-          )}
-
-          {!isOwnProfile && (
-            <div className="flex flex-wrap gap-3 pt-2">
-              <LinkButton href={`/book/${profile.handle}`} size="lg">
-                <Icon name="calendar" size={18} />
-                Request a booking
-              </LinkButton>
-              <LinkButton href={`/messages/new?to=${profile.id}`} size="lg" variant="secondary">
-                <Icon name="message-circle" size={18} />
-                Message
-              </LinkButton>
             </div>
           )}
         </div>
@@ -258,8 +274,10 @@ function PortfolioGrid({
   if (withImages.length === 0) {
     return <EmptyTab icon="layout-grid" title="Portfolio coming soon" description="This artist hasn't added portfolio pieces yet." />;
   }
+  // Straight, flat tiles on a plain grid — hairline borders, mono caption BELOW
+  // each tile (zine). No rounded cards, no elevation; the artwork mats dark.
   return (
-    <div className="[column-fill:balance] columns-2 gap-3 sm:columns-3 [&>*]:mb-3">
+    <div className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3">
       {withImages.map((piece, index) => (
         <PortfolioTile key={piece.id} piece={piece} onOpen={() => onOpen(index)} />
       ))}
@@ -279,28 +297,26 @@ function PortfolioTile({
     <button
       type="button"
       onClick={onOpen}
-      className="group relative block w-full overflow-hidden rounded-xl border border-border-subtle bg-surface-overlay text-left outline-none focus-visible:ring-2 focus-visible:ring-brand"
+      className="group block w-full text-left outline-none"
     >
-      {broken ? (
-        <BrokenPiecePlacard title={piece.title} />
-      ) : (
-        <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+      <div className="overflow-hidden border border-border-subtle bg-surface-overlay group-focus-visible:ring-2 group-focus-visible:ring-brand">
+        {broken ? (
+          <BrokenPiecePlacard title={piece.title} />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={piece.image_url as string}
             alt={piece.title ?? ""}
             loading="lazy"
             decoding="async"
             onError={() => setBroken(true)}
-            className="w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            className="aspect-[4/5] w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
-          {piece.title && (
-            <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-sm font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
-              {piece.title}
-            </span>
-          )}
-        </>
-      )}
+        )}
+      </div>
+      <span className="mt-1.5 block truncate font-mono text-[11px] uppercase tracking-[0.14em] text-content-muted">
+        {piece.title || piece.placement || "Untitled"}
+      </span>
     </button>
   );
 }
@@ -356,20 +372,23 @@ function PostsGrid({ posts }: { posts: PublicArtistData["posts"] }) {
   if (posts.length === 0) {
     return <EmptyTab icon="image" title="No posts yet" description="Updates from this artist will show up here." />;
   }
+  // Straight, flat tiles + mono caption below — matches the portfolio grid.
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4">
       {posts.map((post) => {
         const cover =
           post.cover_url ?? (Array.isArray(post.media) && (post.media[0] as { url?: string } | undefined)?.url);
         return (
-          <Card key={post.id} padding="none" className="overflow-hidden">
-            <div className="aspect-square bg-surface-overlay">
+          <div key={post.id}>
+            <div className="aspect-square overflow-hidden border border-border-subtle bg-surface-overlay">
               <SquareCover src={cover || null} icon="image" />
             </div>
             {post.caption && (
-              <p className="line-clamp-2 p-2.5 text-xs text-content-secondary">{post.caption}</p>
+              <p className="mt-1.5 line-clamp-1 font-mono text-[11px] uppercase tracking-[0.14em] text-content-muted">
+                {post.caption}
+              </p>
             )}
-          </Card>
+          </div>
         );
       })}
     </div>
@@ -389,10 +408,10 @@ function FlashSection({ sheets }: { sheets: PublicArtistData["flashSheets"] }) {
             <h3 className="font-display text-xl font-bold tracking-tight">{sheet.title || "Flash"}</h3>
             {sheet.description && <p className="text-sm text-content-secondary">{sheet.description}</p>}
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4">
             {sheet.items.map((item) => (
-              <Card key={item.id} padding="none" className="overflow-hidden">
-                <div className="relative aspect-square bg-surface-overlay">
+              <div key={item.id}>
+                <div className="relative aspect-square overflow-hidden border border-border-subtle bg-surface-overlay">
                   <SquareCover src={item.image_url ?? null} icon="sparkles" alt={item.title ?? ""} />
                   <Badge
                     variant={item.is_available ? "success" : "neutral"}
@@ -402,16 +421,20 @@ function FlashSection({ sheets }: { sheets: PublicArtistData["flashSheets"] }) {
                     {item.is_available ? "Available" : "Claimed"}
                   </Badge>
                 </div>
-                <div className="flex flex-col gap-0.5 p-2.5">
+                <div className="mt-1.5 flex flex-col gap-0.5">
                   {item.title && (
-                    <p className="truncate text-sm font-medium text-content-primary">{item.title}</p>
+                    <p className="truncate font-mono text-[11px] uppercase tracking-[0.14em] text-content-muted">
+                      {item.title}
+                    </p>
                   )}
-                  <p className="text-xs text-content-muted">
-                    {flashPriceLabel(item.price_cents)}
-                    {item.size_inches ? ` · ${item.size_inches}"` : ""}
+                  <p className="text-xs">
+                    <span className="text-money">{flashPriceLabel(item.price_cents)}</span>
+                    {item.size_inches ? (
+                      <span className="text-content-muted">{` · ${item.size_inches}"`}</span>
+                    ) : null}
                   </p>
                 </div>
-              </Card>
+              </div>
             ))}
           </div>
         </div>
@@ -449,7 +472,7 @@ function InfoTab({ data }: { data: PublicArtistData }) {
                       <span className="text-xs text-content-muted">{service.duration_minutes} min</span>
                     )}
                   </div>
-                  <span className="whitespace-nowrap font-mono text-sm text-content-accent">
+                  <span className="whitespace-nowrap text-sm text-money">
                     {servicePriceLabel(service)}
                   </span>
                 </div>

@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   Badge,
   Button,
-  Card,
   Chip,
   EmptyState,
   FormField,
@@ -62,11 +61,12 @@ export function PortfolioPanel({ artistId, userId }: { artistId: string; userId:
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-content-muted">
           Your curated body of work — the first piece is your public cover image.
         </p>
-        <Button size="sm" leadingIcon={<Icon name="plus" size={16} />} onClick={() => setCreateOpen(true)}>
+        {/* This tab's single action → the one hero on the screen. */}
+        <Button hero leadingIcon={<Icon name="plus" size={16} />} onClick={() => setCreateOpen(true)}>
           Add piece
         </Button>
       </div>
@@ -140,8 +140,8 @@ function PieceCard({
   onDelete: () => void;
 }) {
   return (
-    <Card padding="none" className="group relative overflow-hidden">
-      <div className="relative aspect-square bg-surface-overlay">
+    <div className="group">
+      <div className="relative aspect-square overflow-hidden border border-border-subtle bg-surface-overlay">
         {piece.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -157,7 +157,7 @@ function PieceCard({
           </div>
         )}
         {isCover && (
-          <Badge variant="brand" size="sm" className="absolute left-2 top-2">
+          <Badge variant="date" size="sm" className="absolute left-2 top-2">
             Cover
           </Badge>
         )}
@@ -178,9 +178,11 @@ function PieceCard({
         </div>
       </div>
       {piece.title && (
-        <p className="truncate p-2 text-xs font-medium text-content-secondary">{piece.title}</p>
+        <p className="mt-1.5 truncate font-mono text-[11px] uppercase tracking-[0.14em] text-content-muted">
+          {piece.title}
+        </p>
       )}
-    </Card>
+    </div>
   );
 }
 

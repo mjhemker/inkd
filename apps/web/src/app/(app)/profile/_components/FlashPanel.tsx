@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   Badge,
   Button,
-  Card,
   EmptyState,
   FormField,
   Icon,
@@ -32,11 +31,12 @@ export function FlashPanel({ artistId, userId }: { artistId: string; userId: str
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-content-muted">
           Pre-drawn designs clients can book directly, priced and sized up front.
         </p>
-        <Button size="sm" leadingIcon={<Icon name="plus" size={16} />} onClick={() => setCreateOpen(true)}>
+        {/* This tab's single action → the one hero on the screen. */}
+        <Button hero leadingIcon={<Icon name="plus" size={16} />} onClick={() => setCreateOpen(true)}>
           New sheet
         </Button>
       </div>
@@ -92,8 +92,12 @@ export function FlashPanel({ artistId, userId }: { artistId: string; userId: str
 function SheetCard({ sheet, onManage }: { sheet: FlashSheet; onManage: () => void }) {
   const { data: items } = useFlashItems(sheet.id);
   return (
-    <Card padding="none" variant="interactive" className="overflow-hidden" onClick={onManage}>
-      <div className="relative aspect-[4/3] bg-surface-overlay">
+    <button
+      type="button"
+      onClick={onManage}
+      className="group block w-full text-left outline-none"
+    >
+      <div className="relative aspect-[4/3] overflow-hidden border border-border-subtle bg-surface-overlay group-focus-visible:ring-2 group-focus-visible:ring-brand">
         {sheet.cover_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -109,20 +113,20 @@ function SheetCard({ sheet, onManage }: { sheet: FlashSheet; onManage: () => voi
           </div>
         )}
         {!sheet.is_public && (
-          <span className="absolute left-2 top-2 rounded-md bg-black/60 px-2 py-0.5 text-[11px] font-medium text-content-secondary">
+          <span className="absolute left-2 top-2 rounded-sm bg-black/60 px-2 py-0.5 text-[11px] font-medium text-content-secondary">
             Private
           </span>
         )}
       </div>
-      <div className="flex flex-col gap-0.5 p-2.5">
+      <div className="mt-1.5 flex flex-col gap-0.5">
         <p className="truncate text-sm font-semibold text-content-primary">
           {sheet.title || "Untitled sheet"}
         </p>
-        <p className="text-xs text-content-muted">
+        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-content-muted">
           {items ? `${items.length} piece${items.length === 1 ? "" : "s"}` : "…"}
         </p>
       </div>
-    </Card>
+    </button>
   );
 }
 
@@ -332,9 +336,9 @@ function FlashItemRow({
         <p className="truncate text-sm font-medium text-content-primary">
           {item.title || "Untitled piece"}
         </p>
-        <p className="text-xs text-content-muted">
-          {flashPriceLabel(item.price_cents)}
-          {item.size_inches ? ` · ${item.size_inches}"` : ""}
+        <p className="text-xs">
+          <span className="text-money">{flashPriceLabel(item.price_cents)}</span>
+          {item.size_inches ? <span className="text-content-muted">{` · ${item.size_inches}"`}</span> : null}
         </p>
       </div>
       <Badge variant={item.is_available ? "success" : "neutral"} size="sm">

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import {
   Button,
-  Card,
   Chip,
   EmptyState,
   Icon,
@@ -21,11 +20,12 @@ export function PostsPanel({ artistId, userId }: { artistId: string; userId: str
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-content-muted">
           Photos and updates for your feed — the fastest way to show new work.
         </p>
-        <Button size="sm" leadingIcon={<Icon name="plus" size={16} />} onClick={() => setOpen(true)}>
+        {/* This tab's single action → the one hero on the screen. */}
+        <Button hero leadingIcon={<Icon name="plus" size={16} />} onClick={() => setOpen(true)}>
           New post
         </Button>
       </div>
@@ -56,8 +56,8 @@ function PostCard({ post }: { post: Post }) {
   const cover =
     post.cover_url ?? (Array.isArray(post.media) && (post.media[0] as { url?: string } | undefined)?.url);
   return (
-    <Card padding="none" className="overflow-hidden">
-      <div className="relative aspect-square bg-surface-overlay">
+    <div>
+      <div className="relative aspect-square overflow-hidden border border-border-subtle bg-surface-overlay">
         {cover ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -73,15 +73,17 @@ function PostCard({ post }: { post: Post }) {
           </div>
         )}
         {!post.is_public && (
-          <span className="absolute left-2 top-2 rounded-md bg-black/60 px-2 py-0.5 text-[11px] font-medium text-content-secondary">
+          <span className="absolute left-2 top-2 rounded-sm bg-black/60 px-2 py-0.5 text-[11px] font-medium text-content-secondary">
             Private
           </span>
         )}
       </div>
       {post.caption && (
-        <p className="line-clamp-2 p-2.5 text-xs text-content-secondary">{post.caption}</p>
+        <p className="mt-1.5 line-clamp-1 font-mono text-[11px] uppercase tracking-[0.14em] text-content-muted">
+          {post.caption}
+        </p>
       )}
-    </Card>
+    </div>
   );
 }
 

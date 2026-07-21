@@ -13,11 +13,12 @@ export function PostsPanel({ artistId }: { artistId: string; userId: string }) {
 
   return (
     <View className="gap-4">
-      <View className="flex-row items-center justify-between">
-        <Text className="flex-1 pr-3 text-sm text-content-muted">
-          Photos and updates for your feed.
+      <View className="gap-3">
+        <Text className="text-sm text-content-muted">
+          Photos and updates for your feed — the fastest way to show new work.
         </Text>
-        <Button size="sm" leadingIcon={<Icon name="plus" size={16} color="#FAFAFA" />} onPress={openAddFlow}>
+        {/* This tab's single action → the one hero on the screen. */}
+        <Button hero className="w-full" leadingIcon={<Icon name="plus" size={16} color="#FAFAFA" />} onPress={openAddFlow}>
           New post
         </Button>
       </View>

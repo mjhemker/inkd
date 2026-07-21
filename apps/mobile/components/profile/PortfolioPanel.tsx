@@ -58,11 +58,12 @@ export function PortfolioPanel({ artistId, userId }: { artistId: string; userId:
 
   return (
     <View className="gap-4">
-      <View className="flex-row items-center justify-between">
-        <Text className="flex-1 pr-3 text-sm text-content-muted">
-          The first piece is your public cover image.
+      <View className="gap-3">
+        <Text className="text-sm text-content-muted">
+          Your curated body of work — the first piece is your public cover image.
         </Text>
-        <Button size="sm" leadingIcon={<Icon name="plus" size={16} color="#FAFAFA" />} onPress={openAddFlow}>
+        {/* This tab's single action → the one hero on the screen. */}
+        <Button hero className="w-full" leadingIcon={<Icon name="plus" size={16} color="#FAFAFA" />} onPress={openAddFlow}>
           Add
         </Button>
       </View>
@@ -149,7 +150,7 @@ function PieceRow({
           {piece.title || "Untitled piece"}
         </Text>
         {isCover && (
-          <Badge variant="brand" size="sm" className="self-start">
+          <Badge variant="date" size="sm" className="self-start">
             Cover
           </Badge>
         )}

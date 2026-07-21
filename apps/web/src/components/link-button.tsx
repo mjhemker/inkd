@@ -8,13 +8,17 @@ import { cx } from "@inkd/ui/web";
  * actions without pulling in the client `buttonVariants` reference.
  */
 type LinkButtonProps = ComponentProps<typeof Link> & {
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: "primary" | "secondary" | "ghost" | "outline";
   size?: "sm" | "md" | "lg";
+  /** The screen's single hero action — primary plate + the hard offset shadow
+   * (ink in daylight / ember at night), matching `<Button hero>`. Opt-in per
+   * screen; forces the fixed larger presence so the one hero reads uniformly. */
+  hero?: boolean;
   children: ReactNode;
 };
 
 const base =
-  "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-lg font-sans font-semibold tracking-tight outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base";
+  "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-lg font-sans font-semibold tracking-tight outline-none transition-[background-color,border-color,color,box-shadow,transform] focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base";
 
 const variants = {
   primary: "bg-brand text-brand-on hover:bg-brand-hover",
@@ -22,6 +26,8 @@ const variants = {
     "bg-surface-overlay text-content-primary border border-border hover:border-border-strong",
   ghost:
     "bg-transparent text-content-secondary hover:bg-surface-raised hover:text-content-primary",
+  outline:
+    "bg-transparent text-content-primary border border-border hover:border-border-accent hover:text-content-accent",
 };
 
 const sizes = {
@@ -33,13 +39,18 @@ const sizes = {
 export function LinkButton({
   variant = "primary",
   size = "md",
+  hero = false,
   className,
   children,
   ...props
 }: LinkButtonProps) {
   return (
     <Link
-      className={cx(base, variants[variant], sizes[size], className)}
+      className={
+        hero
+          ? cx(base, variants.primary, "hero-offset h-12 px-6 text-base font-bold", className)
+          : cx(base, variants[variant], sizes[size], className)
+      }
       {...props}
     >
       {children}

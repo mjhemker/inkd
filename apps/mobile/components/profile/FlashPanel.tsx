@@ -34,11 +34,12 @@ export function FlashPanel({ artistId, userId }: { artistId: string; userId: str
 
   return (
     <View className="gap-4">
-      <View className="flex-row items-center justify-between">
-        <Text className="flex-1 pr-3 text-sm text-content-muted">
-          Pre-drawn designs clients can book directly.
+      <View className="gap-3">
+        <Text className="text-sm text-content-muted">
+          Pre-drawn designs clients can book directly, priced and sized up front.
         </Text>
-        <Button size="sm" leadingIcon={<Icon name="plus" size={16} color="#FAFAFA" />} onPress={() => setCreateOpen(true)}>
+        {/* This tab's single action → the one hero on the screen. */}
+        <Button hero className="w-full" leadingIcon={<Icon name="plus" size={16} color="#FAFAFA" />} onPress={() => setCreateOpen(true)}>
           New sheet
         </Button>
       </View>
@@ -308,9 +309,9 @@ function FlashItemRow({
         <Text className="text-sm font-medium text-content-primary" numberOfLines={1}>
           {item.title || "Untitled piece"}
         </Text>
-        <Text className="text-xs text-content-muted">
-          {flashPriceLabel(item.price_cents)}
-          {item.size_inches ? ` · ${item.size_inches}"` : ""}
+        <Text className="text-xs">
+          <Text className="font-mono-medium text-content-ember">{flashPriceLabel(item.price_cents)}</Text>
+          <Text className="text-content-muted">{item.size_inches ? ` · ${item.size_inches}"` : ""}</Text>
         </Text>
       </View>
       <Badge variant={item.is_available ? "success" : "neutral"} size="sm">

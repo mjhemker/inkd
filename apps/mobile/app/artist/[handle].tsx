@@ -129,7 +129,7 @@ function Hero({ data }: { data: PublicArtistProfileData }) {
             accessibilityRole="button"
             onPress={() => router.push(`/shop/${badge.handle}` as never)}
           >
-            <Badge variant="ember" size="sm">
+            <Badge variant="outline" size="sm">
               {`@ ${badge.name}`}
             </Badge>
           </Pressable>
@@ -148,8 +148,9 @@ function Hero({ data }: { data: PublicArtistProfileData }) {
             {label}
           </Badge>
         ))}
-        <Badge variant={artist.accepts_new_clients ? "brand" : "neutral"} size="sm">
-          {artist.accepts_new_clients ? "Accepting new clients" : "Books closed"}
+        {/* Books-open reads as a solid GREEN status chip — never violet. */}
+        <Badge variant={artist.accepts_new_clients ? "success" : "neutral"} size="sm">
+          {artist.accepts_new_clients ? "Books open" : "Books closed"}
         </Badge>
       </View>
 
@@ -164,17 +165,19 @@ function Hero({ data }: { data: PublicArtistProfileData }) {
       )}
 
       {!isOwnProfile && (
-        <View className="flex-row gap-3 pt-1">
+        // Full-width Request-a-booking hero (THE one offset shadow on this
+        // screen) stacked above a flat secondary Message.
+        <View className="gap-3 pt-1">
           <Button
-            className="flex-1"
+            hero
+            className="w-full"
             onPress={() => router.push(`/book/${profile.handle}` as never)}
-            leadingIcon={<Icon name="calendar" size={16} color={colors.text.primary} />}
+            leadingIcon={<Icon name="calendar" size={16} color="#FAFAFA" />}
           >
             Request a booking
           </Button>
           <Button
             variant="secondary"
-            className="flex-1"
             onPress={() => router.push({ pathname: "/messages/new", params: { to: profile.id } } as never)}
             leadingIcon={<Icon name="message-circle" size={16} color={colors.text.secondary} />}
           >
@@ -189,11 +192,20 @@ function Hero({ data }: { data: PublicArtistProfileData }) {
 function PortfolioGrid({ data }: { data: PublicArtistProfileData }) {
   const pieces = data.portfolioPieces.filter((p) => p.image_url);
   if (pieces.length === 0) return <EmptyTab icon="layout-grid" title="Portfolio coming soon" description="This artist hasn't added portfolio pieces yet." />;
+  // 2-col straight grid — flat hairline tiles, mono caption BELOW each tile.
   return (
-    <View className="flex-row flex-wrap gap-2.5">
+    <View className="flex-row flex-wrap justify-between gap-y-4">
       {pieces.map((piece) => (
-        <View key={piece.id} className="aspect-square w-[31%] overflow-hidden rounded-xl bg-surface-overlay">
-          <TileImage uri={piece.image_url as string} title={piece.title} icon="image" />
+        <View key={piece.id} className="w-[48%]">
+          <View className="aspect-square overflow-hidden border border-border-subtle bg-surface-overlay">
+            <TileImage uri={piece.image_url as string} title={piece.title} icon="image" />
+          </View>
+          <Text
+            className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-content-muted"
+            numberOfLines={1}
+          >
+            {piece.title || "Untitled"}
+          </Text>
         </View>
       ))}
     </View>
@@ -204,19 +216,29 @@ function PostsGrid({ data }: { data: PublicArtistProfileData }) {
   const { colors } = useTheme();
   if (data.posts.length === 0) return <EmptyTab icon="image" title="No posts yet" description="Updates from this artist will show up here." />;
   return (
-    <View className="flex-row flex-wrap gap-2.5">
+    <View className="flex-row flex-wrap justify-between gap-y-4">
       {data.posts.map((post) => {
         const cover =
           post.cover_url ?? (Array.isArray(post.media) && (post.media[0] as { url?: string } | undefined)?.url);
         return (
-          <View key={post.id} className="aspect-square w-[31%] overflow-hidden rounded-xl bg-surface-overlay">
-            {cover ? (
-              <TileImage uri={cover} icon="image" />
-            ) : (
-              <View className="h-full w-full items-center justify-center">
-                <Icon name="image" size={16} color={colors.text.muted} />
-              </View>
-            )}
+          <View key={post.id} className="w-[48%]">
+            <View className="aspect-square overflow-hidden border border-border-subtle bg-surface-overlay">
+              {cover ? (
+                <TileImage uri={cover} icon="image" />
+              ) : (
+                <View className="h-full w-full items-center justify-center">
+                  <Icon name="image" size={16} color={colors.text.muted} />
+                </View>
+              )}
+            </View>
+            {post.caption ? (
+              <Text
+                className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-content-muted"
+                numberOfLines={1}
+              >
+                {post.caption}
+              </Text>
+            ) : null}
           </View>
         );
       })}
@@ -235,7 +257,7 @@ function FlashList({ data }: { data: PublicArtistProfileData }) {
           <Text className="font-display text-lg text-content-primary">{sheet.title || "Flash"}</Text>
           <View className="flex-row flex-wrap gap-2.5">
             {sheet.items.map((item) => (
-              <View key={item.id} className="w-[31%] overflow-hidden rounded-xl border border-border-subtle bg-surface-raised">
+              <View key={item.id} className="w-[31%] overflow-hidden border border-border-subtle bg-surface-raised">
                 <View className="aspect-square bg-surface-overlay">
                   {item.image_url ? (
                     <TileImage uri={item.image_url} title={item.title} icon="sparkles" />
@@ -246,7 +268,7 @@ function FlashList({ data }: { data: PublicArtistProfileData }) {
                   )}
                 </View>
                 <View className="gap-0.5 p-2">
-                  <Text className="text-xs text-content-muted" numberOfLines={1}>
+                  <Text className="font-mono-medium text-xs text-content-ember" numberOfLines={1}>
                     {flashPriceLabel(item.price_cents)}
                   </Text>
                   <Badge variant={item.is_available ? "success" : "neutral"} size="sm" className="self-start">
@@ -291,7 +313,7 @@ function InfoTab({ data }: { data: PublicArtistProfileData }) {
                     <Text className="text-xs text-content-muted">{service.duration_minutes} min</Text>
                   )}
                 </View>
-                <Text className="font-mono text-sm text-content-accent">{servicePriceLabel(service)}</Text>
+                <Text className="font-mono-medium text-sm text-content-ember">{servicePriceLabel(service)}</Text>
               </View>
             ))}
           </View>
