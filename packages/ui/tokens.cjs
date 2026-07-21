@@ -170,6 +170,15 @@ const darkSemantic = {
     danger: danger[500],
     info: info[500],
   },
+  // HERO offset-shadow (the "Zine System" one-per-screen law). The single
+  // element you should click carries a hard SOLID offset shadow — no blur,
+  // ~5px down-right. At NIGHT (dark) the offset is an EMBER plate with a thin
+  // ember border ("ember at night"). See boxShadow notes + globals var layer.
+  hero: {
+    shadow: ember[500], // ember offset plate #E8A15C
+    border: ember[500], // thin ember border on the plate
+    offset: "5px", // hard offset distance (theme-independent)
+  },
   // PRINT-ONLY paper semantics (see `paper` ramp). Not used on-screen.
   paper: {
     base: paper.base,
@@ -224,6 +233,14 @@ const lightSemantic = {
     warning: warning[700], // (#B45309)
     danger: danger[600], // (#DC2626)
     info: info[600], // (#2563EB)
+  },
+  // HERO offset-shadow — in DAYLIGHT (light) the offset is PURE INK BLACK
+  // ("ink in daylight"), no blur, ~5px down-right, with a matching thin ink
+  // border. Same one-per-screen law as dark; only the pigment swaps.
+  hero: {
+    shadow: neutral[950], // pure ink offset #0A0A0B
+    border: neutral[950], // thin ink border on the plate
+    offset: "5px",
   },
   paper: darkSemantic.paper, // print paper set is theme-independent
 };
@@ -363,6 +380,13 @@ const fontFamily = {
 //   `glow`  — DEPRECATED. Kept only so any un-swept `shadow-glow` reference
 //             still compiles; it now resolves to the neutral `plate` lift with
 //             no violet bloom. Do not reach for it in new code.
+//
+// HERO OFFSET (Zine System): the ONE clickable thing per screen earns a hard
+// SOLID offset shadow (0 blur, 5px down-right) — ink in daylight, ember at
+// night (see themes.*.hero). It is theme-var backed (`--color-hero-shadow`),
+// so `shadow-hero` / `.hero-offset` swap pigment on a single data-theme flip.
+// `hero`/`hero-pressed` below are the token utilities; the pressed value shrinks
+// the offset (button translates INTO its shadow — a print-sticker press).
 const boxShadow = {
   none: "none",
   sm: "0 1px 2px 0 rgba(0, 0, 0, 0.40)",
@@ -370,6 +394,10 @@ const boxShadow = {
   lg: "0 16px 48px -12px rgba(0, 0, 0, 0.65)",
   plate: "0 2px 0 0 rgba(0, 0, 0, 0.55), 0 6px 20px -10px rgba(0, 0, 0, 0.7)",
   glow: "0 2px 0 0 rgba(0, 0, 0, 0.55), 0 6px 20px -10px rgba(0, 0, 0, 0.7)",
+  // The Zine hero offset — theme-var backed color, hard 0-blur 5px offset.
+  hero: "5px 5px 0 0 rgb(var(--color-hero-shadow) / 1)",
+  // Pressed: offset shrinks to 2px (paired with a 3px translate on the element).
+  "hero-pressed": "2px 2px 0 0 rgb(var(--color-hero-shadow) / 1)",
 };
 
 // --- Motion ------------------------------------------------------------------

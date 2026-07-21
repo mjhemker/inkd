@@ -87,6 +87,15 @@ module.exports = {
           on: v("brand-on"),
           "on-ember": v("brand-on-ember"),
         },
+        // Zine hero offset-shadow color — ink (daylight) / ember (night).
+        // Theme-var backed: `bg-hero-shadow` paints the native offset backing
+        // plate; `border-hero-border` paints the thin plate border. Both swap
+        // pigment on a single data-theme flip. Web uses the `.hero-offset`
+        // utility / `shadow-hero` token instead.
+        hero: {
+          shadow: v("hero-shadow"),
+          border: v("hero-border"),
+        },
       },
       spacing,
       borderRadius: radii,

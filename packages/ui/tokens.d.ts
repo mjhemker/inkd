@@ -42,6 +42,12 @@ export interface SemanticColors {
     danger: string;
     info: string;
   };
+  /** Zine hero offset-shadow — ink in daylight, ember at night. */
+  hero: {
+    shadow: string;
+    border: string;
+    offset: string;
+  };
   paper: {
     base: string;
     raised: string;

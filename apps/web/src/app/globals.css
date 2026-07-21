@@ -46,6 +46,9 @@
   --color-status-warning: 245 158 11;
   --color-status-danger: 239 68 68;
   --color-status-info: 59 130 246;
+  /* Zine hero offset-shadow — EMBER at night (dark default). */
+  --color-hero-shadow: 232 161 92;
+  --color-hero-border: 232 161 92;
 }
 
 [data-theme="light"] {
@@ -79,6 +82,9 @@
   --color-status-warning: 180 83 9;
   --color-status-danger: 220 38 38;
   --color-status-info: 37 99 235;
+  /* Zine hero offset-shadow — PURE INK in daylight (light). */
+  --color-hero-shadow: 10 10 11;
+  --color-hero-border: 10 10 11;
 }
 
 /* --- Always-dark surface island -------------------------------------------
@@ -119,6 +125,9 @@
   --color-status-warning: 245 158 11;
   --color-status-danger: 239 68 68;
   --color-status-info: 59 130 246;
+  /* Hero stays EMBER inside the always-dark island. */
+  --color-hero-shadow: 232 161 92;
+  --color-hero-border: 232 161 92;
 }
 
 /* --- Public profile hero (theme-aware) ------------------------------------
@@ -134,6 +143,32 @@
 }
 [data-theme="light"] .profile-hero {
   background: var(--hero-grad-light);
+}
+
+/* --- Zine hero offset-shadow utility ---------------------------------------
+   The ONE-PER-SCREEN clickable thing. A hard SOLID offset (0 blur, 5px
+   down-right) plus a thin matching border — pure INK in daylight, EMBER at
+   night (theme-var backed, see --color-hero-* above). On press the element
+   translates 3px INTO its shadow and the offset shrinks to 2px — a tactile
+   print-sticker feel. Applied by the `hero` prop on Button/Card; also usable
+   directly on any single primary control. `button.` selectors on :active out-
+   specify Tailwind's base `active:translate-y-px` so the press wins cleanly. */
+.hero-offset {
+  border: 1px solid rgb(var(--color-hero-border));
+  box-shadow: 5px 5px 0 0 rgb(var(--color-hero-shadow));
+}
+.hero-offset:active,
+button.hero-offset:active,
+a.hero-offset:active {
+  transform: translate(3px, 3px);
+  box-shadow: 2px 2px 0 0 rgb(var(--color-hero-shadow));
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-offset:active,
+  button.hero-offset:active,
+  a.hero-offset:active {
+    transform: none;
+  }
 }
 
 html,
