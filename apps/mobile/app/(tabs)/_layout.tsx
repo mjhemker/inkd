@@ -13,20 +13,19 @@ function badgeValue(count: number): number | string | undefined {
  * Bottom tab bar. Colors follow the active theme (Dark / Light).
  *
  * NAV BY ROLE (founder spec):
- *   Clients  → Home · Discover · Messages · Profile   (4 tabs)
- *   Artists  → Home · Discover · Profile · Studio     (4 tabs)
+ *   Clients  → Home · Discover · Inbox · Profile           (4 tabs)
+ *   Artists  → Home · Discover · Inbox · Profile · Studio  (5 tabs)
  *
- * Artists have NO Messages tab — it's freed for Studio. Their inbox is a
- * bell-style icon in the Studio dashboard header (top-right, with the same
- * unread badge); the `messages` route still exists (bottom bar stays visible)
- * so that icon + any message deep-link resolve. Clients keep Messages on the
- * bar and never see Studio.
+ * Inbox (the Messages surface, relabeled with a message icon + red unread
+ * badge) now has its OWN middle slot for BOTH roles. Artists get Studio in the
+ * fifth slot on the right; clients never see Studio. The messages icon that
+ * briefly lived in the Studio dashboard header has been removed — Inbox on the
+ * bar is the single entry point for everyone.
  *
  * The artist Studio ops surfaces (dashboard, bookings, AI staff, settings, shop)
  * live in the Studio tab's OWN nested stack (studio/*), so the bottom bar stays
  * visible across all of them. Role is detected from the presence of an artist
- * profile; the Studio tab is hidden for clients and Messages hidden for artists
- * with `href: null`.
+ * profile; the Studio tab is hidden for clients with `href: null`.
  *
  * `bookings` is a hidden route (never a visible tab): clients open their own
  * bookings from Profile (push into this stack — bar stays visible); artists use
@@ -77,14 +76,14 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Icon name="compass" color={color} size={size} />,
         }}
       />
-      {/* Clients only: artists reach Messages from the Studio dashboard header
-          bell instead (route stays registered so that icon + deep-links work). */}
+      {/* Inbox: the Messages surface, its own middle slot for BOTH roles.
+          Message icon + red unread badge. */}
       <Tabs.Screen
         name="messages"
         options={{
-          title: "Messages",
-          href: isArtist ? null : "/messages",
-          tabBarBadge: isArtist ? undefined : badgeValue(attention.messages),
+          title: "Inbox",
+          href: "/messages",
+          tabBarBadge: badgeValue(attention.messages),
           tabBarBadgeStyle: badgeStyle,
           tabBarIcon: ({ color, size }) => (
             <Icon name="message-circle" color={color} size={size} />

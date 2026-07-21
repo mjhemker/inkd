@@ -29,33 +29,56 @@ export const HUB_TAB_ROUTES = [
 ] as const;
 
 /**
- * The bottom-tab labels a role sees, in order (both roles get exactly four).
- * Mirrors app/(tabs)/_layout.tsx `href` gating — kept here so the contract is
- * unit-testable without a renderer.
+ * The bottom-tab labels a role sees, in order. Mirrors app/(tabs)/_layout.tsx
+ * `href` gating — kept here so the contract is unit-testable without a renderer.
  *
- *   Clients → Home · Discover · Messages · Profile
- *   Artists → Home · Discover · Profile · Studio
+ *   Clients → Home · Discover · Inbox · Profile           (4 tabs)
+ *   Artists → Home · Discover · Inbox · Profile · Studio  (5 tabs)
  *
- * Artists have NO Messages tab: their inbox is a bell-style icon in the Studio
- * dashboard header (top-right), freeing the fourth slot for Studio. Clients
- * keep Messages on the bar. Discover is slot 2 for both.
+ * Inbox (the Messages surface, relabeled) now gets its OWN middle slot for BOTH
+ * roles — no longer swapped out for artists. The artist Studio tab takes the
+ * fifth slot on the right. The messages inbox icon that briefly lived in the
+ * Studio dashboard header is gone; Inbox on the bar is the single entry point.
+ * Discover is slot 2 for both.
  */
 export function visibleTabLabels(isArtist: boolean): readonly string[] {
   return isArtist
-    ? ["Home", "Discover", "Profile", "Studio"]
-    : ["Home", "Discover", "Messages", "Profile"];
+    ? ["Home", "Discover", "Inbox", "Profile", "Studio"]
+    : ["Home", "Discover", "Inbox", "Profile"];
 }
 
 /**
- * The internal Studio sections, in order, with their in-tab route. The
- * segmented header (components/studio/StudioSegments.tsx) renders these and the
- * tab bar stays visible while switching between them.
+ * The internal Studio sections, in order, with their in-tab route and the
+ * one-line muted snippet shown under the segmented bar. The segmented header
+ * (components/studio/StudioSegments.tsx) renders the labels and the tab bar
+ * stays visible while switching between them; StudioScreen renders the snippet
+ * for the active section instead of a big per-tab H1 title.
  */
 export const STUDIO_SECTIONS = [
-  { value: "dashboard", label: "Dashboard", route: "/studio" },
-  { value: "bookings", label: "Bookings", route: "/studio/bookings" },
-  { value: "ai", label: "AI staff", route: "/studio/ai" },
-  { value: "settings", label: "Settings", route: "/studio/settings" },
+  {
+    value: "dashboard",
+    label: "Dashboard",
+    route: "/studio",
+    snippet: "Your operational overview — bookings, revenue, and requests at a glance.",
+  },
+  {
+    value: "bookings",
+    label: "Bookings",
+    route: "/studio/bookings",
+    snippet: "Every request from first inquiry to healed and rebooked.",
+  },
+  {
+    value: "ai",
+    label: "AI staff",
+    route: "/studio/ai",
+    snippet: "Your staff that show their work — approvals, activity, playbook.",
+  },
+  {
+    value: "settings",
+    label: "Settings",
+    route: "/studio/settings",
+    snippet: "Your studio, services, hours and preferences.",
+  },
 ] as const;
 
 export type StudioSection = (typeof STUDIO_SECTIONS)[number]["value"];
