@@ -137,7 +137,7 @@ function Hero({ data }: { data: PublicArtistProfileData }) {
             onPress={() => router.push(`/shop/${badge.handle}` as never)}
           >
             <Badge variant="ember" size="sm">
-              @ {badge.name}
+              {`@ ${badge.name}`}
             </Badge>
           </Pressable>
         ))}

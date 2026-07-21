@@ -2,6 +2,7 @@ import { forwardRef, type ReactNode } from "react";
 import { Pressable, Text, View, type PressableProps } from "react-native";
 import { cx } from "../cx";
 import { Icon } from "./Icon";
+import { wrapTextChildren } from "./textChildren";
 
 export interface ChipProps extends Omit<PressableProps, "children"> {
   selected?: boolean;
@@ -42,19 +43,18 @@ export const Chip = forwardRef<View, ChipProps>(function Chip(
       {...props}
     >
       {leadingIcon}
-      {typeof children === "string" ? (
+      {wrapTextChildren(children, (child, key) => (
         <Text
+          key={key}
           numberOfLines={1}
           className={cx(
             "font-sans-medium text-sm",
             selected ? "text-brand-on" : "text-content-secondary",
           )}
         >
-          {children}
+          {child}
         </Text>
-      ) : (
-        children
-      )}
+      ))}
       {onRemove ? (
         <Pressable
           onPress={onRemove}
