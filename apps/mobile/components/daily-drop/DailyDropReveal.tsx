@@ -350,7 +350,7 @@ function RevealedPanel({
           <ArtworkPlaceholder id={subjectId} className="absolute inset-0 h-full w-full" />
         )}
         <View className="absolute left-3 top-3 flex-row items-center gap-1.5 rounded-sm bg-brand px-2.5 py-1">
-          <LogoDropMark size={13} />
+          <LogoDropMark size={13} tone="on-brand" />
           <Text className="font-mono text-[10px] font-bold uppercase tracking-widest text-brand-on">
             {isFlash ? "Flash drop" : "Today's drop"}
           </Text>

@@ -15,6 +15,9 @@ const ROOT = process.cwd();
 const tileSquare = fs.readFileSync("apps/web/public/brand/inkd-icon-square.svg");
 const tileRounded = fs.readFileSync("apps/web/public/brand/inkd-mark.svg");
 const glyph = fs.readFileSync("apps/web/public/brand/inkd-glyph.svg");
+// The bare mark drawn in light ink, for the near-black splash. The dark `glyph`
+// is invisible there — pick the variant that matches the surface behind it.
+const glyphLight = fs.readFileSync("apps/web/public/brand/inkd-glyph-light.svg");
 
 const png = (svg, size, opts = {}) =>
   sharp(svg, { density: 384 })
@@ -23,9 +26,9 @@ const png = (svg, size, opts = {}) =>
     .toBuffer();
 
 // Glyph centered on a transparent canvas with margin (for splash / adaptive).
-async function paddedGlyph(canvas, glyphFrac) {
+async function paddedGlyph(canvas, glyphFrac, art = glyph) {
   const g = Math.round(canvas * glyphFrac);
-  const buf = await png(glyph, g);
+  const buf = await png(art, g);
   return sharp({
     create: { width: canvas, height: canvas, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
   })
@@ -65,8 +68,8 @@ function icoFrom(png32) {
 
   // --- MOBILE ---
   write("apps/mobile/assets/icon.png", await png(tileSquare, 1024));          // ios/general
-  write("apps/mobile/assets/adaptive-icon.png", await paddedGlyph(1024, 0.62)); // android fg (safe zone)
-  write("apps/mobile/assets/splash.png", await paddedGlyph(1200, 0.30));        // splash glyph
+  write("apps/mobile/assets/adaptive-icon.png", await paddedGlyph(1024, 0.62)); // android fg, on the white adaptive bg
+  write("apps/mobile/assets/splash.png", await paddedGlyph(1200, 0.30, glyphLight)); // splash sits on near-black
   write("apps/mobile/assets/favicon.png", await png(tileRounded, 48));          // expo web
 
   console.log("generated icons");

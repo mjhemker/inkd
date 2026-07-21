@@ -235,7 +235,7 @@ function RevealedPanel({
           )}
           <div className="absolute left-3 top-3 flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-sm bg-brand px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-brand-on">
-              <LogoDropMark size={13} rounded={false} />
+              <LogoDropMark size={13} tone="on-brand" />
               {isFlash ? "Flash drop" : "Today's drop"}
             </span>
           </div>
