@@ -318,8 +318,11 @@ export default function HomeScreen() {
       {showReveal && drop.card && (
         <DailyDropReveal
           card={drop.card}
-          onDismiss={() => {
-            void markDailyDropRevealed(dropDate).then(() => setRevealDismissed(true));
+          onDismiss={async () => {
+            // Awaitable so the reveal's CTAs can tear the takeover down before
+            // navigating. Persist the "revealed" stamp, then unmount.
+            await markDailyDropRevealed(dropDate);
+            setRevealDismissed(true);
           }}
         />
       )}

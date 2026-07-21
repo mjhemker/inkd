@@ -44,8 +44,13 @@ type Phase = "teaser" | "revealed";
 
 export interface DailyDropRevealProps {
   card: DailyDropCardData;
-  /** Called when the user dismisses (from teaser or after reveal). */
-  onDismiss: () => void;
+  /**
+   * Called when the user dismisses (from teaser or after reveal). May be async
+   * (it persists today's "revealed" stamp) — the CTAs await it so the takeover
+   * is fully torn down BEFORE we navigate, never left floating over the
+   * destination screen.
+   */
+  onDismiss: () => void | Promise<void>;
 }
 
 /**
@@ -146,14 +151,24 @@ export function DailyDropReveal({ card, onDismiss }: DailyDropRevealProps) {
 
   const stampClick = () => clicked.mutate(card.id);
 
-  function openArtist() {
+  // Dismiss the takeover FIRST (stamp clicked, persist "revealed", unmount the
+  // Modal), and only THEN navigate. On mobile the reveal is a RN <Modal> that
+  // renders above the pushed screen, so navigating without dismissing left the
+  // overlay floating over the destination — the founder-reported trap.
+  async function dismissThenNavigate(go: () => void) {
     stampClick();
-    if (handle) router.push(`/artist/${handle}` as never);
+    await onDismiss();
+    go();
+  }
+
+  function openArtist() {
+    void dismissThenNavigate(() => {
+      if (handle) router.push(`/artist/${handle}` as never);
+    });
   }
 
   function openPiece() {
-    stampClick();
-    router.push("/daily-drop" as never);
+    void dismissThenNavigate(() => router.push("/daily-drop" as never));
   }
 
   const haloOpacity = haloAnim.interpolate({ inputRange: [0, 1], outputRange: [0.5, 0.9] });
@@ -361,16 +376,32 @@ function RevealedPanel({
 
         <View className="flex-row items-center justify-between gap-3 border-t border-border-subtle pt-3">
           <View className="min-w-0 flex-1 gap-0.5">
-            <Text numberOfLines={1} className="font-display text-base font-bold text-content-primary">
-              {artistName}
-            </Text>
+            {hasArtist ? (
+              <Pressable
+                onPress={onArtist}
+                hitSlop={6}
+                accessibilityRole="link"
+                accessibilityLabel={`View ${artistName}'s profile`}
+              >
+                <Text numberOfLines={1} className="font-display text-base font-bold text-content-accent">
+                  {artistName}
+                </Text>
+              </Pressable>
+            ) : (
+              <Text numberOfLines={1} className="font-display text-base font-bold text-content-primary">
+                {artistName}
+              </Text>
+            )}
             <Text numberOfLines={1} className="font-mono text-[11px] uppercase tracking-widest text-content-muted">
               {styleTags.length > 0 ? styleTags.slice(0, 2).join(" · ") : "Tattoo"}
               {location ? ` · ${location}` : ""}
             </Text>
           </View>
           {isFlash && (
-            <Text className="shrink-0 font-hand text-2xl leading-none text-content-ember">
+            // shrink-0 keeps the plate from being squeezed; pl-3/pr-1 give the
+            // script-font price glyphs room so the last digit never clips at the
+            // panel's right edge (RN <Text> hard-clips to its own bounds).
+            <Text className="shrink-0 pl-3 pr-1 font-hand text-2xl leading-none text-content-ember">
               {formatPrice(priceCents)}
             </Text>
           )}
