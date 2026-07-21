@@ -133,7 +133,7 @@ export function WaitlistJoinForm({
           <TextArea value={note} onChangeText={setNote} numberOfLines={2} placeholder="Anything the artist should know…" />
         </FormField>
 
-        <Button onPress={submit} disabled={submitting}>
+        <Button hero className="w-full" onPress={submit} disabled={submitting}>
           Join the waitlist
         </Button>
       </View>

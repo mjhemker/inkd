@@ -310,7 +310,7 @@ export function ClientSigningFlow({ bookingId }: { bookingId: string }) {
           </p>
         )}
         <Button
-          size="lg"
+          hero
           disabled={!canSubmit}
           loading={signWaiver.isPending}
           onClick={handleSubmit}

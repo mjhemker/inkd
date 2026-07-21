@@ -334,7 +334,8 @@ function SignWaiverBody() {
             <Text className="text-sm text-danger-500">{submitError}</Text>
           )}
           <Button
-            size="lg"
+            hero
+            className="w-full"
             disabled={!canSubmit}
             loading={signWaiver.isPending}
             onPress={handleSubmit}
