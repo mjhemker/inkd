@@ -9,7 +9,10 @@ export type BadgeVariant =
   | "warning"
   | "danger"
   | "info"
-  | "outline";
+  | "outline"
+  // Zine additions:
+  | "stamp" // red mono rubber-stamp — AWAITING YOU / MEDICAL (red = counts & medical only)
+  | "date"; // soft-gray date chip
 export type BadgeSize = "sm" | "md";
 
 // Solid "stamps": opaque plates with high-contrast ink, not low-opacity tints.
@@ -26,6 +29,13 @@ const variants: Record<BadgeVariant, string> = {
   danger: "bg-danger-600 text-neutral-50",
   info: "bg-info-600 text-neutral-50",
   outline: "bg-transparent text-content-secondary border border-border",
+  // Red mono rubber-stamp: the ONLY places red is allowed besides counts —
+  // "AWAITING YOU", "MEDICAL — YOURS TO HANDLE". Transparent plate, red hairline
+  // + red mono uppercase tracked ink, so it reads as inked-on, not a filled pill.
+  stamp:
+    "bg-transparent text-danger-600 border border-danger-600 font-mono uppercase tracking-[0.14em]",
+  // Soft-gray date chip: recedes. Dates are never loud — muted ink, no color.
+  date: "bg-surface-overlay text-content-muted font-medium",
 };
 
 const sizes: Record<BadgeSize, string> = {

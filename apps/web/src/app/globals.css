@@ -171,6 +171,17 @@ a.hero-offset:active {
   }
 }
 
+/* --- Money / stat styling --------------------------------------------------
+   Zine law: money values render in EMBER (the warm price mark), mono + tabular
+   so figures align. Use on price/stat numbers. Native equivalent: className
+   `font-mono-medium text-content-ember` (see docs/zine-hierarchy.md). */
+.text-money {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: rgb(var(--color-content-ember));
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 html,
 body {
   height: 100%;

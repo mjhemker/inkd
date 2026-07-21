@@ -11,7 +11,10 @@ export type BadgeVariant =
   | "warning"
   | "danger"
   | "info"
-  | "outline";
+  | "outline"
+  // Zine additions:
+  | "stamp" // red mono rubber-stamp — AWAITING YOU / MEDICAL
+  | "date"; // soft-gray date chip
 export type BadgeSize = "sm" | "md";
 
 const container: Record<BadgeVariant, string> = {
@@ -24,6 +27,10 @@ const container: Record<BadgeVariant, string> = {
   danger: "bg-danger-600",
   info: "bg-info-600",
   outline: "bg-transparent border border-border",
+  // Red mono rubber-stamp (AWAITING YOU / MEDICAL) — transparent, red hairline.
+  stamp: "bg-transparent border border-danger-600",
+  // Soft-gray date chip — recedes.
+  date: "bg-surface-overlay",
 };
 
 const label: Record<BadgeVariant, string> = {
@@ -35,6 +42,8 @@ const label: Record<BadgeVariant, string> = {
   danger: "text-neutral-50",
   info: "text-neutral-50",
   outline: "text-content-secondary",
+  stamp: "text-danger-600 font-mono uppercase tracking-widest",
+  date: "text-content-muted",
 };
 
 const sizePad: Record<BadgeSize, string> = {

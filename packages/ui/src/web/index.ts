@@ -87,6 +87,7 @@ export { Skeleton, type SkeletonProps } from "./Skeleton";
 export { Slider, type SliderProps } from "./Slider";
 export { RangeSlider, type RangeSliderProps } from "./RangeSlider";
 export { Spinner, type SpinnerProps } from "./Spinner";
+export { StatusDot, type StatusDotProps } from "./StatusDot";
 export { Stepper, type StepperProps, type StepperStep } from "./Stepper";
 export { Tabs, type TabItem, type TabsProps } from "./Tabs";
 export { TextArea, type TextAreaProps } from "./TextArea";
