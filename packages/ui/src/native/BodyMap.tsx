@@ -50,7 +50,7 @@ const PALETTES: Record<"dark" | "light", BodyMapPalette> = {
   dark: {
     figure: { fill: "rgba(250,250,250,0.06)", stroke: "rgba(250,250,250,0.55)" },
     base: { fill: "transparent", stroke: "transparent" },
-    selected: { fill: "#7C3AED", stroke: "#C4B5FD" },
+    selected: { fill: "#8B5CF6", stroke: "#C4B5FD" }, // dark-mode violet lift
   },
   light: {
     figure: { fill: "rgba(28,25,23,0.08)", stroke: "rgba(28,25,23,0.7)" },

@@ -134,8 +134,11 @@ const darkSemantic = {
     chrome: "#0D0D0F",
     inverse: neutral[50],
     // SOLID accent plates — replace old low-opacity brand tints (bg-brand/15).
-    plate: primary[600], // solid violet plate (emphasis block, active fill)
-    plateActive: primary[700], // pressed / stronger violet plate
+    // Dark-mode violet lift (2026-07): brightened one ramp step (600→500) so
+    // solid violet plates separate from the near-black canvas on phone screens
+    // (violet-on-surface AA-normal; see WCAG notes). Light theme keeps 600.
+    plate: primary[500], // solid violet plate (emphasis block, active fill) #8B5CF6
+    plateActive: primary[600], // pressed / stronger violet plate #7C3AED
     plateInk: primary[950], // deep violet plate on dark (subtle, still solid)
     ember: ember[500], // solid ember stamp plate (flash / price marks)
   },
@@ -151,13 +154,13 @@ const darkSemantic = {
     subtle: neutral[800],
     default: neutral[700],
     strong: neutral[600],
-    accent: primary[600],
+    accent: primary[500], // brightened with the dark-mode violet lift (600→500)
     ember: ember[600],
   },
   brand: {
-    primary: primary[600],
-    primaryHover: primary[500], // dark: hover lightens
-    primaryActive: primary[700],
+    primary: primary[500], // dark-mode violet lift: brighter CTA #8B5CF6 (was 600)
+    primaryHover: primary[400], // dark: hover lightens further #A78BFA
+    primaryActive: primary[600], // press darkens one step #7C3AED
     onPrimary: neutral[50],
     onEmber: neutral[950], // dark ink on a solid ember plate
   },

@@ -72,7 +72,7 @@ function BodyMapStyle() {
         --bm-figure-stroke: rgba(250,250,250,0.55);
         --bm-hover-fill: rgba(139,92,246,0.22);
         --bm-hover-stroke: #A78BFA;
-        --bm-sel-fill: #7C3AED;
+        --bm-sel-fill: #8B5CF6;
         --bm-sel-stroke: #C4B5FD;
         --bm-focus-stroke: #C4B5FD;
       }
