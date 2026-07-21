@@ -13,6 +13,7 @@ import {
   isProtectedRoute,
   isArtistRoute,
   requiresCompletedOnboarding,
+  nextParamFor,
 } from "@inkd/core/auth/web";
 
 export async function middleware(request: NextRequest) {
@@ -39,7 +40,11 @@ export async function middleware(request: NextRequest) {
 
   if (!user && isProtectedRoute(pathname)) {
     const signInUrl = new URL("/auth", request.url);
-    signInUrl.searchParams.set("next", pathname);
+    // Preserve the FULL destination — path AND query — so an unauthenticated
+    // return from the Instagram OAuth callback
+    // (`/studio/settings?instagram=connected`) survives the login bounce
+    // instead of losing the `?instagram=…` signal.
+    signInUrl.searchParams.set("next", nextParamFor(pathname, request.nextUrl.search));
     return NextResponse.redirect(signInUrl);
   }
 

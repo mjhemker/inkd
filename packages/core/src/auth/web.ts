@@ -14,6 +14,10 @@ import { resolveSupabaseEnv, type SupabaseEnv } from "../env";
 import type { Database } from "../types/database";
 import type { InkdSupabaseClient } from "../supabase/client";
 
+// Pure route helpers (redirect-builder, query-preservation) — re-exported so
+// middleware can import them from the same `@inkd/core/auth/web` entrypoint.
+export { nextParamFor, buildAuthRedirectPath } from "./routes";
+
 /** Route prefixes that require an authenticated session (SPEC §3/§4 surfaces).
  * Public-by-design surfaces stay OUT of this list: `/` (role-aware entry that
  * redirects to `/preview` when signed out, or the caller's home when signed
