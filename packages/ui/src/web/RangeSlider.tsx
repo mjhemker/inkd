@@ -52,7 +52,7 @@ export function RangeSlider({
           </span>
         </div>
       )}
-      <div className="relative h-5">
+      <div className="relative h-7">
         {/* Track. A recessed groove keyed to the ink color so it reads as a
             subtle bar on BOTH themes (faint light groove on the dark canvas, a
             soft dark groove on the light paper) — the filled violet range and
@@ -95,9 +95,10 @@ export function RangeSlider({
       <style>{`
         .inkd-range {
           position: absolute;
-          left: 0; top: 0;
+          left: 0; top: 50%;
+          transform: translateY(-50%);
           width: 100%;
-          height: 20px;
+          height: 28px;
           margin: 0;
           background: transparent;
           -webkit-appearance: none;
@@ -107,25 +108,43 @@ export function RangeSlider({
         }
         .inkd-range--top { z-index: 4; }
         .inkd-range::-webkit-slider-runnable-track {
-          height: 20px; background: transparent;
+          height: 28px; background: transparent;
         }
-        .inkd-range::-moz-range-track { height: 20px; background: transparent; }
+        .inkd-range::-moz-range-track { height: 28px; background: transparent; }
+        /* Endpoint thumb: a clear circular handle — theme-aware (surface fill,
+           brand ring), a ≥28px touch target, with hover + pressed feedback. */
         .inkd-range::-webkit-slider-thumb {
           -webkit-appearance: none; appearance: none;
           pointer-events: auto;
-          height: 16px; width: 16px; border-radius: 9999px;
-          background: #7C3AED; border: 2px solid #FAFAFA; cursor: pointer;
-          transition: transform 160ms cubic-bezier(0.2, 0, 0, 1);
+          height: 28px; width: 28px; border-radius: 9999px;
+          background: rgb(var(--color-surface-raised));
+          border: 2.5px solid rgb(var(--color-brand));
+          box-shadow: 0 1px 3px rgb(0 0 0 / 0.28);
+          cursor: pointer;
+          transition: transform 140ms cubic-bezier(0.2, 0, 0, 1), box-shadow 140ms;
         }
-        .inkd-range::-webkit-slider-thumb:hover { transform: scale(1.12); }
+        .inkd-range::-webkit-slider-thumb:hover { transform: scale(1.08); }
+        .inkd-range:active::-webkit-slider-thumb {
+          transform: scale(1.14);
+          box-shadow: 0 0 0 6px rgb(var(--color-brand) / 0.22), 0 1px 3px rgb(0 0 0 / 0.28);
+        }
         .inkd-range::-moz-range-thumb {
           pointer-events: auto;
-          height: 16px; width: 16px; border-radius: 9999px;
-          background: #7C3AED; border: 2px solid #FAFAFA; cursor: pointer;
+          height: 28px; width: 28px; border-radius: 9999px;
+          background: rgb(var(--color-surface-raised));
+          border: 2.5px solid rgb(var(--color-brand));
+          box-shadow: 0 1px 3px rgb(0 0 0 / 0.28);
+          cursor: pointer;
+          transition: transform 140ms cubic-bezier(0.2, 0, 0, 1);
         }
+        .inkd-range:active::-moz-range-thumb { transform: scale(1.14); }
         .inkd-range:disabled::-webkit-slider-thumb { cursor: not-allowed; opacity: 0.5; }
+        .inkd-range:disabled::-moz-range-thumb { cursor: not-allowed; opacity: 0.5; }
         .inkd-range:focus-visible::-webkit-slider-thumb {
-          box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.4);
+          box-shadow: 0 0 0 4px rgb(var(--color-brand) / 0.4);
+        }
+        .inkd-range:focus-visible::-moz-range-thumb {
+          box-shadow: 0 0 0 4px rgb(var(--color-brand) / 0.4);
         }
       `}</style>
     </div>

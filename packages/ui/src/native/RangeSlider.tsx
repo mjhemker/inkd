@@ -9,7 +9,7 @@ import {
 import { cx } from "../cx";
 import { a11yPercent, sliderRatio } from "./sliderMath";
 
-const THUMB_SIZE = 24;
+const THUMB_SIZE = 28;
 
 export interface RangeSliderProps {
   /** Current [low, high] value. Kept low <= high by the component. */
@@ -28,7 +28,8 @@ export interface RangeSliderProps {
  * Dual-thumb range slider on PanResponder + a measured track width — the
  * two-thumb sibling of Slider. The grabbed thumb is whichever is nearer the
  * touch; thumbs cannot cross. Track is `bg-surface-overlay`, the selected span
- * `bg-brand`, thumbs are 24px `bg-neutral-50` circles.
+ * `bg-brand`, and each endpoint is a 28px theme-aware circular thumb (surface
+ * fill + brand ring) with a pressed state.
  */
 export function RangeSlider({
   value,
@@ -42,6 +43,7 @@ export function RangeSlider({
   className,
 }: RangeSliderProps) {
   const [trackWidth, setTrackWidth] = useState(0);
+  const [pressed, setPressed] = useState<"low" | "high" | null>(null);
   const activeThumb = useRef<"low" | "high" | null>(null);
   const valueRef = useRef(value);
   valueRef.current = value;
@@ -91,6 +93,7 @@ export function RangeSlider({
       const dLow = Math.abs(v - low);
       const dHigh = Math.abs(v - high);
       activeThumb.current = dLow < dHigh || (dLow === dHigh && v <= low) ? "low" : "high";
+      setPressed(activeThumb.current);
       applyMove(v);
     },
     [valueAt, applyMove],
@@ -114,6 +117,11 @@ export function RangeSlider({
       onPanResponderMove: (evt) => onMoveRef.current(evt),
       onPanResponderRelease: () => {
         activeThumb.current = null;
+        setPressed(null);
+      },
+      onPanResponderTerminate: () => {
+        activeThumb.current = null;
+        setPressed(null);
       },
     }),
   ).current;
@@ -144,7 +152,7 @@ export function RangeSlider({
         // Fabric types accessibilityValue as int; a fractional `now` crashes
         // createNode. See sliderMath.ts.
         accessibilityValue={{ min: 0, max: 100, now: a11yPercent(low, min, max) }}
-        className="h-6 justify-center"
+        className="h-7 justify-center"
         {...panResponder.panHandlers}
       >
         <View className="h-1.5 w-full overflow-hidden rounded-full bg-surface-overlay">
@@ -153,9 +161,35 @@ export function RangeSlider({
             style={{ left: `${lowRatio * 100}%`, width: `${Math.max(0, (highRatio - lowRatio) * 100)}%` }}
           />
         </View>
-        <View className="absolute h-6 w-6 rounded-full bg-neutral-50" style={{ left: thumbLeft(lowRatio) }} />
-        <View className="absolute h-6 w-6 rounded-full bg-neutral-50" style={{ left: thumbLeft(highRatio) }} />
+        <Thumb left={thumbLeft(lowRatio)} pressed={pressed === "low"} />
+        <Thumb left={thumbLeft(highRatio)} pressed={pressed === "high"} />
       </View>
     </View>
+  );
+}
+
+/**
+ * A single endpoint handle — a clear circular thumb (theme-aware: surface fill,
+ * brand ring) sized to a 28px touch target, with a pressed state (scale + a
+ * soft brand halo) so it's obvious which thumb you're dragging.
+ */
+function Thumb({ left, pressed }: { left: number; pressed: boolean }) {
+  return (
+    <View
+      className="absolute rounded-full border-2 border-brand bg-surface-raised"
+      style={{
+        left,
+        height: THUMB_SIZE,
+        width: THUMB_SIZE,
+        transform: [{ scale: pressed ? 1.12 : 1 }],
+        // Soft depth so the handle reads on both themes; the halo strengthens
+        // while pressed.
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: pressed ? 0.3 : 0.22,
+        shadowRadius: pressed ? 5 : 2,
+        elevation: pressed ? 5 : 2,
+      }}
+    />
   );
 }
