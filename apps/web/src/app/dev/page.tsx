@@ -18,6 +18,12 @@ const DEV_ROUTES: { href: string; title: string; description: string }[] = [
     description: "Gallery of @inkd/ui primitives — buttons, inputs, cards, modals, tokens.",
   },
   {
+    href: "/dev/zine-preview",
+    title: "Zine system — hierarchy foundation",
+    description:
+      "The one-hero law: the hero Button + hero Card offset shadow (ink in daylight / ember at night), ink-inverted tabs, and the stamp/date/status/money vocabulary. Flip Appearance to review both themes. See docs/zine-hierarchy.md.",
+  },
+  {
     href: "/dev/shell",
     title: "App shell",
     description: "The signed-in AppShell chrome (sidebar + mobile tab bar) in isolation.",
