@@ -7,6 +7,7 @@ import {
   type PressableProps,
 } from "react-native";
 import { cx } from "../cx";
+import { wrapTextChildren } from "./textChildren";
 
 export type ButtonVariant =
   | "primary"
@@ -89,19 +90,18 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
       ) : (
         leadingIcon
       )}
-      {typeof children === "string" ? (
+      {wrapTextChildren(children, (child, key) => (
         <Text
+          key={key}
           className={cx(
             "font-sans-semibold tracking-tight",
             sizeText[size],
             label[variant],
           )}
         >
-          {children}
+          {child}
         </Text>
-      ) : (
-        children
-      )}
+      ))}
     </Pressable>
   );
 });

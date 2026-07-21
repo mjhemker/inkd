@@ -5,7 +5,7 @@
  * studio locations. Mirrors apps/mobile/app/artist/[handle].tsx structurally.
  */
 import { router, useLocalSearchParams } from "expo-router";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Avatar, Badge, Card, Icon, Skeleton } from "@inkd/ui/native";
 import {
@@ -19,6 +19,7 @@ import {
 
 import { classificationLabel } from "@/lib/format";
 import { useTheme } from "@/providers/theme";
+import { BackButton } from "@/components/BackButton";
 
 export default function ShopProfileScreen() {
   const { colors } = useTheme();
@@ -39,15 +40,7 @@ export default function ShopProfileScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
       <View className="flex-row items-center gap-2 px-4 py-2">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          hitSlop={8}
-          onPress={() => router.back()}
-          className="h-9 w-9 items-center justify-center rounded-full active:bg-surface-overlay"
-        >
-          <Icon name="chevron-left" size={20} color={colors.text.primary} />
-        </Pressable>
+        <BackButton fallback="/(tabs)/discover" />
         <Text className="font-mono text-xs uppercase tracking-[0.18em] text-content-muted">
           {handle ? `@${handle}` : "Shop"}
         </Text>

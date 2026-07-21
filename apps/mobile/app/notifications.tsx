@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import {
@@ -16,6 +16,7 @@ import { NotificationListItem } from "@/components/notifications/NotificationLis
 import { NOTIFICATION_FILTER_TYPES, notificationKindMeta } from "@/lib/notifications";
 import { normalizeDeepLink } from "@/lib/nav";
 import { useTheme } from "@/providers/theme";
+import { BackButton } from "@/components/BackButton";
 
 const PAGE_SIZE = 20;
 
@@ -56,7 +57,7 @@ function NotificationsScreenContent() {
   return (
     <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
       <ScrollView className="flex-1" contentContainerClassName="gap-5 px-6 py-6">
-        <BackLink />
+        <BackButton fallback="/(tabs)/profile" />
 
         <ScreenHeader
           eyebrow="INBOX"
@@ -138,16 +139,5 @@ function NotificationsScreenContent() {
         ) : null}
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-function BackLink() {
-  return (
-    <Text
-      onPress={() => (router.canGoBack() ? router.back() : router.push("/(tabs)/profile"))}
-      className="text-sm text-content-secondary"
-    >
-      {"< Back"}
-    </Text>
   );
 }

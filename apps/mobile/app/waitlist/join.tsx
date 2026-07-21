@@ -9,6 +9,7 @@ import { useCurrentProfile, useServices, useJoinWaitlist } from "@inkd/core";
 import { Skeleton, ToastProvider, useToast } from "@inkd/ui/native";
 
 import { WaitlistJoinForm } from "@/components/waitlist/join-form";
+import { BackButton } from "@/components/BackButton";
 
 export default function WaitlistJoinScreen() {
   const { artistId, artistName } = useLocalSearchParams<{ artistId: string; artistName?: string }>();
@@ -25,12 +26,7 @@ export default function WaitlistJoinScreen() {
     <ToastProvider>
       <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
         <ScrollView className="flex-1" contentContainerClassName="gap-6 px-6 py-8">
-          <Text
-            onPress={() => (router.canGoBack() ? router.back() : router.push("/(tabs)/bookings"))}
-            className="text-sm text-content-secondary"
-          >
-            {"< Back"}
-          </Text>
+          <BackButton fallback="/(tabs)/bookings" />
           <JoinBody artistId={artistId} artistName={artistName} />
         </ScrollView>
       </SafeAreaView>

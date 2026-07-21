@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
 import { cx } from "../cx";
+import { wrapTextChildren } from "./textChildren";
 
 export type BadgeVariant =
   | "neutral"
@@ -68,15 +69,14 @@ export function Badge({
         className,
       )}
     >
-      {typeof children === "string" ? (
+      {wrapTextChildren(children, (child, key) => (
         <Text
+          key={key}
           className={cx("font-sans-semibold", sizeText[size], label[variant])}
         >
-          {children}
+          {child}
         </Text>
-      ) : (
-        children
-      )}
+      ))}
     </View>
   );
 }

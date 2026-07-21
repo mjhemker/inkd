@@ -24,6 +24,7 @@ import * as ImagePicker from "expo-image-picker";
 import { Avatar, Icon, Spinner } from "@inkd/ui/native";
 import { useCurrentProfile, useInkdClient } from "@inkd/core/hooks";
 import { useTheme } from "@/providers/theme";
+import { BackButton } from "@/components/BackButton";
 import {
   CLOSE_MATCH_THRESHOLD,
   STRONG_MATCH_THRESHOLD,
@@ -61,7 +62,6 @@ function titleCase(s: string): string {
 }
 
 export default function MatchInspirationScreen() {
-  const { colors } = useTheme();
   const client = useInkdClient();
   const { data: profile, isLoading: profileLoading } = useCurrentProfile();
 
@@ -71,11 +71,6 @@ export default function MatchInspirationScreen() {
   const [errorMsg, setErrorMsg] = useState("");
   const [notConfigured, setNotConfigured] = useState(false);
   const [picking, setPicking] = useState(false);
-
-  const onBack = () => {
-    if (router.canGoBack()) router.back();
-    else router.replace("/(tabs)/discover");
-  };
 
   function reset() {
     setPreviewUri(null);
@@ -180,9 +175,7 @@ export default function MatchInspirationScreen() {
     <SafeAreaView className="flex-1 bg-surface-base" edges={["top"]}>
       {/* Header */}
       <View className="flex-row items-center justify-between border-b border-border-subtle px-4 py-3">
-        <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="Back" hitSlop={10}>
-          <Icon name="chevron-left" size={24} color={colors.text.primary} />
-        </Pressable>
+        <BackButton fallback="/(tabs)" />
         <Text className="font-display text-base text-content-primary">Match my inspiration</Text>
         <View style={{ width: 24 }} />
       </View>

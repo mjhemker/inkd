@@ -1,9 +1,10 @@
 import { ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { ToastProvider } from "@inkd/ui/native";
 
 import { BookingDetail } from "@/components/bookings/booking-detail";
+import { BackButton } from "@/components/BackButton";
 
 export default function BookingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -20,21 +21,10 @@ export default function BookingDetailScreen() {
     <ToastProvider>
       <SafeAreaView className="flex-1 bg-surface-base" edges={["top", "bottom"]}>
         <ScrollView className="flex-1" contentContainerClassName="gap-6 px-6 py-8">
-          <BackLink />
+          <BackButton fallback="/(tabs)/bookings" />
           <BookingDetail bookingId={id} />
         </ScrollView>
       </SafeAreaView>
     </ToastProvider>
-  );
-}
-
-function BackLink() {
-  return (
-    <Text
-      onPress={() => (router.canGoBack() ? router.back() : router.push("/(tabs)/bookings"))}
-      className="text-sm text-content-secondary"
-    >
-      {"< Bookings"}
-    </Text>
   );
 }

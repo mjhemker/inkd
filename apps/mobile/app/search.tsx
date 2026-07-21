@@ -24,6 +24,7 @@ import {
   type RecentSearch,
 } from "@inkd/core";
 import { useTheme } from "@/providers/theme";
+import { BackButton } from "@/components/BackButton";
 
 function styleLabel(slug: string): string {
   return slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
@@ -91,15 +92,7 @@ export default function SearchScreen() {
     <SafeAreaView className="flex-1 bg-surface-base" edges={["top"]}>
       {/* Search bar row */}
       <View className="flex-row items-center gap-2 px-4 py-2">
-        <Pressable
-          onPress={() => router.back()}
-          hitSlop={10}
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          className="h-10 w-10 items-center justify-center"
-        >
-          <Icon name="chevron-left" size={22} color={colors.text.primary} />
-        </Pressable>
+        <BackButton fallback="/(tabs)" />
         <View className="flex-1">
           <Input
             placeholder="Search artists, shops, styles, cities…"
