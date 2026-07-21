@@ -62,12 +62,14 @@ export function ProfileTabBar({
       className="relative rounded-lg border border-border-subtle bg-surface-raised p-1"
       onLayout={(e: LayoutChangeEvent) => setTrackWidth(e.nativeEvent.layout.width - 8)}
     >
-      {/* Sliding active plate — sits behind the labels. */}
+      {/* Sliding active plate — sits behind the labels. Zine ink-inversion: the
+          active plate is solid INK (off-white at night / black in daylight), not
+          violet; the glide animation is unchanged. */}
       {segWidth > 0 ? (
         <Animated.View
           pointerEvents="none"
           style={{ width: segWidth, transform: [{ translateX }] }}
-          className="absolute bottom-1 left-1 top-1 rounded-md bg-brand"
+          className="absolute bottom-1 left-1 top-1 rounded-sm bg-surface-inverse"
         />
       ) : null}
       <View className="flex-row">
@@ -86,7 +88,7 @@ export function ProfileTabBar({
               <Text
                 className={cx(
                   "text-sm",
-                  active ? "font-sans-bold text-brand-on" : "font-sans-semibold text-content-secondary",
+                  active ? "font-sans-bold text-content-inverse" : "font-sans-semibold text-content-secondary",
                 )}
               >
                 {item.label}
