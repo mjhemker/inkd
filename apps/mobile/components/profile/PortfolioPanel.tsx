@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { router } from "expo-router";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import {
   Badge,
@@ -28,8 +29,10 @@ export function PortfolioPanel({ artistId, userId }: { artistId: string; userId:
   const { data: pieces, isLoading } = usePortfolioPieces(artistId);
   const mutations = usePortfolioMutations(artistId);
   const { toast } = useToast();
-  const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<PortfolioPiece | null>(null);
+
+  // Adding a piece is now a full-screen progressive flow (app/create/portfolio).
+  const openAddFlow = () => router.push("/create/portfolio");
 
   const ordered = pieces ?? [];
   const orderedIds = ordered.map((p) => p.id);
@@ -59,7 +62,7 @@ export function PortfolioPanel({ artistId, userId }: { artistId: string; userId:
         <Text className="flex-1 pr-3 text-sm text-content-muted">
           The first piece is your public cover image.
         </Text>
-        <Button size="sm" leadingIcon={<Icon name="plus" size={16} color="#FAFAFA" />} onPress={() => setCreateOpen(true)}>
+        <Button size="sm" leadingIcon={<Icon name="plus" size={16} color="#FAFAFA" />} onPress={openAddFlow}>
           Add
         </Button>
       </View>
@@ -76,7 +79,7 @@ export function PortfolioPanel({ artistId, userId }: { artistId: string; userId:
           title="Your portfolio is empty"
           description="Upload healed work or your best flash to build out your gallery."
           action={
-            <Button size="sm" onPress={() => setCreateOpen(true)}>
+            <Button size="sm" onPress={openAddFlow}>
               Add your first piece
             </Button>
           }
@@ -98,7 +101,8 @@ export function PortfolioPanel({ artistId, userId }: { artistId: string; userId:
         </View>
       )}
 
-      <PieceSheet open={createOpen} onClose={() => setCreateOpen(false)} artistId={artistId} userId={userId} mode="create" />
+      {/* Editing an existing piece stays an inline sheet; adding is the
+          full-screen flow above. */}
       <PieceSheet
         open={Boolean(editing)}
         onClose={() => setEditing(null)}
