@@ -11,9 +11,7 @@ import {
   EmptyState,
   Icon,
   Skeleton,
-  Tabs,
   ToastProvider,
-  type TabItem,
 } from "@inkd/ui/native";
 import {
   useCurrentArtistProfile,
@@ -27,9 +25,14 @@ import { EditProfileSheet } from "@/components/profile/EditProfileSheet";
 import { PostsPanel } from "@/components/profile/PostsPanel";
 import { PortfolioPanel } from "@/components/profile/PortfolioPanel";
 import { FlashPanel } from "@/components/profile/FlashPanel";
+import {
+  ProfileTabBar,
+  AnimatedTabPanel,
+  type ProfileTabItem,
+} from "@/components/profile/ProfileTabs";
 import { classificationLabel, travelBadges } from "@/lib/format";
 
-const TABS: TabItem[] = [
+const TABS: ProfileTabItem[] = [
   { value: "portfolio", label: "Portfolio" },
   { value: "posts", label: "Posts" },
   { value: "flash", label: "Flash" },
@@ -90,6 +93,8 @@ function ProfileScreenContent() {
           of the screen, with the notification bell docked in its top-right. */}
       <ScrollView className="flex-1" contentContainerClassName="gap-6 px-6 py-8">
         <Card className="gap-4">
+          {/* Identity section: large avatar + name + @handle, with the bell
+              docked top-right of the card. */}
           <View className="flex-row items-start justify-between gap-3">
             <View className="flex-1 flex-row items-start gap-4">
               <Avatar
@@ -111,28 +116,32 @@ function ProfileScreenContent() {
                 {profile.handle && (
                   <Text className="font-mono text-sm text-content-muted">@{profile.handle}</Text>
                 )}
-                {isArtist && artist?.tagline && (
-                  <Text className="text-sm text-content-secondary">{artist.tagline}</Text>
-                )}
-                {/* Classification ("Independent") + travel tags, left-aligned
-                    with the name/handle block (not a floating row). */}
-                {isArtist && artist && (
-                  <View className="mt-1 flex-row flex-wrap gap-1.5">
-                    <Badge variant="outline" size="sm">
-                      {classificationLabel(artist.classification)}
-                    </Badge>
-                    {travelBadges(artist).map((label) => (
-                      <Badge key={label} variant="outline" size="sm">
-                        {label}
-                      </Badge>
-                    ))}
-                  </View>
-                )}
               </View>
             </View>
             {/* Notification bell — top-right of the profile card. */}
             <NotificationBellButton />
           </View>
+
+          {/* Tagline + classification/travel chips sit UNDER the identity
+              section, left-aligned with the name column (indented past the
+              avatar) rather than floating beside it. */}
+          {isArtist && artist && (
+            <View className="gap-2 pl-20">
+              {artist.tagline ? (
+                <Text className="text-sm text-content-secondary">{artist.tagline}</Text>
+              ) : null}
+              <View className="flex-row flex-wrap gap-1.5">
+                <Badge variant="outline" size="sm">
+                  {classificationLabel(artist.classification)}
+                </Badge>
+                {travelBadges(artist).map((label) => (
+                  <Badge key={label} variant="outline" size="sm">
+                    {label}
+                  </Badge>
+                ))}
+              </View>
+            </View>
+          )}
 
           <View className="flex-row gap-2">
             {isArtist && artist?.is_published && profile.handle && (
@@ -174,10 +183,12 @@ function ProfileScreenContent() {
 
         {isArtist && artist ? (
           <View className="gap-4">
-            <Tabs value={tab} onValueChange={setTab} items={TABS} />
-            {tab === "portfolio" && <PortfolioPanel artistId={artist.id} userId={profile.id} />}
-            {tab === "posts" && <PostsPanel artistId={artist.id} userId={profile.id} />}
-            {tab === "flash" && <FlashPanel artistId={artist.id} userId={profile.id} />}
+            <ProfileTabBar value={tab} onChange={setTab} items={TABS} />
+            <AnimatedTabPanel activeKey={tab}>
+              {tab === "portfolio" && <PortfolioPanel artistId={artist.id} userId={profile.id} />}
+              {tab === "posts" && <PostsPanel artistId={artist.id} userId={profile.id} />}
+              {tab === "flash" && <FlashPanel artistId={artist.id} userId={profile.id} />}
+            </AnimatedTabPanel>
           </View>
         ) : (
           <ClientSections clientId={profile.id} />
