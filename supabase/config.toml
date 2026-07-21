@@ -34,16 +34,53 @@ verify_jwt = false
 [functions.approve-agent-action]
 verify_jwt = true
 
-# Meta's OAuth callback redirects the browser here with NO Supabase JWT — the
-# gateway must let it through; the function authenticates the authorize-url /
-# disconnect / refresh / status actions itself via requireUser(), and the
-# callback leg via the signed `state` param instead (see instagram.ts).
-[functions.instagram-oauth]
+# Instagram import ("Instagram API with Instagram Login"). Seven live functions
+# on this project + two additions (status/disconnect); see the Instagram UI
+# Implementation Guide. Shared helpers live in _shared/ig-common.ts; the two
+# OAuth legs are self-contained (no _shared import) because their verify_jwt
+# differs and the callback is public. verify_jwt below mirrors the deployed
+# gateway settings exactly.
+
+# Mints the Instagram authorize URL — a normal authenticated artist call.
+[functions.instagram-oauth-start]
+verify_jwt = true
+
+# Meta redirects the browser here with NO Supabase JWT — the gateway must let it
+# through; the function re-establishes trust from the signed `state` param.
+[functions.instagram-oauth-callback]
 verify_jwt = false
 
-# A normal authenticated artist call (start an import run).
+# Annotated media listing for the import picker — authenticated artist call.
+[functions.instagram-media-list]
+verify_jwt = true
+
+# Runs an import of selected media — authenticated artist call.
 [functions.instagram-import]
 verify_jwt = true
+
+# Connection status for the settings/onboarding UI (reads the caller's row with
+# the service role; never returns a token) — authenticated artist call.
+[functions.instagram-status]
+verify_jwt = true
+
+# Deletes the caller's connection row — authenticated artist call.
+[functions.instagram-disconnect]
+verify_jwt = true
+
+# Weekly token refresh. Invoked by pg_cron with the shared runner bearer (same
+# pattern as agent-run), so the gateway must not require a user JWT; the function
+# enforces the runner bearer itself (see _shared/ig-common.ts isAuthorizedRunner).
+[functions.instagram-refresh-tokens]
+verify_jwt = false
+
+# Meta's Deauthorize callback — Meta POSTs a signed_request with NO Supabase JWT;
+# the function verifies the HMAC signature itself.
+[functions.instagram-deauthorize]
+verify_jwt = false
+
+# Meta's Data Deletion callback — same signed_request handling as deauthorize.
+[functions.instagram-data-deletion]
+verify_jwt = false
 
 # Studio Manager's deterministic scheduled jobs (deposit_chase, rebook_nudge,
 # weekly_digest) — no ANTHROPIC_API_KEY dependency. Invoked by pg_cron
