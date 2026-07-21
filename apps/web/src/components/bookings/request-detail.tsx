@@ -171,7 +171,7 @@ export function RequestDetail({ requestId }: { requestId: string }) {
           </h1>
           <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
           {request.has_medical_flags && (
-            <Badge variant="danger">
+            <Badge variant="stamp">
               <Icon name="shield" size={11} /> Medical
             </Badge>
           )}

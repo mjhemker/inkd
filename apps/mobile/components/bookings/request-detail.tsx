@@ -164,12 +164,8 @@ export function RequestDetail({ requestId }: { requestId: string }) {
           </Text>
           <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
           {request.has_medical_flags && (
-            <Badge variant="danger">
-              <View className="flex-row items-center gap-1">
-                <Icon name="shield" size={11} color="#FAFAFA" />
-                <Text className="font-sans-semibold text-xs text-neutral-50">Medical</Text>
-              </View>
-            </Badge>
+            // Red is rationed to counts + medical: a red mono stamp, not a filled pill.
+            <Badge variant="stamp" size="sm">Medical</Badge>
           )}
         </View>
         <Text className="font-mono text-xs text-content-muted">

@@ -57,8 +57,8 @@ export function ArtistBookings({
       <View className="gap-2">
         <Eyebrow>Studio · Pipeline</Eyebrow>
         <Text className="font-display text-3xl text-content-primary">Bookings</Text>
-        <Text className="text-content-secondary">
-          Every request from first inquiry to healed and rebooked.
+        <Text className="font-mono text-[11px] uppercase tracking-[0.18em] text-content-muted">
+          {`${openCount} New · ${activeCount} Active · ${requests.length} Total`}
         </Text>
       </View>
 
@@ -140,8 +140,9 @@ function InboxView({
           <Text className="text-sm text-content-muted">You&apos;re all caught up.</Text>
         ) : (
           <View className="gap-3">
-            {open.map((r) => (
-              <RequestRow key={r.id} request={r} />
+            {/* Zine law: the top needs-review card is this screen's single hero. */}
+            {open.map((r, i) => (
+              <RequestRow key={r.id} request={r} hero={i === 0} />
             ))}
           </View>
         )}
@@ -153,7 +154,7 @@ function InboxView({
           </Text>
           <View className="gap-3">
             {handled.map((r) => (
-              <RequestRow key={r.id} request={r} muted />
+              <HandledRow key={r.id} request={r} />
             ))}
           </View>
         </View>
@@ -162,31 +163,32 @@ function InboxView({
   );
 }
 
-function RequestRow({ request, muted }: { request: BookingRequest; muted?: boolean }) {
+function requestTitle(request: BookingRequest): string {
+  return request.placement || request.description?.slice(0, 44) || "Custom project";
+}
+
+function RequestRow({ request, hero }: { request: BookingRequest; hero?: boolean }) {
   const { colors } = useTheme();
   const meta = REQUEST_STATUS_META[request.status];
   return (
     <Card
       padding="md"
-      variant="interactive"
-      className={muted ? "gap-3 opacity-70" : "gap-3"}
+      variant={hero ? "default" : "interactive"}
+      hero={hero}
+      className="gap-3"
       onPress={() => router.push(`/bookings/requests/${request.id}`)}
     >
       <View className="flex-row flex-wrap items-center gap-2">
         <Text className="flex-1 font-display text-base text-content-primary" numberOfLines={1}>
-          {request.placement || request.description?.slice(0, 44) || "Custom project"}
+          {requestTitle(request)}
         </Text>
         <Icon name="chevron-right" size={18} color={colors.text.muted} />
       </View>
       <View className="flex-row flex-wrap items-center gap-1.5">
         <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
         {request.has_medical_flags && (
-          <Badge variant="danger">
-            <View className="flex-row items-center gap-1">
-              <Icon name="shield" size={11} color="#FAFAFA" />
-              <Text className="font-sans-semibold text-xs text-neutral-50">Medical</Text>
-            </View>
-          </Badge>
+          // Red is rationed to counts + medical: a red mono stamp, not a filled pill.
+          <Badge variant="stamp" size="sm">Medical</Badge>
         )}
       </View>
       <Text className="font-mono text-xs text-content-muted">
@@ -195,6 +197,36 @@ function RequestRow({ request, muted }: { request: BookingRequest; muted?: boole
         {request.is_first_tattoo ? " · First tattoo" : ""}
       </Text>
     </Card>
+  );
+}
+
+/**
+ * A HANDLED request: muted flat hairline row — title + soft status chip, with a
+ * mono date · budget line. No hero; these are resolved.
+ */
+function HandledRow({ request }: { request: BookingRequest }) {
+  const { colors } = useTheme();
+  const meta = REQUEST_STATUS_META[request.status];
+  return (
+    <Pressable
+      accessibilityRole="button"
+      className="flex-row items-center gap-3 rounded-sm border border-border-subtle bg-surface-raised px-4 py-3 opacity-80 active:opacity-100"
+      onPress={() => router.push(`/bookings/requests/${request.id}`)}
+    >
+      <View className="min-w-0 flex-1 gap-1.5">
+        <View className="flex-row flex-wrap items-center gap-2">
+          <Text className="font-display text-sm text-content-secondary" numberOfLines={1}>
+            {requestTitle(request)}
+          </Text>
+          <Badge variant="neutral" size="sm">{meta.label}</Badge>
+        </View>
+        <Text className="font-mono text-[11px] text-content-muted">
+          {formatDay(request.created_at)} ·{" "}
+          {formatBudget(request.budget_min_cents, request.budget_max_cents)}
+        </Text>
+      </View>
+      <Icon name="chevron-right" size={16} color={colors.text.muted} />
+    </Pressable>
   );
 }
 
