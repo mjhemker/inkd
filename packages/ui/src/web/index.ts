@@ -33,6 +33,16 @@ export {
   type ButtonVariant,
   type ButtonSize,
 } from "./Button";
+export { StarRating, type StarRatingProps } from "./StarRating";
+export {
+  STAR_COUNT,
+  clampRating,
+  roundToHalf,
+  starFillFractions,
+  ratingFromStar,
+  ratingFromRatio,
+  stepRating,
+} from "../starRating/starMath";
 export {
   Card,
   CardContent,

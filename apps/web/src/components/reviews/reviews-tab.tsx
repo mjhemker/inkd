@@ -2,7 +2,7 @@
 
 /** Public-profile Reviews tab: aggregate placard + the review list. Takes
  * fully-resolved data as props (mirrors `ArtistProfileView`'s other tabs). */
-import { Card, CardPlacard, Icon } from "@inkd/ui/web";
+import { Card, CardPlacard, Icon, StarRating } from "@inkd/ui/web";
 import {
   formatRatingAvg,
   reviewerFirstName,
@@ -10,7 +10,6 @@ import {
   type Profile,
   type Review,
 } from "@inkd/core";
-import { RatingStamps } from "./rating-stamps";
 import { ReviewCard } from "./review-card";
 
 export function ReviewsTab({
@@ -48,7 +47,7 @@ export function ReviewsTab({
           <span className="font-display text-4xl font-extrabold tracking-tight">
             {formatRatingAvg(summary.avg)}
           </span>
-          <RatingStamps value={Math.round(summary.avg)} readOnly size="md" />
+          <StarRating value={summary.avg} readOnly size="md" />
         </div>
       </Card>
 

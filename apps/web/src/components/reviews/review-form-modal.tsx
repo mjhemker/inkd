@@ -7,8 +7,7 @@
  * no-op for screenshots.
  */
 import { useEffect, useState } from "react";
-import { Button, FormField, Input, Modal, TextArea } from "@inkd/ui/web";
-import { RatingStamps } from "./rating-stamps";
+import { Button, FormField, Input, Modal, StarRating, TextArea } from "@inkd/ui/web";
 
 export interface ReviewFormValues {
   rating: number;
@@ -74,7 +73,9 @@ export function ReviewFormModal({
     >
       <div className="flex flex-col gap-5">
         <FormField label="Rating" htmlFor="review-rating">
-          <RatingStamps value={rating} onChange={setRating} size="lg" showLabel />
+          {/* Authoring is whole-star: the DB `rating` is a smallint 1–5
+              (see reviews migration), so half-stars are display-only. */}
+          <StarRating value={rating} onChange={setRating} size="lg" showLabel allowHalf={false} />
         </FormField>
         <FormField label="Title" htmlFor="review-title" description="Optional">
           <Input
