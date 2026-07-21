@@ -486,8 +486,9 @@ function SessionCard({
           </div>
         </div>
         {session.deposit_cents > 0 && (
-          <span className="font-mono text-sm text-content-secondary">
-            {formatCents(session.deposit_cents)} dep
+          <span className="text-sm">
+            <span className="text-money">{formatCents(session.deposit_cents)}</span>{" "}
+            <span className="text-content-muted">dep</span>
           </span>
         )}
       </div>
@@ -556,7 +557,7 @@ function MoneyTile({ label, value, sub }: { label: string; value: string; sub: s
   return (
     <Card padding="md" className="flex flex-col gap-0.5">
       <span className="font-mono text-[10px] uppercase tracking-widest text-content-muted">{label}</span>
-      <span className="font-display text-xl font-bold tracking-tight">{value}</span>
+      <span className="text-money text-xl">{value}</span>
       <span className="text-xs text-content-muted">{sub}</span>
     </Card>
   );

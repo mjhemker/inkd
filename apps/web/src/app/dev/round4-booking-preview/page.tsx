@@ -15,6 +15,8 @@ import { useState } from "react";
 import {
   BodyMap,
   BodyMapThumbnail,
+  Button,
+  Eyebrow,
   FormField,
   Icon,
   Input,
@@ -143,6 +145,27 @@ export default function Round4BookingPreviewPage() {
                 <span className="text-sm text-content-muted">{thumbValue.view} view</span>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Item 4 — booking-flow step footer: the primary Continue is this
+            step's single hero (offset shadow); Back stays a flat ghost. */}
+        <section data-testid="step-footer" className="flex flex-col gap-3">
+          <h2 className="font-display text-xl font-bold tracking-tight">4 · Step footer</h2>
+          <div className="flex flex-col gap-1.5">
+            <Eyebrow>Step 2</Eyebrow>
+            <h3 className="font-display text-2xl font-bold tracking-tight">The piece</h3>
+            <p className="text-content-secondary">
+              Describe the tattoo you want — the more detail, the better the quote.
+            </p>
+          </div>
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <Button variant="ghost" leadingIcon={<Icon name="chevron-left" size={16} />}>
+              Back
+            </Button>
+            <Button hero trailingIcon={<Icon name="chevron-right" size={16} />}>
+              Continue
+            </Button>
           </div>
         </section>
       </div>

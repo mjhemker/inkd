@@ -129,7 +129,7 @@ export function WaitlistJoinForm({
         </FormField>
 
         <div className="flex gap-2">
-          <Button onClick={submit} disabled={submitting} className="flex-1">
+          <Button hero onClick={submit} disabled={submitting} className="flex-1">
             Join the waitlist
           </Button>
           {onCancel ? (

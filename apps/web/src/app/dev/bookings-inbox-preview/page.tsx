@@ -73,7 +73,37 @@ const seedTables = {
       created_at: iso(-3),
     }),
   ],
-  bookings: [],
+  // Seed the pipeline board so its flat columns + status chips (Deposit due /
+  // Scheduled / Healed) render for screenshots — the pipeline carries no hero.
+  bookings: [
+    {
+      id: "bk-1",
+      artist_id: ARTIST_ID,
+      client_id: "client-x",
+      title: "Blackwork sleeve",
+      status: "pending",
+      created_at: iso(-2),
+      updated_at: iso(-2),
+    },
+    {
+      id: "bk-2",
+      artist_id: ARTIST_ID,
+      client_id: "client-y",
+      title: "Fine-line florals",
+      status: "confirmed",
+      created_at: iso(-5),
+      updated_at: iso(-1),
+    },
+    {
+      id: "bk-3",
+      artist_id: ARTIST_ID,
+      client_id: "client-z",
+      title: "Japanese koi",
+      status: "completed",
+      created_at: iso(-20),
+      updated_at: iso(-4),
+    },
+  ],
   sessions: [],
 };
 

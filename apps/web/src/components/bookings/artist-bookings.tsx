@@ -64,8 +64,10 @@ export function ArtistBookings({
         <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
           Bookings
         </h1>
-        <p className="max-w-xl text-content-secondary">
-          Every request from first inquiry to healed and rebooked.
+        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-content-muted">
+          {openCount} New <span className="text-content-secondary">·</span>{" "}
+          {activeCount} Active <span className="text-content-secondary">·</span>{" "}
+          {requests.length} Total
         </p>
       </header>
 
@@ -149,7 +151,10 @@ function InboxView({
         {open.length === 0 ? (
           <p className="text-sm text-content-muted">You&apos;re all caught up.</p>
         ) : (
-          open.map((r) => <RequestRow key={r.id} request={r} />)
+          // Zine law: the single hero for this screen is the TOP needs-review
+          // card — the one request most in need of a decision. Every sibling is
+          // a flat hairline card.
+          open.map((r, i) => <RequestRow key={r.id} request={r} hero={i === 0} />)
         )}
       </div>
       {handled.length > 0 && (
@@ -158,7 +163,7 @@ function InboxView({
             Handled
           </h2>
           {handled.map((r) => (
-            <RequestRow key={r.id} request={r} muted />
+            <HandledRow key={r.id} request={r} />
           ))}
         </div>
       )}
@@ -166,33 +171,38 @@ function InboxView({
   );
 }
 
+function requestTitle(request: BookingRequest): string {
+  return (
+    placementLabelFromColumns(request) ||
+    request.placement ||
+    request.description?.slice(0, 44) ||
+    "Custom project"
+  );
+}
+
 function RequestRow({
   request,
-  muted,
+  hero,
 }: {
   request: BookingRequest;
-  muted?: boolean;
+  /** The screen's single hero — the top needs-review card. */
+  hero?: boolean;
 }) {
   const meta = REQUEST_STATUS_META[request.status];
   return (
     <Link href={`/bookings/requests/${request.id}`} className="group block">
-      <Card
-        padding="md"
-        variant="interactive"
-        className={muted ? "opacity-70" : undefined}
-      >
+      <Card padding="md" variant={hero ? "default" : "interactive"} hero={hero}>
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <div className="flex items-center gap-2">
               <span className="truncate font-display text-base font-bold tracking-tight">
-                {placementLabelFromColumns(request) ||
-                  request.placement ||
-                  request.description?.slice(0, 44) ||
-                  "Custom project"}
+                {requestTitle(request)}
               </span>
               <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
               {request.has_medical_flags && (
-                <Badge variant="danger">
+                // Red is rationed to counts + medical: a red mono stamp, not a
+                // filled danger pill.
+                <Badge variant="stamp">
                   <Icon name="shield" size={11} /> Medical
                 </Badge>
               )}
@@ -210,6 +220,38 @@ function RequestRow({
           />
         </div>
       </Card>
+    </Link>
+  );
+}
+
+/**
+ * A HANDLED request: muted flat hairline row — title + soft status chip on the
+ * left, right-aligned mono date · budget. No hero; these are resolved.
+ */
+function HandledRow({ request }: { request: BookingRequest }) {
+  const meta = REQUEST_STATUS_META[request.status];
+  return (
+    <Link
+      href={`/bookings/requests/${request.id}`}
+      className="group flex items-center gap-3 rounded-sm border border-border-subtle bg-surface-raised/40 px-4 py-3 opacity-80 transition-colors hover:border-border-strong hover:opacity-100"
+    >
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <span className="truncate font-display text-sm font-bold tracking-tight text-content-secondary">
+          {requestTitle(request)}
+        </span>
+        <Badge variant="neutral" size="sm">
+          {meta.label}
+        </Badge>
+      </div>
+      <span className="shrink-0 font-mono text-[11px] text-content-muted">
+        {formatDay(request.created_at)} ·{" "}
+        {formatBudget(request.budget_min_cents, request.budget_max_cents)}
+      </span>
+      <Icon
+        name="chevron-right"
+        size={16}
+        className="shrink-0 text-content-muted transition-transform group-hover:translate-x-0.5"
+      />
     </Link>
   );
 }

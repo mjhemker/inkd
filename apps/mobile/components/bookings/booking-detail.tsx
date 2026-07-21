@@ -530,8 +530,9 @@ function SessionCard({
           </View>
         </View>
         {session.deposit_cents > 0 && (
-          <Text className="font-mono text-sm text-content-secondary">
-            {formatCents(session.deposit_cents)} dep
+          <Text className="text-sm">
+            <Text className="font-mono-medium text-content-ember">{formatCents(session.deposit_cents)}</Text>
+            <Text className="font-mono text-content-muted"> dep</Text>
           </Text>
         )}
       </View>
@@ -620,7 +621,7 @@ function MoneyTile({ label, value, sub }: { label: string; value: string; sub: s
   return (
     <Card padding="md" className="flex-1 gap-0.5">
       <Text className="font-mono text-[10px] uppercase tracking-widest text-content-muted">{label}</Text>
-      <Text className="font-display text-xl text-content-primary">{value}</Text>
+      <Text className="font-mono-medium text-xl text-content-ember">{value}</Text>
       <Text className="text-xs text-content-muted">{sub}</Text>
     </Card>
   );

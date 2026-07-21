@@ -312,7 +312,9 @@ function TopBar({ title, action }: { title?: string; action?: ReactNode }) {
           <Link
             href="/bookings"
             className={cx(
-              buttonVariants({ size: "sm" }),
+              // Top-bar action is a flat outline, not the violet plate — heroes
+              // live in the page content, never in the chrome.
+              buttonVariants({ variant: "outline", size: "sm" }),
               "hidden sm:inline-flex",
             )}
           >

@@ -509,11 +509,9 @@ export const IdentityEditor = forwardRef<EditorHandle, IdentityEditorProps>(
         </View>
 
         {variant === "settings" && (
-          <View className="items-end">
-            <Button onPress={() => void save()} loading={saving}>
-              Save changes
-            </Button>
-          </View>
+          <Button hero className="w-full" onPress={() => void save()} loading={saving}>
+            Save changes
+          </Button>
         )}
       </View>
     );
