@@ -41,6 +41,9 @@
     --color-status-warning: 180 83 9;
     --color-status-danger: 220 38 38;
     --color-status-info: 37 99 235;
+    /* Zine hero offset-shadow — PURE INK in daylight (light default). */
+    --color-hero-shadow: 10 10 11;
+    --color-hero-border: 10 10 11;
   }
 
   .dark:root {
@@ -76,5 +79,8 @@
     --color-status-warning: 245 158 11;
     --color-status-danger: 239 68 68;
     --color-status-info: 59 130 246;
+    /* Zine hero offset-shadow — EMBER at night (dark). */
+    --color-hero-shadow: 232 161 92;
+    --color-hero-border: 232 161 92;
   }
 }

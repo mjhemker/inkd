@@ -20,9 +20,11 @@ export interface TabsProps {
 
 export function Tabs({ value, onValueChange, items, className }: TabsProps) {
   return (
-    // Segmented control on a distinct solid raised surface (placard language):
-    // a raised track with hard edges; the active tab is a solid plate with
-    // strong contrast. Mirrors the web Tabs so tabs read the same app-wide.
+    // Segmented control on a flat raised track (placard language). Zine rule:
+    // the active tab INVERTS to solid ink (surface-inverse / content-inverse) —
+    // off-white w/ black text at night, black w/ white text in daylight — NOT a
+    // violet-tinted tab. Inactive tabs stay flat. Mirrors the web Tabs. The
+    // optional `badge` slot (red count pill) is preserved.
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
@@ -39,14 +41,14 @@ export function Tabs({ value, onValueChange, items, className }: TabsProps) {
             onPress={() => onValueChange(item.value)}
             className={cx(
               "min-h-9 flex-row items-center gap-1.5 rounded-sm px-3.5 py-2",
-              active ? "bg-surface-plate-ink" : "bg-transparent",
+              active ? "bg-surface-inverse" : "bg-transparent",
             )}
           >
             {item.icon}
             <Text
               className={cx(
                 "font-sans-semibold text-sm",
-                active ? "text-content-primary" : "text-content-secondary",
+                active ? "text-content-inverse" : "text-content-secondary",
               )}
             >
               {item.label}

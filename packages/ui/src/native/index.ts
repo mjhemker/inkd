@@ -86,6 +86,8 @@ export { Skeleton, type SkeletonProps } from "./Skeleton";
 
 export { Spinner, type SpinnerProps } from "./Spinner";
 
+export { StatusDot, type StatusDotProps } from "./StatusDot";
+
 export { ProgressBar, type ProgressBarProps, type ProgressBarSize } from "./ProgressBar";
 
 export { Stepper, type StepperProps, type StepperStep } from "./Stepper";

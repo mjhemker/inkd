@@ -49,6 +49,8 @@ const sizeText: Record<ButtonSize, string> = {
 export interface ButtonProps extends Omit<PressableProps, "children"> {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  /** The screen's single hero action — violet plate + hard offset shadow. */
+  hero?: boolean;
   loading?: boolean;
   disabled?: boolean;
   leadingIcon?: ReactNode;
@@ -60,6 +62,7 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
   {
     variant = "primary",
     size = "md",
+    hero = false,
     loading = false,
     disabled = false,
     leadingIcon,
@@ -70,6 +73,64 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
   ref,
 ) {
   const isDisabled = disabled || loading;
+
+  const inner = (
+    <>
+      {loading ? (
+        <ActivityIndicator size="small" color="#FAFAFA" />
+      ) : (
+        leadingIcon
+      )}
+      {wrapTextChildren(children, (child, key) => (
+        <Text
+          key={key}
+          className={cx(
+            hero ? "font-sans-bold tracking-tight" : "font-sans-semibold tracking-tight",
+            hero ? "text-base" : sizeText[size],
+            hero ? "text-brand-on" : label[variant],
+          )}
+        >
+          {child}
+        </Text>
+      ))}
+    </>
+  );
+
+  // Hero: the ONE offset shadow per screen. RN box-shadow / elevation cannot
+  // render a hard, 0-blur, theme-colored offset reliably on Android (elevation
+  // is a blurred grey system shadow), so we paint the offset as an absolutely-
+  // positioned backing View shifted 5px down-right BEHIND the violet face —
+  // pixel-identical on iOS and Android. On press the face translates 3px into
+  // the backing (visible offset shrinks 5→2). See docs/zine-hierarchy.md.
+  if (hero) {
+    return (
+      // Wrapper hugs the face (self-start) unless a width class is passed via
+      // `className` (e.g. "w-full"); the w-full face then fills it. Never wrap
+      // the offset in overflow-hidden — it would clip the backing.
+      <View className={cx("relative self-start", className)}>
+        <View
+          pointerEvents="none"
+          className="absolute inset-0 rounded-lg bg-hero-shadow"
+          style={{ transform: [{ translateX: 5 }, { translateY: 5 }] }}
+        />
+        <Pressable
+          ref={ref}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: isDisabled, busy: loading }}
+          disabled={isDisabled}
+          className={cx(
+            "h-12 w-full flex-row items-center justify-center gap-2 rounded-lg border border-hero-border bg-brand px-6",
+            "active:translate-x-[3px] active:translate-y-[3px] active:bg-brand-active",
+            isDisabled && "opacity-50",
+          )}
+          {...props}
+        >
+          {inner}
+        </Pressable>
+      </View>
+    );
+  }
+
   return (
     <Pressable
       ref={ref}
@@ -85,23 +146,7 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
       )}
       {...props}
     >
-      {loading ? (
-        <ActivityIndicator size="small" color="#FAFAFA" />
-      ) : (
-        leadingIcon
-      )}
-      {wrapTextChildren(children, (child, key) => (
-        <Text
-          key={key}
-          className={cx(
-            "font-sans-semibold tracking-tight",
-            sizeText[size],
-            label[variant],
-          )}
-        >
-          {child}
-        </Text>
-      ))}
+      {inner}
     </Pressable>
   );
 });

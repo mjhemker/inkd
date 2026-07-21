@@ -42,9 +42,12 @@ export function Tabs({ value, onValueChange, items, className }: TabsProps) {
   }
 
   return (
-    // Segmented control on a distinct solid raised surface (placard language):
-    // the whole row is a raised track; the active tab is a solid plate with
-    // strong contrast. Hard edges, generous hit area, consistent app-wide.
+    // Segmented control on a flat raised track (placard language). Zine rule:
+    // the active tab INVERTS to solid ink — solid black w/ white text in
+    // daylight, solid off-white w/ black text at night (surface-inverse /
+    // content-inverse) — NOT a violet-tinted active tab. Inactive tabs stay
+    // flat hairline. Red count pills passed into a tab's icon slot are
+    // preserved. Hard edges, generous hit area, consistent app-wide.
     <div
       ref={listRef}
       role="tablist"
@@ -69,7 +72,7 @@ export function Tabs({ value, onValueChange, items, className }: TabsProps) {
             className={cx(
               "relative inline-flex h-9 shrink-0 items-center gap-1.5 rounded-sm px-3.5 text-sm font-semibold outline-none transition-[background-color,color] duration-[180ms] ease-[cubic-bezier(0.2,0,0,1)] focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised",
               selected
-                ? "bg-surface-plate-ink text-content-primary shadow-sm"
+                ? "bg-surface-inverse text-content-inverse"
                 : "text-content-secondary hover:bg-surface-overlay/60 hover:text-content-primary",
             )}
           >
